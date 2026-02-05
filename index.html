@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>근시 관리표 | Myopia Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        
+        :root {
+            --primary: #0066cc;
+            --primary-dark: #004d99;
+            --primary-light: #e6f2ff;
+            --secondary: #00a896;
+            --danger: #dc3545;
+            --warning: #f4a261;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        header h1::before {
+            content: "👁";
+            font-size: 1.5rem;
+        }
+
+        header p {
+            margin-top: 0.25rem;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: var(--primary-light);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Patient List */
+        .patient-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .patient-item {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .patient-item:hover {
+            background: var(--primary-light);
+        }
+
+        .patient-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .patient-item .name {
+            font-weight: 500;
+        }
+
+        .patient-item .info {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .patient-item.active .info {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .patient-item .delete-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            padding: 0.25rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .patient-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .patient-item.active .delete-btn {
+            color: white;
+            opacity: 1;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.375rem;
+            color: var(--text);
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #008f7f;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Patient Info Display */
+        .patient-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .patient-title h2 {
+            font-size: 1.5rem;
+            color: var(--text);
+        }
+
+        .patient-title p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .patient-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-card.right {
+            border-left-color: var(--secondary);
+        }
+
+        .stat-card .label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0.25rem 0;
+        }
+
+        .stat-card .change {
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-card .change.negative {
+            color: var(--danger);
+        }
+
+        .stat-card .change.positive {
+            color: var(--secondary);
+        }
+
+        /* Measurement Form */
+        .measurement-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .eye-section {
+            padding: 1.25rem;
+            border-radius: 12px;
+            background: linear-gradient(to bottom, var(--primary-light), transparent);
+        }
+
+        .eye-section h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary-dark);
+        }
+
+        .eye-section.right h3 {
+            border-bottom-color: var(--secondary);
+            color: #007a6c;
+        }
+
+        /* Data Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--primary-light);
+            font-weight: 600;
+            color: var(--primary-dark);
+            white-space: nowrap;
+        }
+
+        tr:hover {
+            background: rgba(0, 102, 204, 0.03);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .table-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem;
+            color: var(--text-light);
+            transition: color 0.2s;
+        }
+
+        .table-actions button:hover {
+            color: var(--primary);
+        }
+
+        .table-actions button.delete:hover {
+            color: var(--danger);
+        }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            padding: 1rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-light);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.1rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+
+            header {
+                padding: 1rem 1.5rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .patient-actions {
+                width: 100%;
+            }
+
+            .patient-actions .btn {
+                flex: 1;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-light);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>근시 관리표</h1>
+        <p>Myopia Management Tracker</p>
+    </header>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- Patient List -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>👥 환자 목록</h2>
+                    <button class="btn btn-primary btn-sm" onclick="openModal()">+ 새 환자</button>
+                </div>
+                <div class="patient-list" id="patientList">
+                    <!-- Patient items will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📊 전체 통계</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>등록 환자 수</label>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);" id="totalPatients">0명</div>
+                    </div>
+                    <div class="form-group">
+                        <label>총 측정 기록</label>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--secondary);" id="totalRecords">0건</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+            <!-- Empty State (shown when no patient selected) -->
+            <div class="card" id="emptyState">
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <h3>환자를 선택해주세요</h3>
+                    <p>왼쪽 목록에서 환자를 선택하거나<br>새 환자를 등록해주세요.</p>
+                </div>
+            </div>
+
+            <!-- Patient Detail (hidden initially) -->
+            <div id="patientDetail" style="display: none;">
+                <!-- Patient Header -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="patient-header">
+                            <div class="patient-title">
+                                <h2 id="patientName">-</h2>
+                                <p id="patientInfo">-</p>
+                            </div>
+                            <div class="patient-actions">
+                                <button class="btn btn-outline btn-sm" onclick="exportCSV()">📥 CSV 내보내기</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid" id="statsGrid">
+                    <!-- Stats will be rendered here -->
+                </div>
+
+                <!-- New Measurement Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📝 새 측정 기록</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="measurementForm" onsubmit="addMeasurement(event)">
+                            <div class="form-group">
+                                <label for="measureDate">측정일</label>
+                                <input type="date" id="measureDate" required>
+                            </div>
+                            
+                            <div class="measurement-form">
+                                <!-- Left Eye -->
+                                <div class="eye-section">
+                                    <h3>👁 좌안 (OS)</h3>
+                                    <div class="form-group">
+                                        <label for="leftAL">안축장 (mm)</label>
+                                        <input type="number" id="leftAL" step="0.01" placeholder="예: 24.50">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="leftSE">굴절력 (D)</label>
+                                        <input type="number" id="leftSE" step="0.25" placeholder="예: -3.00">
+                                    </div>
+                                </div>
+
+                                <!-- Right Eye -->
+                                <div class="eye-section right">
+                                    <h3>👁 우안 (OD)</h3>
+                                    <div class="form-group">
+                                        <label for="rightAL">안축장 (mm)</label>
+                                        <input type="number" id="rightAL" step="0.01" placeholder="예: 24.50">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="rightSE">굴절력 (D)</label>
+                                        <input type="number" id="rightSE" step="0.25" placeholder="예: -3.00">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1rem;">
+                                측정 기록 추가
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>📈 안축장 변화</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="alChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>📉 굴절력 변화</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="seChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📋 측정 기록</h2>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>측정일</th>
+                                    <th>좌안 AL</th>
+                                    <th>좌안 SE</th>
+                                    <th>우안 AL</th>
+                                    <th>우안 SE</th>
+                                    <th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recordsTable">
+                                <!-- Records will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- New Patient Modal -->
+    <div class="modal-overlay" id="patientModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>새 환자 등록</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="patientForm" onsubmit="addPatient(event)">
+                    <div class="form-group">
+                        <label for="newPatientName">환자 이름 *</label>
+                        <input type="text" id="newPatientName" required placeholder="홍길동">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPatientBirth">생년월일 *</label>
+                        <input type="date" id="newPatientBirth" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPatientNote">메모</label>
+                        <input type="text" id="newPatientNote" placeholder="특이사항 (선택)">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal()">취소</button>
+                <button class="btn btn-primary" onclick="document.getElementById('patientForm').requestSubmit()">등록</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ Data Management ============
+        let patients = JSON.parse(localStorage.getItem('myopia_patients')) || [];
+        let currentPatientId = null;
+        let alChart = null;
+        let seChart = null;
+
+        function saveData() {
+            localStorage.setItem('myopia_patients', JSON.stringify(patients));
+            updateGlobalStats();
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // ============ Patient Management ============
+        function renderPatientList() {
+            const container = document.getElementById('patientList');
+            
+            if (patients.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding: 2rem;">
+                        <p>등록된 환자가 없습니다.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = patients.map(patient => `
+                <div class="patient-item ${patient.id === currentPatientId ? 'active' : ''}" 
+                     onclick="selectPatient('${patient.id}')">
+                    <div>
+                        <div class="name">${patient.name}</div>
+                        <div class="info">${formatDate(patient.birthDate)} · ${patient.records?.length || 0}회 측정</div>
+                    </div>
+                    <button class="delete-btn" onclick="event.stopPropagation(); deletePatient('${patient.id}')" title="삭제">
+                        🗑
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function openModal() {
+            document.getElementById('patientModal').classList.add('active');
+            document.getElementById('newPatientName').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('patientModal').classList.remove('active');
+            document.getElementById('patientForm').reset();
+        }
+
+        function addPatient(event) {
+            event.preventDefault();
+            
+            const patient = {
+                id: generateId(),
+                name: document.getElementById('newPatientName').value.trim(),
+                birthDate: document.getElementById('newPatientBirth').value,
+                note: document.getElementById('newPatientNote').value.trim(),
+                records: [],
+                createdAt: new Date().toISOString()
+            };
+
+            patients.push(patient);
+            saveData();
+            renderPatientList();
+            closeModal();
+            selectPatient(patient.id);
+        }
+
+        function deletePatient(id) {
+            if (!confirm('이 환자의 모든 기록이 삭제됩니다. 계속하시겠습니까?')) return;
+            
+            patients = patients.filter(p => p.id !== id);
+            saveData();
+            
+            if (currentPatientId === id) {
+                currentPatientId = null;
+                showEmptyState();
+            }
+            renderPatientList();
+        }
+
+        function selectPatient(id) {
+            currentPatientId = id;
+            renderPatientList();
+            renderPatientDetail();
+        }
+
+        // ============ Patient Detail ============
+        function showEmptyState() {
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('patientDetail').style.display = 'none';
+        }
+
+        function renderPatientDetail() {
+            const patient = patients.find(p => p.id === currentPatientId);
+            if (!patient) {
+                showEmptyState();
+                return;
+            }
+
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('patientDetail').style.display = 'block';
+
+            // Header
+            document.getElementById('patientName').textContent = patient.name;
+            const age = calculateAge(patient.birthDate);
+            document.getElementById('patientInfo').textContent = 
+                `${formatDate(patient.birthDate)} (만 ${age}세) ${patient.note ? '· ' + patient.note : ''}`;
+
+            // Set default date to today
+            document.getElementById('measureDate').value = new Date().toISOString().split('T')[0];
+
+            // Render components
+            renderStats(patient);
+            renderRecordsTable(patient);
+            renderCharts(patient);
+        }
+
+        // ============ Measurements ============
+        function addMeasurement(event) {
+            event.preventDefault();
+            
+            const patient = patients.find(p => p.id === currentPatientId);
+            if (!patient) return;
+
+            const record = {
+                id: generateId(),
+                date: document.getElementById('measureDate').value,
+                leftAL: parseFloat(document.getElementById('leftAL').value) || null,
+                leftSE: parseFloat(document.getElementById('leftSE').value) || null,
+                rightAL: parseFloat(document.getElementById('rightAL').value) || null,
+                rightSE: parseFloat(document.getElementById('rightSE').value) || null,
+                createdAt: new Date().toISOString()
+            };
+
+            // Validate at least one measurement
+            if (!record.leftAL && !record.leftSE && !record.rightAL && !record.rightSE) {
+                alert('최소 하나의 측정값을 입력해주세요.');
+                return;
+            }
+
+            patient.records.push(record);
+            patient.records.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            saveData();
+            renderPatientDetail();
+            renderPatientList();
+
+            // Reset form
+            document.getElementById('measurementForm').reset();
+            document.getElementById('measureDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        function deleteRecord(recordId) {
+            if (!confirm('이 측정 기록을 삭제하시겠습니까?')) return;
+            
+            const patient = patients.find(p => p.id === currentPatientId);
+            if (!patient) return;
+
+            patient.records = patient.records.filter(r => r.id !== recordId);
+            saveData();
+            renderPatientDetail();
+            renderPatientList();
+        }
+
+        // ============ Stats ============
+        function renderStats(patient) {
+            const records = patient.records || [];
+            const container = document.getElementById('statsGrid');
+
+            if (records.length === 0) {
+                container.innerHTML = `
+                    <div class="stat-card">
+                        <div class="label">측정 기록</div>
+                        <div class="value">없음</div>
+                        <div class="change">첫 측정을 기록해주세요</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const latest = records[records.length - 1];
+            const progression = calculateProgression(records);
+
+            container.innerHTML = `
+                <div class="stat-card">
+                    <div class="label">좌안 안축장 (최근)</div>
+                    <div class="value">${latest.leftAL ? latest.leftAL.toFixed(2) + ' mm' : '-'}</div>
+                    ${progression.leftAL ? `<div class="change negative">↑ ${progression.leftAL.toFixed(3)} mm/년</div>` : '<div class="change">데이터 부족</div>'}
+                </div>
+                <div class="stat-card right">
+                    <div class="label">우안 안축장 (최근)</div>
+                    <div class="value">${latest.rightAL ? latest.rightAL.toFixed(2) + ' mm' : '-'}</div>
+                    ${progression.rightAL ? `<div class="change negative">↑ ${progression.rightAL.toFixed(3)} mm/년</div>` : '<div class="change">데이터 부족</div>'}
+                </div>
+                <div class="stat-card">
+                    <div class="label">좌안 굴절력 (최근)</div>
+                    <div class="value">${latest.leftSE !== null ? latest.leftSE.toFixed(2) + ' D' : '-'}</div>
+                    ${progression.leftSE ? `<div class="change negative">↓ ${Math.abs(progression.leftSE).toFixed(2)} D/년</div>` : '<div class="change">데이터 부족</div>'}
+                </div>
+                <div class="stat-card right">
+                    <div class="label">우안 굴절력 (최근)</div>
+                    <div class="value">${latest.rightSE !== null ? latest.rightSE.toFixed(2) + ' D' : '-'}</div>
+                    ${progression.rightSE ? `<div class="change negative">↓ ${Math.abs(progression.rightSE).toFixed(2)} D/년</div>` : '<div class="change">데이터 부족</div>'}
+                </div>
+            `;
+        }
+
+        function calculateProgression(records) {
+            if (records.length < 2) return {};
+
+            const first = records[0];
+            const last = records[records.length - 1];
+            const years = (new Date(last.date) - new Date(first.date)) / (365.25 * 24 * 60 * 60 * 1000);
+
+            if (years < 0.1) return {}; // Less than ~1 month
+
+            const result = {};
+
+            if (first.leftAL && last.leftAL) {
+                result.leftAL = (last.leftAL - first.leftAL) / years;
+            }
+            if (first.rightAL && last.rightAL) {
+                result.rightAL = (last.rightAL - first.rightAL) / years;
+            }
+            if (first.leftSE !== null && last.leftSE !== null) {
+                result.leftSE = (last.leftSE - first.leftSE) / years;
+            }
+            if (first.rightSE !== null && last.rightSE !== null) {
+                result.rightSE = (last.rightSE - first.rightSE) / years;
+            }
+
+            return result;
+        }
+
+        // ============ Table ============
+        function renderRecordsTable(patient) {
+            const records = patient.records || [];
+            const container = document.getElementById('recordsTable');
+
+            if (records.length === 0) {
+                container.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-light); padding: 2rem;">
+                            측정 기록이 없습니다.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            container.innerHTML = [...records].reverse().map(record => `
+                <tr>
+                    <td>${formatDate(record.date)}</td>
+                    <td>${record.leftAL ? record.leftAL.toFixed(2) : '-'}</td>
+                    <td>${record.leftSE !== null ? record.leftSE.toFixed(2) : '-'}</td>
+                    <td>${record.rightAL ? record.rightAL.toFixed(2) : '-'}</td>
+                    <td>${record.rightSE !== null ? record.rightSE.toFixed(2) : '-'}</td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="delete" onclick="deleteRecord('${record.id}')" title="삭제">🗑</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ============ Charts ============
+        function renderCharts(patient) {
+            const records = patient.records || [];
+
+            // Destroy existing charts
+            if (alChart) alChart.destroy();
+            if (seChart) seChart.destroy();
+
+            const labels = records.map(r => formatDate(r.date));
+
+            // AL Chart
+            const alCtx = document.getElementById('alChart').getContext('2d');
+            alChart = new Chart(alCtx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: '좌안 (OS)',
+                            data: records.map(r => r.leftAL),
+                            borderColor: '#0066cc',
+                            backgroundColor: 'rgba(0, 102, 204, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: '우안 (OD)',
+                            data: records.map(r => r.rightAL),
+                            borderColor: '#00a896',
+                            backgroundColor: 'rgba(0, 168, 150, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: '안축장 (mm)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // SE Chart
+            const seCtx = document.getElementById('seChart').getContext('2d');
+            seChart = new Chart(seCtx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: '좌안 (OS)',
+                            data: records.map(r => r.leftSE),
+                            borderColor: '#0066cc',
+                            backgroundColor: 'rgba(0, 102, 204, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: '우안 (OD)',
+                            data: records.map(r => r.rightSE),
+                            borderColor: '#00a896',
+                            backgroundColor: 'rgba(0, 168, 150, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: '굴절력 (D)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============ Export ============
+        function exportCSV() {
+            const patient = patients.find(p => p.id === currentPatientId);
+            if (!patient || !patient.records.length) {
+                alert('내보낼 기록이 없습니다.');
+                return;
+            }
+
+            const headers = ['측정일', '좌안_안축장(mm)', '좌안_굴절력(D)', '우안_안축장(mm)', '우안_굴절력(D)'];
+            const rows = patient.records.map(r => [
+                r.date,
+                r.leftAL || '',
+                r.leftSE !== null ? r.leftSE : '',
+                r.rightAL || '',
+                r.rightSE !== null ? r.rightSE : ''
+            ]);
+
+            const csvContent = [
+                `# 환자명: ${patient.name}`,
+                `# 생년월일: ${patient.birthDate}`,
+                `# 내보내기 일시: ${new Date().toLocaleString('ko-KR')}`,
+                '',
+                headers.join(','),
+                ...rows.map(r => r.join(','))
+            ].join('\n');
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `근시기록_${patient.name}_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        // ============ Utilities ============
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function calculateAge(birthDate) {
+            const today = new Date();
+            const birth = new Date(birthDate);
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        function updateGlobalStats() {
+            document.getElementById('totalPatients').textContent = patients.length + '명';
+            const totalRecords = patients.reduce((sum, p) => sum + (p.records?.length || 0), 0);
+            document.getElementById('totalRecords').textContent = totalRecords + '건';
+        }
+
+        // ============ Initialize ============
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPatientList();
+            updateGlobalStats();
+            
+            // Close modal on outside click
+            document.getElementById('patientModal').addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal-overlay')) {
+                    closeModal();
+                }
+            });
+
+            // Close modal on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeModal();
+            });
+        });
+    </script>
+</body>
+</html>
