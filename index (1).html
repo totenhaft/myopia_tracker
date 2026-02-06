@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>근시 관리표 - Myopia Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0066cc;
+            --primary-dark: #004d99;
+            --primary-light: #e6f0ff;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-600: #6c757d;
+            --gray-800: #343a40;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            min-height: 100vh;
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white; padding: 30px 20px; text-align: center; box-shadow: var(--shadow);
+        }
+        header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; }
+        header p { opacity: 0.9; font-size: 0.95rem; }
+        .card {
+            background: white; border-radius: var(--radius);
+            box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 1.1rem; font-weight: 600; color: var(--primary);
+            margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-light);
+        }
+        .search-box {
+            display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+        }
+        .search-input {
+            flex: 1; min-width: 200px; padding: 12px 16px;
+            border: 2px solid var(--gray-300); border-radius: 8px;
+            font-size: 0.95rem; transition: border-color 0.2s;
+        }
+        .search-input:focus { outline: none; border-color: var(--primary); }
+        .search-results {
+            max-height: 300px; overflow-y: auto; border: 1px solid var(--gray-200);
+            border-radius: 8px; margin-top: 12px; display: none;
+        }
+        .search-results.active { display: block; }
+        .search-item {
+            padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--gray-200);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .search-item:hover { background: var(--primary-light); }
+        .search-item:last-child { border-bottom: none; }
+        .patient-name { font-weight: 500; }
+        .patient-id { color: var(--gray-600); font-size: 0.85rem; }
+        select, input, button { font-family: inherit; font-size: 0.95rem; }
+        .btn {
+            padding: 12px 24px; border: none; border-radius: 8px;
+            cursor: pointer; font-weight: 500; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-outline { background: white; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary-light); }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 6px; color: var(--gray-600); }
+        .form-group input {
+            width: 100%; padding: 12px 16px; border: 2px solid var(--gray-300);
+            border-radius: 8px; transition: border-color 0.2s;
+        }
+        .form-group input:focus { outline: none; border-color: var(--primary); }
+        .gender-selector { display: flex; gap: 16px; margin-top: 8px; }
+        .gender-option { flex: 1; position: relative; }
+        .gender-option input { position: absolute; opacity: 0; cursor: pointer; }
+        .gender-option label {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px; border: 2px solid var(--gray-300); border-radius: 8px;
+            cursor: pointer; transition: all 0.2s; font-weight: 500;
+        }
+        .gender-option input:checked + label {
+            border-color: var(--primary); background: var(--primary-light); color: var(--primary);
+        }
+        .eye-section { background: var(--gray-100); padding: 16px; border-radius: 8px; margin-bottom: 12px; }
+        .eye-section h4 { color: var(--primary); margin-bottom: 12px; font-size: 1rem; }
+        .eye-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
+        .stat-card { background: var(--gray-100); padding: 16px; border-radius: 8px; text-align: center; }
+        .stat-card.left { border-left: 4px solid #17a2b8; }
+        .stat-card.right { border-left: 4px solid #6f42c1; }
+        .stat-label { font-size: 0.85rem; color: var(--gray-600); margin-bottom: 4px; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--gray-800); }
+        .stat-unit { font-size: 0.8rem; color: var(--gray-600); }
+        .percentile-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: 600; margin-top: 4px;
+        }
+        .percentile-low { background: #d4edda; color: #155724; }
+        .percentile-mid { background: #fff3cd; color: #856404; }
+        .percentile-high { background: #f8d7da; color: #721c24; }
+        .progress-indicator { margin-top: 8px; font-size: 0.85rem; }
+        .progress-indicator.stable { color: var(--success); }
+        .progress-indicator.moderate { color: var(--warning); }
+        .progress-indicator.rapid { color: var(--danger); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid var(--gray-200); }
+        th { background: var(--gray-100); font-weight: 600; color: var(--gray-600); font-size: 0.85rem; }
+        tbody tr:hover { background: var(--gray-100); }
+        .delete-btn {
+            background: none; border: none; color: var(--danger);
+            cursor: pointer; padding: 4px 8px; border-radius: 4px;
+        }
+        .delete-btn:hover { background: #f8d7da; }
+        .chart-container { position: relative; height: 400px; margin-top: 16px; }
+        .chart-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .chart-tab {
+            padding: 8px 20px; border: 2px solid var(--gray-300); background: white;
+            border-radius: 20px; cursor: pointer; font-weight: 500; transition: all 0.2s;
+        }
+        .chart-tab.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .chart-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; }
+        .legend-color { width: 24px; height: 4px; border-radius: 2px; }
+        .empty-state { text-align: center; padding: 40px; color: var(--gray-600); }
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white; border-radius: var(--radius); padding: 24px;
+            max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { font-size: 1.2rem; color: var(--primary); }
+        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-600); }
+        .patient-info-header {
+            background: var(--primary-light); padding: 16px; border-radius: 8px;
+            margin-bottom: 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .patient-info-header .name { font-size: 1.2rem; font-weight: 600; color: var(--primary); }
+        .patient-info-header .details { color: var(--gray-600); font-size: 0.9rem; }
+        .table-container { overflow-x: auto; }
+        @media (max-width: 768px) {
+            .container { padding: 12px; }
+            header { padding: 20px 16px; }
+            header h1 { font-size: 1.4rem; }
+            .card { padding: 16px; }
+            .eye-inputs { grid-template-columns: 1fr; }
+            .btn { padding: 10px 16px; font-size: 0.9rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            th, td { padding: 8px 4px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>👁️ 근시 관리표</h1>
+        <p>Myopia Management Tracker with Growth Chart</p>
+    </header>
+    
+    <div class="container">
+        <!-- 환자 검색 및 선택 -->
+        <div class="card">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="🔍 환자 이름 또는 등록번호로 검색...">
+                <button class="btn btn-primary" onclick="openPatientModal()">➕ 새 환자</button>
+                <button class="btn btn-danger" onclick="deletePatient()" id="deletePatientBtn" style="display:none">🗑️ 삭제</button>
+            </div>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+        
+        <!-- 메인 컨텐츠 -->
+        <div id="mainContent" style="display:none">
+            <!-- 선택된 환자 정보 -->
+            <div class="patient-info-header" id="patientInfoHeader"></div>
+            
+            <div class="grid-2">
+                <!-- 측정값 입력 -->
+                <div class="card">
+                    <h3 class="card-title">📝 새 측정값 입력</h3>
+                    <div class="form-group">
+                        <label>측정일</label>
+                        <input type="date" id="measureDate">
+                    </div>
+                    <div class="eye-section">
+                        <h4>👁️ 우안 (OD)</h4>
+                        <div class="eye-inputs">
+                            <div class="form-group">
+                                <label>안축장 (mm)</label>
+                                <input type="number" step="0.01" id="odAL" placeholder="24.50">
+                            </div>
+                            <div class="form-group">
+                                <label>굴절력 (D)</label>
+                                <input type="number" step="0.25" id="odSE" placeholder="-3.00">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="eye-section">
+                        <h4>👁️ 좌안 (OS)</h4>
+                        <div class="eye-inputs">
+                            <div class="form-group">
+                                <label>안축장 (mm)</label>
+                                <input type="number" step="0.01" id="osAL" placeholder="24.50">
+                            </div>
+                            <div class="form-group">
+                                <label>굴절력 (D)</label>
+                                <input type="number" step="0.25" id="osSE" placeholder="-3.00">
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-success" onclick="addMeasurement()" style="width:100%">✅ 측정값 저장</button>
+                </div>
+                
+                <!-- 통계 -->
+                <div class="card">
+                    <h3 class="card-title">📊 현재 상태</h3>
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="empty-state"><p>측정 데이터가 없습니다</p></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 안축장 성장 차트 (양안 통합) -->
+            <div class="card">
+                <h3 class="card-title">📈 안축장 성장 차트 (Percentile Growth Chart)</h3>
+                <div class="chart-container">
+                    <canvas id="growthChart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item"><div class="legend-color" style="background:#17a2b8"></div>우안 (OD)</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#6f42c1"></div>좌안 (OS)</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#dc3545; opacity:0.3"></div>P95 (고위험)</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#ffc107; opacity:0.3"></div>P75</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#28a745"></div>P50 (중앙)</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#6c757d; opacity:0.3"></div>P25 / P5</div>
+                </div>
+            </div>
+            
+            <!-- 변화 그래프 -->
+            <div class="card">
+                <h3 class="card-title">📈 시간에 따른 변화</h3>
+                <div class="chart-tabs">
+                    <button class="chart-tab active" onclick="switchChart('AL')" id="tabAL">안축장</button>
+                    <button class="chart-tab" onclick="switchChart('SE')" id="tabSE">굴절력</button>
+                </div>
+                <div class="chart-container" style="height:300px">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- 측정 기록 -->
+            <div class="card">
+                <h3 class="card-title">📋 측정 기록</h3>
+                <div class="table-container">
+                    <table id="recordsTable">
+                        <thead>
+                            <tr>
+                                <th>날짜</th>
+                                <th>나이</th>
+                                <th>OD AL</th>
+                                <th>OD %ile</th>
+                                <th>OS AL</th>
+                                <th>OS %ile</th>
+                                <th>OD SE</th>
+                                <th>OS SE</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsBody"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top:16px">
+                    <button class="btn btn-outline" onclick="exportCSV()">📥 CSV 내보내기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 환자 등록 모달 -->
+    <div class="modal-overlay" id="patientModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>새 환자 등록</h3>
+                <button class="modal-close" onclick="closePatientModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>등록번호 *</label>
+                <input type="text" id="newPatientRegNo" placeholder="12345678">
+            </div>
+            <div class="form-group">
+                <label>환자 이름 *</label>
+                <input type="text" id="newPatientName" placeholder="홍길동">
+            </div>
+            <div class="form-group">
+                <label>생년월일 *</label>
+                <input type="date" id="newPatientBirth">
+            </div>
+            <div class="form-group">
+                <label>성별 *</label>
+                <div class="gender-selector">
+                    <div class="gender-option">
+                        <input type="radio" name="gender" id="genderMale" value="male" checked>
+                        <label for="genderMale">👦 남자</label>
+                    </div>
+                    <div class="gender-option">
+                        <input type="radio" name="gender" id="genderFemale" value="female">
+                        <label for="genderFemale">👧 여자</label>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="addPatient()" style="width:100%">✅ 등록</button>
+        </div>
+    </div>
+    
+    <script>
+        // Percentile 데이터 (외부 파일로 로드)
+        const PERCENTILE_DATA = {"male":[{"Age":4,"P3":21.26,"P5":21.41,"P10":21.63,"P25":21.99,"P50":22.39,"P75":22.78,"P90":23.13,"P95":23.33},{"Age":5,"P3":21.49,"P5":21.64,"P10":21.87,"P25":22.26,"P50":22.69,"P75":23.12,"P90":23.51,"P95":23.74},{"Age":6,"P3":21.71,"P5":21.86,"P10":22.1,"P25":22.51,"P50":22.97,"P75":23.45,"P90":23.88,"P95":24.15},{"Age":7,"P3":21.91,"P5":22.07,"P10":22.32,"P25":22.75,"P50":23.25,"P75":23.76,"P90":24.24,"P95":24.54},{"Age":8,"P3":22.09,"P5":22.26,"P10":22.53,"P25":22.98,"P50":23.51,"P75":24.07,"P90":24.6,"P95":24.92},{"Age":9,"P3":22.27,"P5":22.44,"P10":22.72,"P25":23.19,"P50":23.76,"P75":24.36,"P90":24.93,"P95":25.3},{"Age":10,"P3":22.42,"P5":22.6,"P10":22.89,"P25":23.4,"P50":23.99,"P75":24.64,"P90":25.26,"P95":25.65},{"Age":11,"P3":22.56,"P5":22.75,"P10":23.05,"P25":23.58,"P50":24.22,"P75":24.9,"P90":25.57,"P95":25.99},{"Age":12,"P3":22.68,"P5":22.88,"P10":23.2,"P25":23.76,"P50":24.43,"P75":25.15,"P90":25.86,"P95":26.31},{"Age":13,"P3":22.78,"P5":22.99,"P10":23.33,"P25":23.92,"P50":24.62,"P75":25.39,"P90":26.14,"P95":26.61},{"Age":14,"P3":22.86,"P5":23.08,"P10":23.44,"P25":24.06,"P50":24.81,"P75":25.61,"P90":26.39,"P95":26.89},{"Age":15,"P3":22.91,"P5":23.15,"P10":23.53,"P25":24.19,"P50":24.98,"P75":25.82,"P90":26.63,"P95":27.14},{"Age":16,"P3":22.94,"P5":23.2,"P10":23.6,"P25":24.31,"P50":25.13,"P75":26.01,"P90":26.84,"P95":27.36},{"Age":17,"P3":22.95,"P5":23.23,"P10":23.66,"P25":24.41,"P50":25.28,"P75":26.18,"P90":27.04,"P95":27.56},{"Age":18,"P3":22.92,"P5":23.22,"P10":23.69,"P25":24.5,"P50":25.41,"P75":26.35,"P90":27.21,"P95":27.74}],"female":[{"Age":4,"P3":20.74,"P5":20.87,"P10":21.08,"P25":21.41,"P50":21.78,"P75":22.14,"P90":22.46,"P95":22.66},{"Age":5,"P3":20.96,"P5":21.11,"P10":21.33,"P25":21.69,"P50":22.1,"P75":22.5,"P90":22.87,"P95":23.08},{"Age":6,"P3":21.17,"P5":21.33,"P10":21.56,"P25":21.96,"P50":22.41,"P75":22.85,"P90":23.26,"P95":23.5},{"Age":7,"P3":21.37,"P5":21.53,"P10":21.79,"P25":22.22,"P50":22.7,"P75":23.19,"P90":23.63,"P95":23.9},{"Age":8,"P3":21.56,"P5":21.73,"P10":22,"P25":22.46,"P50":22.98,"P75":23.51,"P90":23.99,"P95":24.28},{"Age":9,"P3":21.73,"P5":21.92,"P10":22.21,"P25":22.7,"P50":23.25,"P75":23.82,"P90":24.34,"P95":24.65},{"Age":10,"P3":21.89,"P5":22.09,"P10":22.4,"P25":22.92,"P50":23.51,"P75":24.11,"P90":24.67,"P95":25.01},{"Age":11,"P3":22.04,"P5":22.25,"P10":22.57,"P25":23.12,"P50":23.75,"P75":24.39,"P90":24.98,"P95":25.34},{"Age":12,"P3":22.18,"P5":22.39,"P10":22.73,"P25":23.31,"P50":23.97,"P75":24.65,"P90":25.28,"P95":25.66},{"Age":13,"P3":22.29,"P5":22.53,"P10":22.88,"P25":23.49,"P50":24.19,"P75":24.9,"P90":25.55,"P95":25.95},{"Age":14,"P3":22.4,"P5":22.64,"P10":23.02,"P25":23.66,"P50":24.39,"P75":25.13,"P90":25.81,"P95":26.22},{"Age":15,"P3":22.48,"P5":22.74,"P10":23.14,"P25":23.81,"P50":24.57,"P75":25.34,"P90":26.05,"P95":26.47},{"Age":16,"P3":22.55,"P5":22.82,"P10":23.24,"P25":23.95,"P50":24.75,"P75":25.54,"P90":26.27,"P95":26.7},{"Age":17,"P3":22.59,"P5":22.89,"P10":23.33,"P25":24.08,"P50":24.91,"P75":25.73,"P90":26.46,"P95":26.9},{"Age":18,"P3":22.61,"P5":22.93,"P10":23.41,"P25":24.19,"P50":25.05,"P75":25.89,"P90":26.64,"P95":27.08}]};
+        
+        let patients = JSON.parse(localStorage.getItem('myopiaPatients')) || [];
+        let currentPatientId = null;
+        let progressChart = null;
+        let growthChart = null;
+        let currentChartType = 'AL';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('measureDate').valueAsDate = new Date();
+            setupSearch();
+        });
+        
+        // 검색 기능
+        function setupSearch() {
+            const input = document.getElementById('searchInput');
+            const results = document.getElementById('searchResults');
+            
+            input.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                if (query.length === 0) {
+                    results.classList.remove('active');
+                    return;
+                }
+                
+                const filtered = patients.filter(p => 
+                    p.name.toLowerCase().includes(query) || 
+                    (p.regNo && p.regNo.toLowerCase().includes(query))
+                );
+                
+                if (filtered.length === 0) {
+                    results.innerHTML = '<div class="search-item"><span>검색 결과가 없습니다</span></div>';
+                } else {
+                    results.innerHTML = filtered.map(p => {
+                        const icon = p.gender === 'male' ? '👦' : '👧';
+                        return `<div class="search-item" onclick="selectPatient('${p.id}')">
+                            <span class="patient-name">${icon} ${p.name}</span>
+                            <span class="patient-id">${p.regNo || '-'} · ${p.birthDate}</span>
+                        </div>`;
+                    }).join('');
+                }
+                results.classList.add('active');
+            });
+            
+            input.addEventListener('blur', () => {
+                setTimeout(() => results.classList.remove('active'), 200);
+            });
+            input.addEventListener('focus', () => {
+                if (input.value.trim()) input.dispatchEvent(new Event('input'));
+            });
+        }
+        
+        function selectPatient(id) {
+            currentPatientId = id;
+            const patient = patients.find(p => p.id === id);
+            document.getElementById('searchInput').value = patient.name;
+            document.getElementById('searchResults').classList.remove('active');
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('deletePatientBtn').style.display = 'inline-flex';
+            updateDisplay();
+        }
+        
+        function openPatientModal() { document.getElementById('patientModal').classList.add('active'); }
+        function closePatientModal() { document.getElementById('patientModal').classList.remove('active'); }
+        
+        function addPatient() {
+            const regNo = document.getElementById('newPatientRegNo').value.trim();
+            const name = document.getElementById('newPatientName').value.trim();
+            const birth = document.getElementById('newPatientBirth').value;
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+            
+            if (!regNo || !name || !birth) { alert('등록번호, 이름, 생년월일을 모두 입력하세요.'); return; }
+            if (patients.find(p => p.regNo === regNo)) { alert('이미 등록된 등록번호입니다.'); return; }
+            
+            const patient = { id: Date.now().toString(), regNo, name, birthDate: birth, gender, records: [] };
+            patients.push(patient);
+            saveData();
+            closePatientModal();
+            document.getElementById('newPatientRegNo').value = '';
+            document.getElementById('newPatientName').value = '';
+            document.getElementById('newPatientBirth').value = '';
+            selectPatient(patient.id);
+        }
+        
+        function deletePatient() {
+            if (!currentPatientId) return;
+            const patient = patients.find(p => p.id === currentPatientId);
+            if (confirm(`"${patient.name}" 환자를 삭제하시겠습니까?`)) {
+                patients = patients.filter(p => p.id !== currentPatientId);
+                saveData();
+                currentPatientId = null;
+                document.getElementById('searchInput').value = '';
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('deletePatientBtn').style.display = 'none';
+            }
+        }
+        
+        function addMeasurement() {
+            if (!currentPatientId) return;
+            const patient = patients.find(p => p.id === currentPatientId);
+            const date = document.getElementById('measureDate').value;
+            const odAL = parseFloat(document.getElementById('odAL').value);
+            const odSE = parseFloat(document.getElementById('odSE').value);
+            const osAL = parseFloat(document.getElementById('osAL').value);
+            const osSE = parseFloat(document.getElementById('osSE').value);
+            
+            if (!date || (isNaN(odAL) && isNaN(odSE) && isNaN(osAL) && isNaN(osSE))) {
+                alert('날짜와 최소 하나의 측정값을 입력하세요.'); return;
+            }
+            
+            const age = calculateAgeAtDate(patient.birthDate, date);
+            const record = { date, age, odAL: isNaN(odAL)?null:odAL, odSE: isNaN(odSE)?null:odSE, osAL: isNaN(osAL)?null:osAL, osSE: isNaN(osSE)?null:osSE };
+            
+            if (record.odAL && age >= 4 && age <= 18) record.odPercentile = calculatePercentile(patient.gender, age, record.odAL);
+            if (record.osAL && age >= 4 && age <= 18) record.osPercentile = calculatePercentile(patient.gender, age, record.osAL);
+            
+            patient.records.push(record);
+            patient.records.sort((a, b) => new Date(a.date) - new Date(b.date));
+            saveData();
+            updateDisplay();
+            ['odAL','odSE','osAL','osSE'].forEach(id => document.getElementById(id).value = '');
+        }
+        
+        function calculateAgeAtDate(birthDate, measureDate) {
+            const birth = new Date(birthDate), measure = new Date(measureDate);
+            let age = measure.getFullYear() - birth.getFullYear();
+            age += (measure.getMonth() - birth.getMonth()) / 12;
+            age += (measure.getDate() - birth.getDate()) / 365.25;
+            return Math.round(age * 10) / 10;
+        }
+        
+        function calculatePercentile(gender, age, al) {
+            const data = PERCENTILE_DATA[gender];
+            if (!data || age < 4 || age > 18) return null;
+            
+            // 나이 보간
+            let lower = data[0], upper = data[data.length-1];
+            for (let i = 0; i < data.length - 1; i++) {
+                if (data[i].Age <= age && data[i+1].Age >= age) { lower = data[i]; upper = data[i+1]; break; }
+            }
+            const ratio = upper.Age === lower.Age ? 0 : (age - lower.Age) / (upper.Age - lower.Age);
+            const interp = (key) => lower[key] + ratio * (upper[key] - lower[key]);
+            
+            const refs = { 3: interp('P3'), 5: interp('P5'), 10: interp('P10'), 25: interp('P25'), 50: interp('P50'), 75: interp('P75'), 90: interp('P90'), 95: interp('P95') };
+            
+            if (al <= refs[3]) return '<3';
+            if (al >= refs[95]) return '>95';
+            
+            const pcts = [3,5,10,25,50,75,90,95];
+            for (let i = 0; i < pcts.length - 1; i++) {
+                if (al >= refs[pcts[i]] && al <= refs[pcts[i+1]]) {
+                    const r = (al - refs[pcts[i]]) / (refs[pcts[i+1]] - refs[pcts[i]]);
+                    return Math.round(pcts[i] + r * (pcts[i+1] - pcts[i]));
+                }
+            }
+            return 50;
+        }
+        
+        function calculateProgression(records, key) {
+            const valid = records.filter(r => r[key] !== null);
+            if (valid.length < 2) return null;
+            const days = (new Date(valid[valid.length-1].date) - new Date(valid[0].date)) / 86400000;
+            const years = days / 365.25;
+            if (years < 0.1) return null;
+            return (valid[valid.length-1][key] - valid[0][key]) / years;
+        }
+        
+        function updateDisplay() {
+            const patient = patients.find(p => p.id === currentPatientId);
+            if (!patient) return;
+            
+            const icon = patient.gender === 'male' ? '👦' : '👧';
+            const genderText = patient.gender === 'male' ? '남자' : '여자';
+            document.getElementById('patientInfoHeader').innerHTML = `
+                <span class="name">${icon} ${patient.name}</span>
+                <span class="details">등록번호: ${patient.regNo} · ${genderText} · ${patient.birthDate}</span>
+            `;
+            
+            updateStats(patient);
+            updateRecordsTable(patient);
+            updateProgressChart(patient);
+            updateGrowthChart(patient);
+        }
+        
+        function updateStats(patient) {
+            const grid = document.getElementById('statsGrid');
+            if (patient.records.length === 0) { grid.innerHTML = '<div class="empty-state"><p>측정 데이터가 없습니다</p></div>'; return; }
+            
+            const last = patient.records[patient.records.length - 1];
+            const alProgOD = calculateProgression(patient.records, 'odAL');
+            const alProgOS = calculateProgression(patient.records, 'osAL');
+            
+            const getProgressClass = (v) => v === null ? '' : Math.abs(v) < 0.2 ? 'stable' : Math.abs(v) < 0.4 ? 'moderate' : 'rapid';
+            const getPctBadge = (p) => {
+                if (!p) return '';
+                const n = typeof p === 'string' ? (p.includes('>') ? 96 : 2) : p;
+                const cls = n > 75 ? 'percentile-high' : n > 50 ? 'percentile-mid' : 'percentile-low';
+                return `<span class="percentile-badge ${cls}">${p}%ile</span>`;
+            };
+            
+            grid.innerHTML = `
+                <div class="stat-card left"><div class="stat-label">우안 안축장</div><div class="stat-value">${last.odAL?.toFixed(2)||'-'}</div><div class="stat-unit">mm</div>${getPctBadge(last.odPercentile)}${alProgOD!==null?`<div class="progress-indicator ${getProgressClass(alProgOD)}">${alProgOD>=0?'+':''}${alProgOD.toFixed(2)} mm/년</div>`:''}</div>
+                <div class="stat-card right"><div class="stat-label">좌안 안축장</div><div class="stat-value">${last.osAL?.toFixed(2)||'-'}</div><div class="stat-unit">mm</div>${getPctBadge(last.osPercentile)}${alProgOS!==null?`<div class="progress-indicator ${getProgressClass(alProgOS)}">${alProgOS>=0?'+':''}${alProgOS.toFixed(2)} mm/년</div>`:''}</div>
+                <div class="stat-card left"><div class="stat-label">우안 굴절력</div><div class="stat-value">${last.odSE?.toFixed(2)||'-'}</div><div class="stat-unit">D</div></div>
+                <div class="stat-card right"><div class="stat-label">좌안 굴절력</div><div class="stat-value">${last.osSE?.toFixed(2)||'-'}</div><div class="stat-unit">D</div></div>
+            `;
+        }
+        
+        function updateRecordsTable(patient) {
+            const tbody = document.getElementById('recordsBody');
+            if (patient.records.length === 0) { tbody.innerHTML = '<tr><td colspan="9">기록이 없습니다</td></tr>'; return; }
+            
+            const getPctBadge = (p) => {
+                if (!p) return '-';
+                const n = typeof p === 'string' ? (p.includes('>') ? 96 : 2) : p;
+                const cls = n > 75 ? 'percentile-high' : n > 50 ? 'percentile-mid' : 'percentile-low';
+                return `<span class="percentile-badge ${cls}">${p}</span>`;
+            };
+            
+            tbody.innerHTML = patient.records.map((r, i) => `
+                <tr><td>${r.date}</td><td>${r.age?.toFixed(1)||'-'}세</td><td>${r.odAL?.toFixed(2)||'-'}</td><td>${getPctBadge(r.odPercentile)}</td><td>${r.osAL?.toFixed(2)||'-'}</td><td>${getPctBadge(r.osPercentile)}</td><td>${r.odSE?.toFixed(2)||'-'}</td><td>${r.osSE?.toFixed(2)||'-'}</td><td><button class="delete-btn" onclick="deleteRecord(${i})">✕</button></td></tr>
+            `).join('');
+        }
+        
+        function deleteRecord(idx) {
+            const patient = patients.find(p => p.id === currentPatientId);
+            if (confirm('이 기록을 삭제하시겠습니까?')) {
+                patient.records.splice(idx, 1);
+                saveData();
+                updateDisplay();
+            }
+        }
+        
+        function updateProgressChart(patient) {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            if (progressChart) progressChart.destroy();
+            
+            const key = currentChartType === 'AL' ? { od: 'odAL', os: 'osAL', label: '안축장 (mm)' } : { od: 'odSE', os: 'osSE', label: '굴절력 (D)' };
+            
+            progressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: patient.records.map(r => r.date),
+                    datasets: [
+                        { label: '우안 (OD)', data: patient.records.map(r => r[key.od]), borderColor: '#17a2b8', backgroundColor: 'rgba(23,162,184,0.1)', borderWidth: 2, tension: 0.3, pointRadius: 5 },
+                        { label: '좌안 (OS)', data: patient.records.map(r => r[key.os]), borderColor: '#6f42c1', backgroundColor: 'rgba(111,66,193,0.1)', borderWidth: 2, tension: 0.3, pointRadius: 5 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { title: { display: true, text: key.label } } } }
+            });
+        }
+        
+        function updateGrowthChart(patient) {
+            const ctx = document.getElementById('growthChart').getContext('2d');
+            if (growthChart) growthChart.destroy();
+            
+            const data = PERCENTILE_DATA[patient.gender];
+            const ages = data.map(d => d.Age);
+            
+            const createArea = (pLow, pHigh, color, label) => ({
+                label, data: data.map(d => ({ x: d.Age, y: d[pHigh] })),
+                borderColor: 'transparent', backgroundColor: color,
+                fill: { target: '+1', above: color }, pointRadius: 0, tension: 0.4, order: 10
+            });
+            
+            const createLine = (pKey, color, width, dash, label) => ({
+                label, data: data.map(d => ({ x: d.Age, y: d[pKey] })),
+                borderColor: color, borderWidth: width, borderDash: dash || [],
+                pointRadius: 0, tension: 0.4, fill: false, order: 5
+            });
+            
+            const odData = patient.records.filter(r => r.odAL && r.age >= 4 && r.age <= 18).map(r => ({ x: r.age, y: r.odAL }));
+            const osData = patient.records.filter(r => r.osAL && r.age >= 4 && r.age <= 18).map(r => ({ x: r.age, y: r.osAL }));
+            
+            growthChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        // 영역 (배경)
+                        { label: '>P95', data: data.map(d => ({ x: d.Age, y: 30 })), backgroundColor: 'rgba(220,53,69,0.15)', fill: { target: '+1', above: 'rgba(220,53,69,0.15)' }, borderColor: 'transparent', pointRadius: 0, tension: 0.4, order: 20 },
+                        { label: 'P95', data: data.map(d => ({ x: d.Age, y: d.P95 })), backgroundColor: 'rgba(255,193,7,0.15)', fill: { target: '+1', above: 'rgba(255,193,7,0.15)' }, borderColor: 'transparent', pointRadius: 0, tension: 0.4, order: 19 },
+                        { label: 'P75', data: data.map(d => ({ x: d.Age, y: d.P75 })), backgroundColor: 'rgba(40,167,69,0.1)', fill: { target: '+1', above: 'rgba(40,167,69,0.1)' }, borderColor: 'transparent', pointRadius: 0, tension: 0.4, order: 18 },
+                        { label: 'P50', data: data.map(d => ({ x: d.Age, y: d.P50 })), backgroundColor: 'rgba(40,167,69,0.1)', fill: { target: '+1', above: 'rgba(40,167,69,0.1)' }, borderColor: 'transparent', pointRadius: 0, tension: 0.4, order: 17 },
+                        { label: 'P25', data: data.map(d => ({ x: d.Age, y: d.P25 })), backgroundColor: 'rgba(108,117,125,0.08)', fill: { target: '+1', above: 'rgba(108,117,125,0.08)' }, borderColor: 'transparent', pointRadius: 0, tension: 0.4, order: 16 },
+                        { label: 'P5', data: data.map(d => ({ x: d.Age, y: d.P5 })), backgroundColor: 'transparent', borderColor: 'transparent', pointRadius: 0, tension: 0.4, order: 15 },
+                        // 선
+                        createLine('P95', '#dc3545', 1.5, [4,4], 'P95선'),
+                        createLine('P75', '#ffc107', 1.5, [4,4], 'P75선'),
+                        createLine('P50', '#28a745', 2.5, [], 'P50선'),
+                        createLine('P25', '#6c757d', 1, [4,4], 'P25선'),
+                        createLine('P5', '#adb5bd', 1, [4,4], 'P5선'),
+                        // 환자 데이터
+                        { label: '우안 (OD)', data: odData, borderColor: '#17a2b8', backgroundColor: '#17a2b8', pointRadius: 8, pointHoverRadius: 10, showLine: true, borderWidth: 3, tension: 0.2, order: 1 },
+                        { label: '좌안 (OS)', data: osData, borderColor: '#6f42c1', backgroundColor: '#6f42c1', pointRadius: 8, pointHoverRadius: 10, showLine: true, borderWidth: 3, tension: 0.2, order: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    if (ctx.dataset.label === '우안 (OD)' || ctx.dataset.label === '좌안 (OS)') {
+                                        return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}mm @ ${ctx.parsed.x.toFixed(1)}세`;
+                                    }
+                                    return null;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { type: 'linear', min: 4, max: 18, title: { display: true, text: '나이 (세)' }, ticks: { stepSize: 2 } },
+                        y: { title: { display: true, text: '안축장 (mm)' }, min: 20, max: 28 }
+                    }
+                }
+            });
+        }
+        
+        function switchChart(type) {
+            currentChartType = type;
+            document.getElementById('tabAL').classList.toggle('active', type === 'AL');
+            document.getElementById('tabSE').classList.toggle('active', type === 'SE');
+            const patient = patients.find(p => p.id === currentPatientId);
+            if (patient) updateProgressChart(patient);
+        }
+        
+        function exportCSV() {
+            const patient = patients.find(p => p.id === currentPatientId);
+            if (!patient || patient.records.length === 0) { alert('내보낼 데이터가 없습니다.'); return; }
+            
+            let csv = `등록번호,${patient.regNo}\n환자명,${patient.name}\n생년월일,${patient.birthDate}\n성별,${patient.gender==='male'?'남자':'여자'}\n\n`;
+            csv += '날짜,나이(세),OD_AL(mm),OD_Percentile,OS_AL(mm),OS_Percentile,OD_SE(D),OS_SE(D)\n';
+            patient.records.forEach(r => {
+                csv += `${r.date},${r.age?.toFixed(1)||''},${r.odAL||''},${r.odPercentile||''},${r.osAL||''},${r.osPercentile||''},${r.odSE||''},${r.osSE||''}\n`;
+            });
+            
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${patient.regNo}_${patient.name}_근시관리_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+        
+        function saveData() { localStorage.setItem('myopiaPatients', JSON.stringify(patients)); }
+    </script>
+</body>
+</html>
