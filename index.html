@@ -22,13 +22,7 @@
             --shadow: 0 2px 8px rgba(0,0,0,0.1);
             --radius: 12px;
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
@@ -36,450 +30,145 @@
             color: var(--gray-800);
             line-height: 1.6;
         }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-            box-shadow: var(--shadow);
+            color: white; padding: 30px 20px; text-align: center; box-shadow: var(--shadow);
         }
-        
-        header h1 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        header p {
-            opacity: 0.9;
-            font-size: 0.95rem;
-        }
-        
+        header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; }
+        header p { opacity: 0.9; font-size: 0.95rem; }
         .card {
-            background: white;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 24px;
-            margin-bottom: 20px;
+            background: white; border-radius: var(--radius);
+            box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px;
         }
-        
         .card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid var(--primary-light);
+            font-size: 1.1rem; font-weight: 600; color: var(--primary);
+            margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-light);
         }
-        
-        .patient-selector {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: center;
+        .search-box {
+            display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
         }
-        
-        select, input, button {
-            font-family: inherit;
-            font-size: 0.95rem;
+        .search-input {
+            flex: 1; min-width: 200px; padding: 12px 16px;
+            border: 2px solid var(--gray-300); border-radius: 8px;
+            font-size: 0.95rem; transition: border-color 0.2s;
         }
-        
-        select {
-            flex: 1;
-            min-width: 200px;
-            padding: 12px 16px;
-            border: 2px solid var(--gray-300);
-            border-radius: 8px;
-            background: white;
-            cursor: pointer;
-            transition: border-color 0.2s;
+        .search-input:focus { outline: none; border-color: var(--primary); }
+        .search-results {
+            max-height: 300px; overflow-y: auto; border: 1px solid var(--gray-200);
+            border-radius: 8px; margin-top: 12px; display: none;
         }
-        
-        select:focus {
-            outline: none;
-            border-color: var(--primary);
+        .search-results.active { display: block; }
+        .search-item {
+            padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--gray-200);
+            display: flex; justify-content: space-between; align-items: center;
         }
-        
+        .search-item:hover { background: var(--primary-light); }
+        .search-item:last-child { border-bottom: none; }
+        .patient-name { font-weight: 500; }
+        .patient-id { color: var(--gray-600); font-size: 0.85rem; }
+        select, input, button { font-family: inherit; font-size: 0.95rem; }
         .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            padding: 12px 24px; border: none; border-radius: 8px;
+            cursor: pointer; font-weight: 500; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
         }
-        
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-        
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #218838;
-        }
-        
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #c82333;
-        }
-        
-        .btn-outline {
-            background: white;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-        }
-        
-        .btn-outline:hover {
-            background: var(--primary-light);
-        }
-        
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 16px;
-        }
-        
-        .form-group label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 6px;
-            color: var(--gray-600);
-        }
-        
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-outline { background: white; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary-light); }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 6px; color: var(--gray-600); }
         .form-group input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid var(--gray-300);
-            border-radius: 8px;
-            transition: border-color 0.2s;
+            width: 100%; padding: 12px 16px; border: 2px solid var(--gray-300);
+            border-radius: 8px; transition: border-color 0.2s;
         }
-        
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        
-        .gender-selector {
-            display: flex;
-            gap: 16px;
-            margin-top: 8px;
-        }
-        
-        .gender-option {
-            flex: 1;
-            position: relative;
-        }
-        
-        .gender-option input {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-        }
-        
+        .form-group input:focus { outline: none; border-color: var(--primary); }
+        .gender-selector { display: flex; gap: 16px; margin-top: 8px; }
+        .gender-option { flex: 1; position: relative; }
+        .gender-option input { position: absolute; opacity: 0; cursor: pointer; }
         .gender-option label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px;
-            border: 2px solid var(--gray-300);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 500;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px; border: 2px solid var(--gray-300); border-radius: 8px;
+            cursor: pointer; transition: all 0.2s; font-weight: 500;
         }
-        
         .gender-option input:checked + label {
-            border-color: var(--primary);
-            background: var(--primary-light);
-            color: var(--primary);
+            border-color: var(--primary); background: var(--primary-light); color: var(--primary);
         }
-        
-        .gender-option label:hover {
-            border-color: var(--primary);
-        }
-        
-        .eye-section {
-            background: var(--gray-100);
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-        }
-        
-        .eye-section h4 {
-            color: var(--primary);
-            margin-bottom: 12px;
-            font-size: 1rem;
-        }
-        
-        .eye-inputs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 16px;
-        }
-        
-        .stat-card {
-            background: var(--gray-100);
-            padding: 16px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
+        .eye-section { background: var(--gray-100); padding: 16px; border-radius: 8px; margin-bottom: 12px; }
+        .eye-section h4 { color: var(--primary); margin-bottom: 12px; font-size: 1rem; }
+        .eye-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
+        .stat-card { background: var(--gray-100); padding: 16px; border-radius: 8px; text-align: center; }
         .stat-card.left { border-left: 4px solid #17a2b8; }
         .stat-card.right { border-left: 4px solid #6f42c1; }
-        
-        .stat-label {
-            font-size: 0.85rem;
-            color: var(--gray-600);
-            margin-bottom: 4px;
-        }
-        
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--gray-800);
-        }
-        
-        .stat-unit {
-            font-size: 0.8rem;
-            color: var(--gray-600);
-        }
-        
+        .stat-label { font-size: 0.85rem; color: var(--gray-600); margin-bottom: 4px; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--gray-800); }
+        .stat-unit { font-size: 0.8rem; color: var(--gray-600); }
         .percentile-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-top: 4px;
+            display: inline-block; padding: 2px 8px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: 600; margin-top: 4px;
         }
-        
         .percentile-low { background: #d4edda; color: #155724; }
         .percentile-mid { background: #fff3cd; color: #856404; }
         .percentile-high { background: #f8d7da; color: #721c24; }
-        
-        .progress-indicator {
-            margin-top: 8px;
-            font-size: 0.85rem;
-        }
-        
+        .progress-indicator { margin-top: 8px; font-size: 0.85rem; }
         .progress-indicator.stable { color: var(--success); }
         .progress-indicator.moderate { color: var(--warning); }
         .progress-indicator.rapid { color: var(--danger); }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        th, td {
-            padding: 12px;
-            text-align: center;
-            border-bottom: 1px solid var(--gray-200);
-        }
-        
-        th {
-            background: var(--gray-100);
-            font-weight: 600;
-            color: var(--gray-600);
-            font-size: 0.85rem;
-        }
-        
-        tbody tr:hover {
-            background: var(--gray-100);
-        }
-        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid var(--gray-200); }
+        th { background: var(--gray-100); font-weight: 600; color: var(--gray-600); font-size: 0.85rem; }
+        tbody tr:hover { background: var(--gray-100); }
         .delete-btn {
-            background: none;
-            border: none;
-            color: var(--danger);
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: background 0.2s;
+            background: none; border: none; color: var(--danger);
+            cursor: pointer; padding: 4px 8px; border-radius: 4px;
         }
-        
-        .delete-btn:hover {
-            background: #f8d7da;
-        }
-        
-        .chart-container {
-            position: relative;
-            height: 350px;
-            margin-top: 16px;
-        }
-        
-        .chart-tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        
+        .delete-btn:hover { background: #f8d7da; }
+        .chart-container { position: relative; height: 400px; margin-top: 16px; }
+        .chart-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
         .chart-tab {
-            padding: 8px 20px;
-            border: 2px solid var(--gray-300);
-            background: white;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
+            padding: 8px 20px; border: 2px solid var(--gray-300); background: white;
+            border-radius: 20px; cursor: pointer; font-weight: 500; transition: all 0.2s;
         }
-        
-        .chart-tab.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: white;
-        }
-        
-        .chart-tab:hover:not(.active) {
-            border-color: var(--primary);
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: var(--gray-600);
-        }
-        
-        .empty-state svg {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-        
+        .chart-tab.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .chart-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; }
+        .legend-color { width: 24px; height: 4px; border-radius: 2px; }
+        .empty-state { text-align: center; padding: 40px; color: var(--gray-600); }
         .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;
         }
-        
-        .modal-overlay.active {
-            display: flex;
-        }
-        
+        .modal-overlay.active { display: flex; }
         .modal {
-            background: white;
-            border-radius: var(--radius);
-            padding: 24px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
+            background: white; border-radius: var(--radius); padding: 24px;
+            max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;
         }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { font-size: 1.2rem; color: var(--primary); }
+        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-600); }
+        .patient-info-header {
+            background: var(--primary-light); padding: 16px; border-radius: 8px;
+            margin-bottom: 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
         }
-        
-        .modal-header h3 {
-            font-size: 1.2rem;
-            color: var(--primary);
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--gray-600);
-        }
-        
-        .patient-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            color: var(--gray-600);
-            margin-bottom: 16px;
-        }
-        
-        .gender-icon {
-            font-size: 1.2rem;
-        }
-        
-        .table-container {
-            overflow-x: auto;
-        }
-        
+        .patient-info-header .name { font-size: 1.2rem; font-weight: 600; color: var(--primary); }
+        .patient-info-header .details { color: var(--gray-600); font-size: 0.9rem; }
+        .table-container { overflow-x: auto; }
         @media (max-width: 768px) {
-            .container {
-                padding: 12px;
-            }
-            
-            header {
-                padding: 20px 16px;
-            }
-            
-            header h1 {
-                font-size: 1.4rem;
-            }
-            
-            .card {
-                padding: 16px;
-            }
-            
-            .eye-inputs {
-                grid-template-columns: 1fr;
-            }
-            
-            .btn {
-                padding: 10px 16px;
-                font-size: 0.9rem;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            th, td {
-                padding: 8px 4px;
-                font-size: 0.85rem;
-            }
+            .container { padding: 12px; }
+            header { padding: 20px 16px; }
+            header h1 { font-size: 1.4rem; }
+            .card { padding: 16px; }
+            .eye-inputs { grid-template-columns: 1fr; }
+            .btn { padding: 10px 16px; font-size: 0.9rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            th, td { padding: 8px 4px; font-size: 0.85rem; }
         }
     </style>
 </head>
@@ -490,23 +179,21 @@
     </header>
     
     <div class="container">
-        <!-- 환자 선택 -->
+        <!-- 환자 검색 및 선택 -->
         <div class="card">
-            <div class="patient-selector">
-                <select id="patientSelect">
-                    <option value="">환자를 선택하세요</option>
-                </select>
-                <button class="btn btn-primary" onclick="openPatientModal()">
-                    ➕ 새 환자
-                </button>
-                <button class="btn btn-danger" onclick="deletePatient()" id="deletePatientBtn" style="display:none">
-                    🗑️ 삭제
-                </button>
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="🔍 환자 이름 또는 등록번호로 검색...">
+                <button class="btn btn-primary" onclick="openPatientModal()">➕ 새 환자</button>
+                <button class="btn btn-danger" onclick="deletePatient()" id="deletePatientBtn" style="display:none">🗑️ 삭제</button>
             </div>
+            <div class="search-results" id="searchResults"></div>
         </div>
         
-        <!-- 메인 컨텐츠 (환자 선택 후 표시) -->
+        <!-- 메인 컨텐츠 -->
         <div id="mainContent" style="display:none">
+            <!-- 선택된 환자 정보 -->
+            <div class="patient-info-header" id="patientInfoHeader"></div>
+            
             <div class="grid-2">
                 <!-- 측정값 입력 -->
                 <div class="card">
@@ -515,7 +202,6 @@
                         <label>측정일</label>
                         <input type="date" id="measureDate">
                     </div>
-                    
                     <div class="eye-section">
                         <h4>👁️ 우안 (OD)</h4>
                         <div class="eye-inputs">
@@ -529,7 +215,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="eye-section">
                         <h4>👁️ 좌안 (OS)</h4>
                         <div class="eye-inputs">
@@ -543,33 +228,31 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <button class="btn btn-success" onclick="addMeasurement()" style="width:100%">
-                        ✅ 측정값 저장
-                    </button>
+                    <button class="btn btn-success" onclick="addMeasurement()" style="width:100%">✅ 측정값 저장</button>
                 </div>
                 
                 <!-- 통계 -->
                 <div class="card">
                     <h3 class="card-title">📊 현재 상태</h3>
-                    <div class="patient-info" id="patientInfo"></div>
                     <div class="stats-grid" id="statsGrid">
-                        <div class="empty-state">
-                            <p>측정 데이터가 없습니다</p>
-                        </div>
+                        <div class="empty-state"><p>측정 데이터가 없습니다</p></div>
                     </div>
                 </div>
             </div>
             
-            <!-- 안축장 성장 차트 -->
+            <!-- 안축장 성장 차트 (양안 통합) -->
             <div class="card">
-                <h3 class="card-title">📈 안축장 성장 차트 (Percentile)</h3>
-                <div class="chart-tabs">
-                    <button class="chart-tab active" onclick="switchGrowthChart('OD')" id="growthTabOD">우안 (OD)</button>
-                    <button class="chart-tab" onclick="switchGrowthChart('OS')" id="growthTabOS">좌안 (OS)</button>
-                </div>
+                <h3 class="card-title">📈 안축장 성장 차트 (Percentile Growth Chart)</h3>
                 <div class="chart-container">
                     <canvas id="growthChart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item"><div class="legend-color" style="background:#17a2b8"></div>우안 (OD)</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#6f42c1"></div>좌안 (OS)</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#dc3545; opacity:0.3"></div>P95 (고위험)</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#ffc107; opacity:0.3"></div>P75</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#28a745"></div>P50 (중앙)</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#6c757d; opacity:0.3"></div>P25 / P5</div>
                 </div>
             </div>
             
@@ -580,7 +263,7 @@
                     <button class="chart-tab active" onclick="switchChart('AL')" id="tabAL">안축장</button>
                     <button class="chart-tab" onclick="switchChart('SE')" id="tabSE">굴절력</button>
                 </div>
-                <div class="chart-container">
+                <div class="chart-container" style="height:300px">
                     <canvas id="progressChart"></canvas>
                 </div>
             </div>
@@ -606,7 +289,7 @@
                         <tbody id="recordsBody"></tbody>
                     </table>
                 </div>
-                <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap">
+                <div style="margin-top:16px">
                     <button class="btn btn-outline" onclick="exportCSV()">📥 CSV 내보내기</button>
                 </div>
             </div>
@@ -621,15 +304,19 @@
                 <button class="modal-close" onclick="closePatientModal()">&times;</button>
             </div>
             <div class="form-group">
-                <label>환자 이름</label>
+                <label>등록번호 *</label>
+                <input type="text" id="newPatientRegNo" placeholder="12345678">
+            </div>
+            <div class="form-group">
+                <label>환자 이름 *</label>
                 <input type="text" id="newPatientName" placeholder="홍길동">
             </div>
             <div class="form-group">
-                <label>생년월일</label>
+                <label>생년월일 *</label>
                 <input type="date" id="newPatientBirth">
             </div>
             <div class="form-group">
-                <label>성별</label>
+                <label>성별 *</label>
                 <div class="gender-selector">
                     <div class="gender-option">
                         <input type="radio" name="gender" id="genderMale" value="male" checked>
@@ -641,112 +328,111 @@
                     </div>
                 </div>
             </div>
-            <button class="btn btn-primary" onclick="addPatient()" style="width:100%">
-                ✅ 등록
-            </button>
+            <button class="btn btn-primary" onclick="addPatient()" style="width:100%">✅ 등록</button>
         </div>
     </div>
     
     <script>
-        // Percentile 참조 데이터
-        const PERCENTILE_DATA = {"male": [{"Age": 4.0, "P3": 21.26, "P5": 21.41, "P10": 21.63, "P25": 21.99, "P50": 22.39, "P75": 22.78, "P90": 23.13, "P95": 23.33}, {"Age": 4.1, "P3": 21.28, "P5": 21.43, "P10": 21.65, "P25": 22.02, "P50": 22.42, "P75": 22.81, "P90": 23.17, "P95": 23.37}, {"Age": 4.2, "P3": 21.31, "P5": 21.46, "P10": 21.68, "P25": 22.04, "P50": 22.45, "P75": 22.85, "P90": 23.21, "P95": 23.41}, {"Age": 4.3, "P3": 21.33, "P5": 21.48, "P10": 21.7, "P25": 22.07, "P50": 22.48, "P75": 22.88, "P90": 23.24, "P95": 23.45}, {"Age": 4.4, "P3": 21.35, "P5": 21.5, "P10": 21.73, "P25": 22.1, "P50": 22.51, "P75": 22.92, "P90": 23.28, "P95": 23.49}, {"Age": 4.5, "P3": 21.38, "P5": 21.52, "P10": 21.75, "P25": 22.12, "P50": 22.54, "P75": 22.95, "P90": 23.32, "P95": 23.54}, {"Age": 4.6, "P3": 21.4, "P5": 21.55, "P10": 21.77, "P25": 22.15, "P50": 22.57, "P75": 22.98, "P90": 23.36, "P95": 23.58}, {"Age": 4.7, "P3": 21.42, "P5": 21.57, "P10": 21.8, "P25": 22.18, "P50": 22.6, "P75": 23.02, "P90": 23.4, "P95": 23.62}, {"Age": 4.8, "P3": 21.44, "P5": 21.59, "P10": 21.82, "P25": 22.21, "P50": 22.63, "P75": 23.05, "P90": 23.43, "P95": 23.66}, {"Age": 4.9, "P3": 21.47, "P5": 21.62, "P10": 21.85, "P25": 22.23, "P50": 22.66, "P75": 23.09, "P90": 23.47, "P95": 23.7}, {"Age": 5.0, "P3": 21.49, "P5": 21.64, "P10": 21.87, "P25": 22.26, "P50": 22.69, "P75": 23.12, "P90": 23.51, "P95": 23.74}, {"Age": 5.1, "P3": 21.51, "P5": 21.66, "P10": 21.89, "P25": 22.29, "P50": 22.72, "P75": 23.15, "P90": 23.55, "P95": 23.78}, {"Age": 5.2, "P3": 21.53, "P5": 21.68, "P10": 21.92, "P25": 22.31, "P50": 22.75, "P75": 23.19, "P90": 23.58, "P95": 23.82}, {"Age": 5.3, "P3": 21.56, "P5": 21.71, "P10": 21.94, "P25": 22.34, "P50": 22.77, "P75": 23.22, "P90": 23.62, "P95": 23.86}, {"Age": 5.4, "P3": 21.58, "P5": 21.73, "P10": 21.96, "P25": 22.36, "P50": 22.8, "P75": 23.25, "P90": 23.66, "P95": 23.9}, {"Age": 5.5, "P3": 21.6, "P5": 21.75, "P10": 21.98, "P25": 22.39, "P50": 22.83, "P75": 23.29, "P90": 23.7, "P95": 23.95}, {"Age": 5.6, "P3": 21.62, "P5": 21.77, "P10": 22.01, "P25": 22.41, "P50": 22.86, "P75": 23.32, "P90": 23.73, "P95": 23.99}, {"Age": 5.7, "P3": 21.64, "P5": 21.79, "P10": 22.03, "P25": 22.43, "P50": 22.89, "P75": 23.35, "P90": 23.77, "P95": 24.03}, {"Age": 5.8, "P3": 21.67, "P5": 21.82, "P10": 22.05, "P25": 22.46, "P50": 22.91, "P75": 23.38, "P90": 23.81, "P95": 24.07}, {"Age": 5.9, "P3": 21.69, "P5": 21.84, "P10": 22.08, "P25": 22.48, "P50": 22.94, "P75": 23.42, "P90": 23.84, "P95": 24.11}, {"Age": 6.0, "P3": 21.71, "P5": 21.86, "P10": 22.1, "P25": 22.51, "P50": 22.97, "P75": 23.45, "P90": 23.88, "P95": 24.15}, {"Age": 6.1, "P3": 21.73, "P5": 21.88, "P10": 22.12, "P25": 22.53, "P50": 23.0, "P75": 23.48, "P90": 23.92, "P95": 24.19}, {"Age": 6.2, "P3": 21.75, "P5": 21.9, "P10": 22.14, "P25": 22.56, "P50": 23.03, "P75": 23.51, "P90": 23.95, "P95": 24.23}, {"Age": 6.3, "P3": 21.77, "P5": 21.92, "P10": 22.17, "P25": 22.58, "P50": 23.05, "P75": 23.54, "P90": 23.99, "P95": 24.27}, {"Age": 6.4, "P3": 21.79, "P5": 21.94, "P10": 22.19, "P25": 22.61, "P50": 23.08, "P75": 23.57, "P90": 24.02, "P95": 24.31}, {"Age": 6.5, "P3": 21.81, "P5": 21.96, "P10": 22.21, "P25": 22.63, "P50": 23.11, "P75": 23.61, "P90": 24.06, "P95": 24.34}, {"Age": 6.6, "P3": 21.83, "P5": 21.99, "P10": 22.23, "P25": 22.65, "P50": 23.14, "P75": 23.64, "P90": 24.1, "P95": 24.38}, {"Age": 6.7, "P3": 21.85, "P5": 22.01, "P10": 22.25, "P25": 22.68, "P50": 23.17, "P75": 23.67, "P90": 24.13, "P95": 24.42}, {"Age": 6.8, "P3": 21.87, "P5": 22.03, "P10": 22.28, "P25": 22.7, "P50": 23.19, "P75": 23.7, "P90": 24.17, "P95": 24.46}, {"Age": 6.9, "P3": 21.89, "P5": 22.05, "P10": 22.3, "P25": 22.73, "P50": 23.22, "P75": 23.73, "P90": 24.2, "P95": 24.5}, {"Age": 7.0, "P3": 21.91, "P5": 22.07, "P10": 22.32, "P25": 22.75, "P50": 23.25, "P75": 23.76, "P90": 24.24, "P95": 24.54}, {"Age": 7.1, "P3": 21.93, "P5": 22.09, "P10": 22.34, "P25": 22.77, "P50": 23.28, "P75": 23.79, "P90": 24.28, "P95": 24.58}, {"Age": 7.2, "P3": 21.95, "P5": 22.11, "P10": 22.36, "P25": 22.8, "P50": 23.3, "P75": 23.82, "P90": 24.31, "P95": 24.62}, {"Age": 7.3, "P3": 21.96, "P5": 22.13, "P10": 22.38, "P25": 22.82, "P50": 23.33, "P75": 23.85, "P90": 24.35, "P95": 24.65}, {"Age": 7.4, "P3": 21.98, "P5": 22.15, "P10": 22.4, "P25": 22.84, "P50": 23.35, "P75": 23.88, "P90": 24.38, "P95": 24.69}, {"Age": 7.5, "P3": 22.0, "P5": 22.16, "P10": 22.43, "P25": 22.86, "P50": 23.38, "P75": 23.91, "P90": 24.42, "P95": 24.73}, {"Age": 7.6, "P3": 22.02, "P5": 22.18, "P10": 22.45, "P25": 22.89, "P50": 23.41, "P75": 23.95, "P90": 24.46, "P95": 24.77}, {"Age": 7.7, "P3": 22.04, "P5": 22.2, "P10": 22.47, "P25": 22.91, "P50": 23.43, "P75": 23.98, "P90": 24.49, "P95": 24.81}, {"Age": 7.8, "P3": 22.05, "P5": 22.22, "P10": 22.49, "P25": 22.93, "P50": 23.46, "P75": 24.01, "P90": 24.53, "P95": 24.84}, {"Age": 7.9, "P3": 22.07, "P5": 22.24, "P10": 22.51, "P25": 22.96, "P50": 23.48, "P75": 24.04, "P90": 24.56, "P95": 24.88}, {"Age": 8.0, "P3": 22.09, "P5": 22.26, "P10": 22.53, "P25": 22.98, "P50": 23.51, "P75": 24.07, "P90": 24.6, "P95": 24.92}, {"Age": 8.1, "P3": 22.11, "P5": 22.28, "P10": 22.55, "P25": 23.0, "P50": 23.54, "P75": 24.1, "P90": 24.63, "P95": 24.96}, {"Age": 8.2, "P3": 22.13, "P5": 22.3, "P10": 22.57, "P25": 23.02, "P50": 23.56, "P75": 24.13, "P90": 24.67, "P95": 25.0}, {"Age": 8.3, "P3": 22.14, "P5": 22.31, "P10": 22.59, "P25": 23.04, "P50": 23.59, "P75": 24.16, "P90": 24.7, "P95": 25.03}, {"Age": 8.4, "P3": 22.16, "P5": 22.33, "P10": 22.61, "P25": 23.06, "P50": 23.61, "P75": 24.19, "P90": 24.73, "P95": 25.07}, {"Age": 8.5, "P3": 22.18, "P5": 22.35, "P10": 22.62, "P25": 23.09, "P50": 23.64, "P75": 24.21, "P90": 24.77, "P95": 25.11}, {"Age": 8.6, "P3": 22.2, "P5": 22.37, "P10": 22.64, "P25": 23.11, "P50": 23.66, "P75": 24.24, "P90": 24.8, "P95": 25.15}, {"Age": 8.7, "P3": 22.22, "P5": 22.39, "P10": 22.66, "P25": 23.13, "P50": 23.68, "P75": 24.27, "P90": 24.83, "P95": 25.19}, {"Age": 8.8, "P3": 22.23, "P5": 22.4, "P10": 22.68, "P25": 23.15, "P50": 23.71, "P75": 24.3, "P90": 24.86, "P95": 25.22}, {"Age": 8.9, "P3": 22.25, "P5": 22.42, "P10": 22.7, "P25": 23.17, "P50": 23.73, "P75": 24.33, "P90": 24.9, "P95": 25.26}, {"Age": 9.0, "P3": 22.27, "P5": 22.44, "P10": 22.72, "P25": 23.19, "P50": 23.76, "P75": 24.36, "P90": 24.93, "P95": 25.3}, {"Age": 9.1, "P3": 22.29, "P5": 22.46, "P10": 22.74, "P25": 23.21, "P50": 23.78, "P75": 24.39, "P90": 24.96, "P95": 25.34}, {"Age": 9.2, "P3": 22.3, "P5": 22.47, "P10": 22.75, "P25": 23.23, "P50": 23.81, "P75": 24.42, "P90": 25.0, "P95": 25.37}, {"Age": 9.3, "P3": 22.32, "P5": 22.49, "P10": 22.77, "P25": 23.25, "P50": 23.83, "P75": 24.44, "P90": 25.03, "P95": 25.41}, {"Age": 9.4, "P3": 22.33, "P5": 22.5, "P10": 22.79, "P25": 23.27, "P50": 23.85, "P75": 24.47, "P90": 25.06, "P95": 25.44}, {"Age": 9.5, "P3": 22.34, "P5": 22.52, "P10": 22.8, "P25": 23.3, "P50": 23.88, "P75": 24.5, "P90": 25.09, "P95": 25.48}, {"Age": 9.6, "P3": 22.36, "P5": 22.54, "P10": 22.82, "P25": 23.32, "P50": 23.9, "P75": 24.53, "P90": 25.13, "P95": 25.51}, {"Age": 9.7, "P3": 22.38, "P5": 22.55, "P10": 22.84, "P25": 23.34, "P50": 23.92, "P75": 24.56, "P90": 25.16, "P95": 25.55}, {"Age": 9.8, "P3": 22.39, "P5": 22.57, "P10": 22.86, "P25": 23.36, "P50": 23.94, "P75": 24.58, "P90": 25.19, "P95": 25.58}, {"Age": 9.9, "P3": 22.41, "P5": 22.58, "P10": 22.87, "P25": 23.38, "P50": 23.97, "P75": 24.61, "P90": 25.23, "P95": 25.61}, {"Age": 10.0, "P3": 22.42, "P5": 22.6, "P10": 22.89, "P25": 23.4, "P50": 23.99, "P75": 24.64, "P90": 25.26, "P95": 25.65}, {"Age": 10.1, "P3": 22.43, "P5": 22.61, "P10": 22.91, "P25": 23.42, "P50": 24.01, "P75": 24.67, "P90": 25.29, "P95": 25.68}, {"Age": 10.2, "P3": 22.45, "P5": 22.63, "P10": 22.92, "P25": 23.44, "P50": 24.04, "P75": 24.69, "P90": 25.32, "P95": 25.72}, {"Age": 10.3, "P3": 22.46, "P5": 22.64, "P10": 22.94, "P25": 23.45, "P50": 24.06, "P75": 24.72, "P90": 25.35, "P95": 25.75}, {"Age": 10.4, "P3": 22.48, "P5": 22.66, "P10": 22.95, "P25": 23.47, "P50": 24.08, "P75": 24.74, "P90": 25.38, "P95": 25.79}, {"Age": 10.5, "P3": 22.49, "P5": 22.68, "P10": 22.97, "P25": 23.49, "P50": 24.11, "P75": 24.77, "P90": 25.41, "P95": 25.82}, {"Age": 10.6, "P3": 22.5, "P5": 22.69, "P10": 22.99, "P25": 23.51, "P50": 24.13, "P75": 24.8, "P90": 25.45, "P95": 25.85}, {"Age": 10.7, "P3": 22.52, "P5": 22.7, "P10": 23.0, "P25": 23.53, "P50": 24.15, "P75": 24.82, "P90": 25.48, "P95": 25.89}, {"Age": 10.8, "P3": 22.53, "P5": 22.72, "P10": 23.02, "P25": 23.54, "P50": 24.17, "P75": 24.85, "P90": 25.51, "P95": 25.92}, {"Age": 10.9, "P3": 22.55, "P5": 22.73, "P10": 23.03, "P25": 23.56, "P50": 24.2, "P75": 24.87, "P90": 25.54, "P95": 25.96}, {"Age": 11.0, "P3": 22.56, "P5": 22.75, "P10": 23.05, "P25": 23.58, "P50": 24.22, "P75": 24.9, "P90": 25.57, "P95": 25.99}, {"Age": 11.1, "P3": 22.57, "P5": 22.76, "P10": 23.07, "P25": 23.6, "P50": 24.24, "P75": 24.93, "P90": 25.6, "P95": 26.02}, {"Age": 11.2, "P3": 22.58, "P5": 22.78, "P10": 23.08, "P25": 23.62, "P50": 24.26, "P75": 24.95, "P90": 25.63, "P95": 26.05}, {"Age": 11.3, "P3": 22.6, "P5": 22.79, "P10": 23.09, "P25": 23.63, "P50": 24.28, "P75": 24.98, "P90": 25.66, "P95": 26.09}, {"Age": 11.4, "P3": 22.61, "P5": 22.8, "P10": 23.11, "P25": 23.65, "P50": 24.3, "P75": 25.0, "P90": 25.69, "P95": 26.12}, {"Age": 11.5, "P3": 22.62, "P5": 22.82, "P10": 23.12, "P25": 23.67, "P50": 24.32, "P75": 25.02, "P90": 25.71, "P95": 26.15}, {"Age": 11.6, "P3": 22.63, "P5": 22.83, "P10": 23.14, "P25": 23.69, "P50": 24.35, "P75": 25.05, "P90": 25.74, "P95": 26.18}, {"Age": 11.7, "P3": 22.64, "P5": 22.84, "P10": 23.16, "P25": 23.71, "P50": 24.37, "P75": 25.07, "P90": 25.77, "P95": 26.21}, {"Age": 11.8, "P3": 22.66, "P5": 22.85, "P10": 23.17, "P25": 23.72, "P50": 24.39, "P75": 25.1, "P90": 25.8, "P95": 26.25}, {"Age": 11.9, "P3": 22.67, "P5": 22.87, "P10": 23.18, "P25": 23.74, "P50": 24.41, "P75": 25.12, "P90": 25.83, "P95": 26.28}, {"Age": 12.0, "P3": 22.68, "P5": 22.88, "P10": 23.2, "P25": 23.76, "P50": 24.43, "P75": 25.15, "P90": 25.86, "P95": 26.31}, {"Age": 12.1, "P3": 22.69, "P5": 22.89, "P10": 23.21, "P25": 23.78, "P50": 24.45, "P75": 25.17, "P90": 25.89, "P95": 26.34}, {"Age": 12.2, "P3": 22.7, "P5": 22.9, "P10": 23.23, "P25": 23.79, "P50": 24.47, "P75": 25.2, "P90": 25.92, "P95": 26.37}, {"Age": 12.3, "P3": 22.71, "P5": 22.91, "P10": 23.24, "P25": 23.81, "P50": 24.49, "P75": 25.22, "P90": 25.94, "P95": 26.4}, {"Age": 12.4, "P3": 22.72, "P5": 22.92, "P10": 23.25, "P25": 23.82, "P50": 24.51, "P75": 25.25, "P90": 25.97, "P95": 26.43}, {"Age": 12.5, "P3": 22.73, "P5": 22.93, "P10": 23.27, "P25": 23.84, "P50": 24.52, "P75": 25.27, "P90": 26.0, "P95": 26.46}, {"Age": 12.6, "P3": 22.74, "P5": 22.95, "P10": 23.28, "P25": 23.86, "P50": 24.54, "P75": 25.29, "P90": 26.03, "P95": 26.49}, {"Age": 12.7, "P3": 22.75, "P5": 22.96, "P10": 23.29, "P25": 23.87, "P50": 24.56, "P75": 25.32, "P90": 26.06, "P95": 26.52}, {"Age": 12.8, "P3": 22.76, "P5": 22.97, "P10": 23.3, "P25": 23.89, "P50": 24.58, "P75": 25.34, "P90": 26.08, "P95": 26.55}, {"Age": 12.9, "P3": 22.77, "P5": 22.98, "P10": 23.32, "P25": 23.9, "P50": 24.6, "P75": 25.37, "P90": 26.11, "P95": 26.58}, {"Age": 13.0, "P3": 22.78, "P5": 22.99, "P10": 23.33, "P25": 23.92, "P50": 24.62, "P75": 25.39, "P90": 26.14, "P95": 26.61}, {"Age": 13.1, "P3": 22.79, "P5": 23.0, "P10": 23.34, "P25": 23.93, "P50": 24.64, "P75": 25.41, "P90": 26.16, "P95": 26.64}, {"Age": 13.2, "P3": 22.8, "P5": 23.01, "P10": 23.35, "P25": 23.95, "P50": 24.66, "P75": 25.43, "P90": 26.19, "P95": 26.67}, {"Age": 13.3, "P3": 22.8, "P5": 23.02, "P10": 23.36, "P25": 23.96, "P50": 24.68, "P75": 25.46, "P90": 26.21, "P95": 26.69}, {"Age": 13.4, "P3": 22.81, "P5": 23.03, "P10": 23.37, "P25": 23.98, "P50": 24.7, "P75": 25.48, "P90": 26.24, "P95": 26.72}, {"Age": 13.5, "P3": 22.82, "P5": 23.04, "P10": 23.39, "P25": 23.99, "P50": 24.71, "P75": 25.5, "P90": 26.27, "P95": 26.75}, {"Age": 13.6, "P3": 22.83, "P5": 23.04, "P10": 23.4, "P25": 24.0, "P50": 24.73, "P75": 25.52, "P90": 26.29, "P95": 26.78}, {"Age": 13.7, "P3": 22.84, "P5": 23.05, "P10": 23.41, "P25": 24.02, "P50": 24.75, "P75": 25.54, "P90": 26.32, "P95": 26.81}, {"Age": 13.8, "P3": 22.84, "P5": 23.06, "P10": 23.42, "P25": 24.03, "P50": 24.77, "P75": 25.57, "P90": 26.34, "P95": 26.83}, {"Age": 13.9, "P3": 22.85, "P5": 23.07, "P10": 23.43, "P25": 24.05, "P50": 24.79, "P75": 25.59, "P90": 26.36, "P95": 26.86}, {"Age": 14.0, "P3": 22.86, "P5": 23.08, "P10": 23.44, "P25": 24.06, "P50": 24.81, "P75": 25.61, "P90": 26.39, "P95": 26.89}, {"Age": 14.1, "P3": 22.86, "P5": 23.09, "P10": 23.45, "P25": 24.07, "P50": 24.83, "P75": 25.63, "P90": 26.41, "P95": 26.91}, {"Age": 14.2, "P3": 22.87, "P5": 23.09, "P10": 23.46, "P25": 24.09, "P50": 24.84, "P75": 25.65, "P90": 26.44, "P95": 26.94}, {"Age": 14.3, "P3": 22.88, "P5": 23.1, "P10": 23.47, "P25": 24.1, "P50": 24.86, "P75": 25.67, "P90": 26.46, "P95": 26.96}, {"Age": 14.4, "P3": 22.88, "P5": 23.11, "P10": 23.48, "P25": 24.11, "P50": 24.88, "P75": 25.69, "P90": 26.49, "P95": 26.99}, {"Age": 14.5, "P3": 22.89, "P5": 23.11, "P10": 23.48, "P25": 24.12, "P50": 24.89, "P75": 25.71, "P90": 26.51, "P95": 27.02}, {"Age": 14.6, "P3": 22.89, "P5": 23.12, "P10": 23.49, "P25": 24.14, "P50": 24.91, "P75": 25.74, "P90": 26.53, "P95": 27.04}, {"Age": 14.7, "P3": 22.89, "P5": 23.13, "P10": 23.5, "P25": 24.15, "P50": 24.93, "P75": 25.76, "P90": 26.56, "P95": 27.07}, {"Age": 14.8, "P3": 22.9, "P5": 23.14, "P10": 23.51, "P25": 24.16, "P50": 24.95, "P75": 25.78, "P90": 26.58, "P95": 27.09}, {"Age": 14.9, "P3": 22.91, "P5": 23.14, "P10": 23.52, "P25": 24.18, "P50": 24.96, "P75": 25.8, "P90": 26.61, "P95": 27.11}, {"Age": 15.0, "P3": 22.91, "P5": 23.15, "P10": 23.53, "P25": 24.19, "P50": 24.98, "P75": 25.82, "P90": 26.63, "P95": 27.14}, {"Age": 15.1, "P3": 22.91, "P5": 23.16, "P10": 23.54, "P25": 24.2, "P50": 25.0, "P75": 25.84, "P90": 26.65, "P95": 27.16}, {"Age": 15.2, "P3": 22.92, "P5": 23.16, "P10": 23.54, "P25": 24.21, "P50": 25.01, "P75": 25.86, "P90": 26.67, "P95": 27.18}, {"Age": 15.3, "P3": 22.92, "P5": 23.16, "P10": 23.55, "P25": 24.23, "P50": 25.02, "P75": 25.88, "P90": 26.69, "P95": 27.21}, {"Age": 15.4, "P3": 22.92, "P5": 23.17, "P10": 23.56, "P25": 24.24, "P50": 25.04, "P75": 25.9, "P90": 26.71, "P95": 27.23}, {"Age": 15.5, "P3": 22.93, "P5": 23.18, "P10": 23.57, "P25": 24.25, "P50": 25.05, "P75": 25.91, "P90": 26.73, "P95": 27.25}, {"Age": 15.6, "P3": 22.93, "P5": 23.18, "P10": 23.57, "P25": 24.26, "P50": 25.07, "P75": 25.93, "P90": 26.76, "P95": 27.27}, {"Age": 15.7, "P3": 22.93, "P5": 23.18, "P10": 23.58, "P25": 24.27, "P50": 25.09, "P75": 25.95, "P90": 26.78, "P95": 27.29}, {"Age": 15.8, "P3": 22.93, "P5": 23.19, "P10": 23.59, "P25": 24.29, "P50": 25.1, "P75": 25.97, "P90": 26.8, "P95": 27.32}, {"Age": 15.9, "P3": 22.94, "P5": 23.2, "P10": 23.59, "P25": 24.3, "P50": 25.11, "P75": 25.99, "P90": 26.82, "P95": 27.34}, {"Age": 16.0, "P3": 22.94, "P5": 23.2, "P10": 23.6, "P25": 24.31, "P50": 25.13, "P75": 26.01, "P90": 26.84, "P95": 27.36}, {"Age": 16.1, "P3": 22.94, "P5": 23.2, "P10": 23.61, "P25": 24.32, "P50": 25.14, "P75": 26.03, "P90": 26.86, "P95": 27.38}, {"Age": 16.2, "P3": 22.94, "P5": 23.21, "P10": 23.61, "P25": 24.33, "P50": 25.16, "P75": 26.04, "P90": 26.88, "P95": 27.4}, {"Age": 16.3, "P3": 22.94, "P5": 23.21, "P10": 23.62, "P25": 24.34, "P50": 25.18, "P75": 26.06, "P90": 26.9, "P95": 27.42}, {"Age": 16.4, "P3": 22.94, "P5": 23.21, "P10": 23.62, "P25": 24.35, "P50": 25.19, "P75": 26.08, "P90": 26.92, "P95": 27.44}, {"Age": 16.5, "P3": 22.95, "P5": 23.21, "P10": 23.63, "P25": 24.36, "P50": 25.2, "P75": 26.09, "P90": 26.94, "P95": 27.46}, {"Age": 16.6, "P3": 22.95, "P5": 23.22, "P10": 23.64, "P25": 24.37, "P50": 25.22, "P75": 26.11, "P90": 26.96, "P95": 27.48}, {"Age": 16.7, "P3": 22.95, "P5": 23.22, "P10": 23.64, "P25": 24.38, "P50": 25.23, "P75": 26.13, "P90": 26.98, "P95": 27.5}, {"Age": 16.8, "P3": 22.95, "P5": 23.22, "P10": 23.65, "P25": 24.39, "P50": 25.25, "P75": 26.15, "P90": 27.0, "P95": 27.52}, {"Age": 16.9, "P3": 22.95, "P5": 23.23, "P10": 23.65, "P25": 24.4, "P50": 25.27, "P75": 26.16, "P90": 27.02, "P95": 27.54}, {"Age": 17.0, "P3": 22.95, "P5": 23.23, "P10": 23.66, "P25": 24.41, "P50": 25.28, "P75": 26.18, "P90": 27.04, "P95": 27.56}, {"Age": 17.1, "P3": 22.95, "P5": 23.23, "P10": 23.66, "P25": 24.42, "P50": 25.29, "P75": 26.2, "P90": 27.06, "P95": 27.58}, {"Age": 17.2, "P3": 22.94, "P5": 23.23, "P10": 23.67, "P25": 24.43, "P50": 25.31, "P75": 26.21, "P90": 27.07, "P95": 27.6}, {"Age": 17.3, "P3": 22.94, "P5": 23.23, "P10": 23.67, "P25": 24.44, "P50": 25.32, "P75": 26.23, "P90": 27.09, "P95": 27.61}, {"Age": 17.4, "P3": 22.94, "P5": 23.23, "P10": 23.67, "P25": 24.45, "P50": 25.33, "P75": 26.25, "P90": 27.11, "P95": 27.63}, {"Age": 17.5, "P3": 22.93, "P5": 23.23, "P10": 23.68, "P25": 24.45, "P50": 25.34, "P75": 26.27, "P90": 27.12, "P95": 27.65}, {"Age": 17.6, "P3": 22.93, "P5": 23.22, "P10": 23.68, "P25": 24.46, "P50": 25.36, "P75": 26.28, "P90": 27.14, "P95": 27.67}, {"Age": 17.7, "P3": 22.93, "P5": 23.22, "P10": 23.68, "P25": 24.47, "P50": 25.37, "P75": 26.3, "P90": 27.16, "P95": 27.69}, {"Age": 17.8, "P3": 22.93, "P5": 23.22, "P10": 23.68, "P25": 24.48, "P50": 25.38, "P75": 26.32, "P90": 27.18, "P95": 27.7}, {"Age": 17.9, "P3": 22.92, "P5": 23.22, "P10": 23.69, "P25": 24.49, "P50": 25.4, "P75": 26.33, "P90": 27.19, "P95": 27.72}, {"Age": 18.0, "P3": 22.92, "P5": 23.22, "P10": 23.69, "P25": 24.5, "P50": 25.41, "P75": 26.35, "P90": 27.21, "P95": 27.74}], "female": [{"Age": 4.0, "P3": 20.74, "P5": 20.87, "P10": 21.08, "P25": 21.41, "P50": 21.78, "P75": 22.14, "P90": 22.46, "P95": 22.66}, {"Age": 4.1, "P3": 20.76, "P5": 20.89, "P10": 21.11, "P25": 21.44, "P50": 21.81, "P75": 22.18, "P90": 22.5, "P95": 22.7}, {"Age": 4.2, "P3": 20.78, "P5": 20.92, "P10": 21.13, "P25": 21.47, "P50": 21.84, "P75": 22.21, "P90": 22.54, "P95": 22.74}, {"Age": 4.3, "P3": 20.81, "P5": 20.94, "P10": 21.16, "P25": 21.49, "P50": 21.88, "P75": 22.25, "P90": 22.58, "P95": 22.79}, {"Age": 4.4, "P3": 20.83, "P5": 20.97, "P10": 21.18, "P25": 21.52, "P50": 21.91, "P75": 22.28, "P90": 22.62, "P95": 22.83}, {"Age": 4.5, "P3": 20.85, "P5": 20.99, "P10": 21.2, "P25": 21.55, "P50": 21.94, "P75": 22.32, "P90": 22.66, "P95": 22.87}, {"Age": 4.6, "P3": 20.87, "P5": 21.01, "P10": 21.23, "P25": 21.58, "P50": 21.97, "P75": 22.36, "P90": 22.71, "P95": 22.91}, {"Age": 4.7, "P3": 20.89, "P5": 21.04, "P10": 21.25, "P25": 21.61, "P50": 22.0, "P75": 22.39, "P90": 22.75, "P95": 22.95}, {"Age": 4.8, "P3": 20.92, "P5": 21.06, "P10": 21.28, "P25": 21.63, "P50": 22.04, "P75": 22.43, "P90": 22.79, "P95": 23.0}, {"Age": 4.9, "P3": 20.94, "P5": 21.09, "P10": 21.3, "P25": 21.66, "P50": 22.07, "P75": 22.46, "P90": 22.83, "P95": 23.04}, {"Age": 5.0, "P3": 20.96, "P5": 21.11, "P10": 21.33, "P25": 21.69, "P50": 22.1, "P75": 22.5, "P90": 22.87, "P95": 23.08}, {"Age": 5.1, "P3": 20.98, "P5": 21.13, "P10": 21.35, "P25": 21.72, "P50": 22.13, "P75": 22.54, "P90": 22.91, "P95": 23.12}, {"Age": 5.2, "P3": 21.0, "P5": 21.15, "P10": 21.38, "P25": 21.74, "P50": 22.16, "P75": 22.57, "P90": 22.95, "P95": 23.16}, {"Age": 5.3, "P3": 21.02, "P5": 21.18, "P10": 21.4, "P25": 21.77, "P50": 22.19, "P75": 22.61, "P90": 22.99, "P95": 23.21}, {"Age": 5.4, "P3": 21.04, "P5": 21.2, "P10": 21.42, "P25": 21.8, "P50": 22.22, "P75": 22.64, "P90": 23.03, "P95": 23.25}, {"Age": 5.5, "P3": 21.07, "P5": 21.22, "P10": 21.45, "P25": 21.82, "P50": 22.25, "P75": 22.68, "P90": 23.07, "P95": 23.29}, {"Age": 5.6, "P3": 21.09, "P5": 21.24, "P10": 21.47, "P25": 21.85, "P50": 22.29, "P75": 22.71, "P90": 23.1, "P95": 23.33}, {"Age": 5.7, "P3": 21.11, "P5": 21.26, "P10": 21.49, "P25": 21.88, "P50": 22.32, "P75": 22.75, "P90": 23.14, "P95": 23.37}, {"Age": 5.8, "P3": 21.13, "P5": 21.29, "P10": 21.51, "P25": 21.91, "P50": 22.35, "P75": 22.78, "P90": 23.18, "P95": 23.42}, {"Age": 5.9, "P3": 21.15, "P5": 21.31, "P10": 21.54, "P25": 21.93, "P50": 22.38, "P75": 22.82, "P90": 23.22, "P95": 23.46}, {"Age": 6.0, "P3": 21.17, "P5": 21.33, "P10": 21.56, "P25": 21.96, "P50": 22.41, "P75": 22.85, "P90": 23.26, "P95": 23.5}, {"Age": 6.1, "P3": 21.19, "P5": 21.35, "P10": 21.58, "P25": 21.99, "P50": 22.44, "P75": 22.88, "P90": 23.3, "P95": 23.54}, {"Age": 6.2, "P3": 21.21, "P5": 21.37, "P10": 21.61, "P25": 22.01, "P50": 22.47, "P75": 22.92, "P90": 23.33, "P95": 23.58}, {"Age": 6.3, "P3": 21.23, "P5": 21.39, "P10": 21.63, "P25": 22.04, "P50": 22.5, "P75": 22.95, "P90": 23.37, "P95": 23.62}, {"Age": 6.4, "P3": 21.25, "P5": 21.41, "P10": 21.65, "P25": 22.06, "P50": 22.53, "P75": 22.99, "P90": 23.41, "P95": 23.66}, {"Age": 6.5, "P3": 21.27, "P5": 21.43, "P10": 21.68, "P25": 22.09, "P50": 22.55, "P75": 23.02, "P90": 23.45, "P95": 23.7}, {"Age": 6.6, "P3": 21.29, "P5": 21.45, "P10": 21.7, "P25": 22.12, "P50": 22.58, "P75": 23.05, "P90": 23.48, "P95": 23.74}, {"Age": 6.7, "P3": 21.31, "P5": 21.47, "P10": 21.72, "P25": 22.14, "P50": 22.61, "P75": 23.09, "P90": 23.52, "P95": 23.78}, {"Age": 6.8, "P3": 21.33, "P5": 21.49, "P10": 21.74, "P25": 22.17, "P50": 22.64, "P75": 23.12, "P90": 23.56, "P95": 23.82}, {"Age": 6.9, "P3": 21.35, "P5": 21.51, "P10": 21.77, "P25": 22.19, "P50": 22.67, "P75": 23.16, "P90": 23.59, "P95": 23.86}, {"Age": 7.0, "P3": 21.37, "P5": 21.53, "P10": 21.79, "P25": 22.22, "P50": 22.7, "P75": 23.19, "P90": 23.63, "P95": 23.9}, {"Age": 7.1, "P3": 21.39, "P5": 21.55, "P10": 21.81, "P25": 22.24, "P50": 22.73, "P75": 23.22, "P90": 23.67, "P95": 23.94}, {"Age": 7.2, "P3": 21.41, "P5": 21.57, "P10": 21.83, "P25": 22.27, "P50": 22.76, "P75": 23.25, "P90": 23.7, "P95": 23.98}, {"Age": 7.3, "P3": 21.43, "P5": 21.59, "P10": 21.85, "P25": 22.29, "P50": 22.78, "P75": 23.29, "P90": 23.74, "P95": 24.01}, {"Age": 7.4, "P3": 21.45, "P5": 21.61, "P10": 21.87, "P25": 22.32, "P50": 22.81, "P75": 23.32, "P90": 23.77, "P95": 24.05}, {"Age": 7.5, "P3": 21.46, "P5": 21.63, "P10": 21.89, "P25": 22.34, "P50": 22.84, "P75": 23.35, "P90": 23.81, "P95": 24.09}, {"Age": 7.6, "P3": 21.48, "P5": 21.65, "P10": 21.92, "P25": 22.36, "P50": 22.87, "P75": 23.38, "P90": 23.85, "P95": 24.13}, {"Age": 7.7, "P3": 21.5, "P5": 21.67, "P10": 21.94, "P25": 22.39, "P50": 22.9, "P75": 23.41, "P90": 23.88, "P95": 24.17}, {"Age": 7.8, "P3": 21.52, "P5": 21.69, "P10": 21.96, "P25": 22.41, "P50": 22.92, "P75": 23.45, "P90": 23.92, "P95": 24.2}, {"Age": 7.9, "P3": 21.54, "P5": 21.71, "P10": 21.98, "P25": 22.44, "P50": 22.95, "P75": 23.48, "P90": 23.95, "P95": 24.24}, {"Age": 8.0, "P3": 21.56, "P5": 21.73, "P10": 22.0, "P25": 22.46, "P50": 22.98, "P75": 23.51, "P90": 23.99, "P95": 24.28}, {"Age": 8.1, "P3": 21.58, "P5": 21.75, "P10": 22.02, "P25": 22.48, "P50": 23.01, "P75": 23.54, "P90": 24.02, "P95": 24.32}, {"Age": 8.2, "P3": 21.59, "P5": 21.77, "P10": 22.04, "P25": 22.51, "P50": 23.03, "P75": 23.57, "P90": 24.06, "P95": 24.35}, {"Age": 8.3, "P3": 21.61, "P5": 21.79, "P10": 22.06, "P25": 22.53, "P50": 23.06, "P75": 23.6, "P90": 24.09, "P95": 24.39}, {"Age": 8.4, "P3": 21.63, "P5": 21.81, "P10": 22.08, "P25": 22.56, "P50": 23.09, "P75": 23.63, "P90": 24.13, "P95": 24.43}, {"Age": 8.5, "P3": 21.64, "P5": 21.82, "P10": 22.11, "P25": 22.58, "P50": 23.11, "P75": 23.66, "P90": 24.16, "P95": 24.46}, {"Age": 8.6, "P3": 21.66, "P5": 21.84, "P10": 22.13, "P25": 22.6, "P50": 23.14, "P75": 23.7, "P90": 24.2, "P95": 24.5}, {"Age": 8.7, "P3": 21.68, "P5": 21.86, "P10": 22.15, "P25": 22.63, "P50": 23.17, "P75": 23.73, "P90": 24.23, "P95": 24.54}, {"Age": 8.8, "P3": 21.7, "P5": 21.88, "P10": 22.17, "P25": 22.65, "P50": 23.2, "P75": 23.76, "P90": 24.27, "P95": 24.58}, {"Age": 8.9, "P3": 21.71, "P5": 21.9, "P10": 22.19, "P25": 22.68, "P50": 23.22, "P75": 23.79, "P90": 24.3, "P95": 24.61}, {"Age": 9.0, "P3": 21.73, "P5": 21.92, "P10": 22.21, "P25": 22.7, "P50": 23.25, "P75": 23.82, "P90": 24.34, "P95": 24.65}, {"Age": 9.1, "P3": 21.75, "P5": 21.94, "P10": 22.23, "P25": 22.72, "P50": 23.28, "P75": 23.85, "P90": 24.37, "P95": 24.69}, {"Age": 9.2, "P3": 21.76, "P5": 21.95, "P10": 22.25, "P25": 22.74, "P50": 23.3, "P75": 23.88, "P90": 24.41, "P95": 24.72}, {"Age": 9.3, "P3": 21.78, "P5": 21.97, "P10": 22.27, "P25": 22.77, "P50": 23.33, "P75": 23.91, "P90": 24.44, "P95": 24.76}, {"Age": 9.4, "P3": 21.79, "P5": 21.99, "P10": 22.29, "P25": 22.79, "P50": 23.35, "P75": 23.94, "P90": 24.47, "P95": 24.79}, {"Age": 9.5, "P3": 21.81, "P5": 22.0, "P10": 22.3, "P25": 22.81, "P50": 23.38, "P75": 23.96, "P90": 24.5, "P95": 24.83}, {"Age": 9.6, "P3": 21.83, "P5": 22.02, "P10": 22.32, "P25": 22.83, "P50": 23.41, "P75": 23.99, "P90": 24.54, "P95": 24.87}, {"Age": 9.7, "P3": 21.84, "P5": 22.04, "P10": 22.34, "P25": 22.85, "P50": 23.43, "P75": 24.02, "P90": 24.57, "P95": 24.9}, {"Age": 9.8, "P3": 21.86, "P5": 22.06, "P10": 22.36, "P25": 22.88, "P50": 23.46, "P75": 24.05, "P90": 24.6, "P95": 24.94}, {"Age": 9.9, "P3": 21.87, "P5": 22.07, "P10": 22.38, "P25": 22.9, "P50": 23.48, "P75": 24.08, "P90": 24.64, "P95": 24.97}, {"Age": 10.0, "P3": 21.89, "P5": 22.09, "P10": 22.4, "P25": 22.92, "P50": 23.51, "P75": 24.11, "P90": 24.67, "P95": 25.01}, {"Age": 10.1, "P3": 21.91, "P5": 22.11, "P10": 22.42, "P25": 22.94, "P50": 23.53, "P75": 24.14, "P90": 24.7, "P95": 25.04}, {"Age": 10.2, "P3": 21.92, "P5": 22.12, "P10": 22.43, "P25": 22.96, "P50": 23.56, "P75": 24.17, "P90": 24.73, "P95": 25.08}, {"Age": 10.3, "P3": 21.93, "P5": 22.14, "P10": 22.45, "P25": 22.98, "P50": 23.58, "P75": 24.19, "P90": 24.76, "P95": 25.11}, {"Age": 10.4, "P3": 21.95, "P5": 22.15, "P10": 22.47, "P25": 23.0, "P50": 23.61, "P75": 24.22, "P90": 24.79, "P95": 25.14}, {"Age": 10.5, "P3": 21.96, "P5": 22.17, "P10": 22.48, "P25": 23.02, "P50": 23.63, "P75": 24.25, "P90": 24.82, "P95": 25.18}, {"Age": 10.6, "P3": 21.98, "P5": 22.19, "P10": 22.5, "P25": 23.04, "P50": 23.65, "P75": 24.28, "P90": 24.86, "P95": 25.21}, {"Age": 10.7, "P3": 22.0, "P5": 22.2, "P10": 22.52, "P25": 23.06, "P50": 23.68, "P75": 24.31, "P90": 24.89, "P95": 25.24}, {"Age": 10.8, "P3": 22.01, "P5": 22.22, "P10": 22.54, "P25": 23.08, "P50": 23.7, "P75": 24.33, "P90": 24.92, "P95": 25.27}, {"Age": 10.9, "P3": 22.02, "P5": 22.23, "P10": 22.55, "P25": 23.1, "P50": 23.73, "P75": 24.36, "P90": 24.95, "P95": 25.31}, {"Age": 11.0, "P3": 22.04, "P5": 22.25, "P10": 22.57, "P25": 23.12, "P50": 23.75, "P75": 24.39, "P90": 24.98, "P95": 25.34}, {"Age": 11.1, "P3": 22.05, "P5": 22.26, "P10": 22.59, "P25": 23.14, "P50": 23.77, "P75": 24.42, "P90": 25.01, "P95": 25.37}, {"Age": 11.2, "P3": 22.07, "P5": 22.28, "P10": 22.6, "P25": 23.16, "P50": 23.79, "P75": 24.44, "P90": 25.04, "P95": 25.4}, {"Age": 11.3, "P3": 22.08, "P5": 22.29, "P10": 22.62, "P25": 23.18, "P50": 23.82, "P75": 24.47, "P90": 25.07, "P95": 25.44}, {"Age": 11.4, "P3": 22.1, "P5": 22.31, "P10": 22.63, "P25": 23.2, "P50": 23.84, "P75": 24.49, "P90": 25.1, "P95": 25.47}, {"Age": 11.5, "P3": 22.11, "P5": 22.32, "P10": 22.65, "P25": 23.21, "P50": 23.86, "P75": 24.52, "P90": 25.13, "P95": 25.5}, {"Age": 11.6, "P3": 22.12, "P5": 22.33, "P10": 22.67, "P25": 23.23, "P50": 23.88, "P75": 24.55, "P90": 25.16, "P95": 25.53}, {"Age": 11.7, "P3": 22.14, "P5": 22.35, "P10": 22.68, "P25": 23.25, "P50": 23.9, "P75": 24.57, "P90": 25.19, "P95": 25.56}, {"Age": 11.8, "P3": 22.15, "P5": 22.36, "P10": 22.7, "P25": 23.27, "P50": 23.93, "P75": 24.6, "P90": 25.22, "P95": 25.6}, {"Age": 11.9, "P3": 22.17, "P5": 22.38, "P10": 22.71, "P25": 23.29, "P50": 23.95, "P75": 24.62, "P90": 25.25, "P95": 25.63}, {"Age": 12.0, "P3": 22.18, "P5": 22.39, "P10": 22.73, "P25": 23.31, "P50": 23.97, "P75": 24.65, "P90": 25.28, "P95": 25.66}, {"Age": 12.1, "P3": 22.19, "P5": 22.4, "P10": 22.75, "P25": 23.33, "P50": 23.99, "P75": 24.68, "P90": 25.31, "P95": 25.69}, {"Age": 12.2, "P3": 22.2, "P5": 22.42, "P10": 22.76, "P25": 23.35, "P50": 24.01, "P75": 24.7, "P90": 25.33, "P95": 25.72}, {"Age": 12.3, "P3": 22.21, "P5": 22.43, "P10": 22.77, "P25": 23.36, "P50": 24.04, "P75": 24.73, "P90": 25.36, "P95": 25.75}, {"Age": 12.4, "P3": 22.22, "P5": 22.45, "P10": 22.79, "P25": 23.38, "P50": 24.06, "P75": 24.75, "P90": 25.39, "P95": 25.78}, {"Age": 12.5, "P3": 22.23, "P5": 22.46, "P10": 22.8, "P25": 23.4, "P50": 24.08, "P75": 24.77, "P90": 25.41, "P95": 25.8}, {"Age": 12.6, "P3": 22.25, "P5": 22.47, "P10": 22.82, "P25": 23.42, "P50": 24.1, "P75": 24.8, "P90": 25.44, "P95": 25.83}, {"Age": 12.7, "P3": 22.26, "P5": 22.49, "P10": 22.84, "P25": 23.44, "P50": 24.12, "P75": 24.82, "P90": 25.47, "P95": 25.86}, {"Age": 12.8, "P3": 22.27, "P5": 22.5, "P10": 22.85, "P25": 23.45, "P50": 24.15, "P75": 24.85, "P90": 25.5, "P95": 25.89}, {"Age": 12.9, "P3": 22.28, "P5": 22.52, "P10": 22.86, "P25": 23.47, "P50": 24.17, "P75": 24.88, "P90": 25.52, "P95": 25.92}, {"Age": 13.0, "P3": 22.29, "P5": 22.53, "P10": 22.88, "P25": 23.49, "P50": 24.19, "P75": 24.9, "P90": 25.55, "P95": 25.95}, {"Age": 13.1, "P3": 22.3, "P5": 22.54, "P10": 22.89, "P25": 23.51, "P50": 24.21, "P75": 24.92, "P90": 25.58, "P95": 25.98}, {"Age": 13.2, "P3": 22.31, "P5": 22.55, "P10": 22.91, "P25": 23.52, "P50": 24.23, "P75": 24.95, "P90": 25.6, "P95": 26.0}, {"Age": 13.3, "P3": 22.32, "P5": 22.56, "P10": 22.92, "P25": 23.54, "P50": 24.25, "P75": 24.97, "P90": 25.63, "P95": 26.03}, {"Age": 13.4, "P3": 22.33, "P5": 22.57, "P10": 22.94, "P25": 23.56, "P50": 24.27, "P75": 24.99, "P90": 25.65, "P95": 26.06}, {"Age": 13.5, "P3": 22.34, "P5": 22.59, "P10": 22.95, "P25": 23.57, "P50": 24.29, "P75": 25.02, "P90": 25.68, "P95": 26.09}, {"Age": 13.6, "P3": 22.36, "P5": 22.6, "P10": 22.96, "P25": 23.59, "P50": 24.31, "P75": 25.04, "P90": 25.71, "P95": 26.11}, {"Age": 13.7, "P3": 22.37, "P5": 22.61, "P10": 22.98, "P25": 23.61, "P50": 24.33, "P75": 25.06, "P90": 25.73, "P95": 26.14}, {"Age": 13.8, "P3": 22.38, "P5": 22.62, "P10": 22.99, "P25": 23.63, "P50": 24.35, "P75": 25.08, "P90": 25.76, "P95": 26.17}, {"Age": 13.9, "P3": 22.39, "P5": 22.63, "P10": 23.01, "P25": 23.64, "P50": 24.37, "P75": 25.11, "P90": 25.78, "P95": 26.19}, {"Age": 14.0, "P3": 22.4, "P5": 22.64, "P10": 23.02, "P25": 23.66, "P50": 24.39, "P75": 25.13, "P90": 25.81, "P95": 26.22}, {"Age": 14.1, "P3": 22.41, "P5": 22.65, "P10": 23.03, "P25": 23.68, "P50": 24.41, "P75": 25.15, "P90": 25.83, "P95": 26.25}, {"Age": 14.2, "P3": 22.42, "P5": 22.66, "P10": 23.04, "P25": 23.69, "P50": 24.43, "P75": 25.17, "P90": 25.86, "P95": 26.27}, {"Age": 14.3, "P3": 22.42, "P5": 22.67, "P10": 23.06, "P25": 23.7, "P50": 24.44, "P75": 25.19, "P90": 25.88, "P95": 26.3}, {"Age": 14.4, "P3": 22.43, "P5": 22.68, "P10": 23.07, "P25": 23.72, "P50": 24.46, "P75": 25.21, "P90": 25.91, "P95": 26.32}, {"Age": 14.5, "P3": 22.44, "P5": 22.69, "P10": 23.08, "P25": 23.73, "P50": 24.48, "P75": 25.23, "P90": 25.93, "P95": 26.34}, {"Age": 14.6, "P3": 22.45, "P5": 22.7, "P10": 23.09, "P25": 23.75, "P50": 24.5, "P75": 25.26, "P90": 25.95, "P95": 26.37}, {"Age": 14.7, "P3": 22.46, "P5": 22.71, "P10": 23.1, "P25": 23.77, "P50": 24.52, "P75": 25.28, "P90": 25.98, "P95": 26.39}, {"Age": 14.8, "P3": 22.46, "P5": 22.72, "P10": 23.12, "P25": 23.78, "P50": 24.53, "P75": 25.3, "P90": 26.0, "P95": 26.42}, {"Age": 14.9, "P3": 22.47, "P5": 22.73, "P10": 23.13, "P25": 23.8, "P50": 24.55, "P75": 25.32, "P90": 26.03, "P95": 26.45}, {"Age": 15.0, "P3": 22.48, "P5": 22.74, "P10": 23.14, "P25": 23.81, "P50": 24.57, "P75": 25.34, "P90": 26.05, "P95": 26.47}, {"Age": 15.1, "P3": 22.49, "P5": 22.75, "P10": 23.15, "P25": 23.82, "P50": 24.59, "P75": 25.36, "P90": 26.07, "P95": 26.49}, {"Age": 15.2, "P3": 22.49, "P5": 22.76, "P10": 23.16, "P25": 23.84, "P50": 24.61, "P75": 25.38, "P90": 26.09, "P95": 26.52}, {"Age": 15.3, "P3": 22.5, "P5": 22.76, "P10": 23.17, "P25": 23.85, "P50": 24.62, "P75": 25.4, "P90": 26.12, "P95": 26.54}, {"Age": 15.4, "P3": 22.51, "P5": 22.77, "P10": 23.18, "P25": 23.87, "P50": 24.64, "P75": 25.42, "P90": 26.14, "P95": 26.56}, {"Age": 15.5, "P3": 22.52, "P5": 22.78, "P10": 23.19, "P25": 23.88, "P50": 24.66, "P75": 25.44, "P90": 26.16, "P95": 26.59}, {"Age": 15.6, "P3": 22.52, "P5": 22.79, "P10": 23.2, "P25": 23.89, "P50": 24.68, "P75": 25.46, "P90": 26.18, "P95": 26.61}, {"Age": 15.7, "P3": 22.53, "P5": 22.8, "P10": 23.21, "P25": 23.91, "P50": 24.7, "P75": 25.48, "P90": 26.2, "P95": 26.63}, {"Age": 15.8, "P3": 22.54, "P5": 22.8, "P10": 23.22, "P25": 23.92, "P50": 24.71, "P75": 25.5, "P90": 26.23, "P95": 26.65}, {"Age": 15.9, "P3": 22.54, "P5": 22.81, "P10": 23.23, "P25": 23.94, "P50": 24.73, "P75": 25.52, "P90": 26.25, "P95": 26.68}, {"Age": 16.0, "P3": 22.55, "P5": 22.82, "P10": 23.24, "P25": 23.95, "P50": 24.75, "P75": 25.54, "P90": 26.27, "P95": 26.7}, {"Age": 16.1, "P3": 22.55, "P5": 22.83, "P10": 23.25, "P25": 23.96, "P50": 24.77, "P75": 25.56, "P90": 26.29, "P95": 26.72}, {"Age": 16.2, "P3": 22.56, "P5": 22.83, "P10": 23.26, "P25": 23.98, "P50": 24.78, "P75": 25.58, "P90": 26.31, "P95": 26.74}, {"Age": 16.3, "P3": 22.56, "P5": 22.84, "P10": 23.27, "P25": 23.99, "P50": 24.8, "P75": 25.6, "P90": 26.33, "P95": 26.76}, {"Age": 16.4, "P3": 22.57, "P5": 22.85, "P10": 23.28, "P25": 24.0, "P50": 24.81, "P75": 25.62, "P90": 26.35, "P95": 26.78}, {"Age": 16.5, "P3": 22.57, "P5": 22.86, "P10": 23.29, "P25": 24.02, "P50": 24.83, "P75": 25.64, "P90": 26.36, "P95": 26.8}, {"Age": 16.6, "P3": 22.57, "P5": 22.86, "P10": 23.29, "P25": 24.03, "P50": 24.85, "P75": 25.65, "P90": 26.38, "P95": 26.82}, {"Age": 16.7, "P3": 22.58, "P5": 22.87, "P10": 23.3, "P25": 24.04, "P50": 24.86, "P75": 25.67, "P90": 26.4, "P95": 26.84}, {"Age": 16.8, "P3": 22.58, "P5": 22.88, "P10": 23.31, "P25": 24.05, "P50": 24.88, "P75": 25.69, "P90": 26.42, "P95": 26.86}, {"Age": 16.9, "P3": 22.59, "P5": 22.88, "P10": 23.32, "P25": 24.07, "P50": 24.89, "P75": 25.71, "P90": 26.44, "P95": 26.88}, {"Age": 17.0, "P3": 22.59, "P5": 22.89, "P10": 23.33, "P25": 24.08, "P50": 24.91, "P75": 25.73, "P90": 26.46, "P95": 26.9}, {"Age": 17.1, "P3": 22.59, "P5": 22.89, "P10": 23.34, "P25": 24.09, "P50": 24.92, "P75": 25.75, "P90": 26.48, "P95": 26.92}, {"Age": 17.2, "P3": 22.59, "P5": 22.9, "P10": 23.35, "P25": 24.1, "P50": 24.94, "P75": 25.76, "P90": 26.5, "P95": 26.94}, {"Age": 17.3, "P3": 22.6, "P5": 22.9, "P10": 23.35, "P25": 24.11, "P50": 24.95, "P75": 25.78, "P90": 26.51, "P95": 26.95}, {"Age": 17.4, "P3": 22.6, "P5": 22.91, "P10": 23.36, "P25": 24.12, "P50": 24.97, "P75": 25.79, "P90": 26.53, "P95": 26.97}, {"Age": 17.5, "P3": 22.6, "P5": 22.91, "P10": 23.37, "P25": 24.14, "P50": 24.98, "P75": 25.81, "P90": 26.55, "P95": 26.99}, {"Age": 17.6, "P3": 22.6, "P5": 22.91, "P10": 23.38, "P25": 24.15, "P50": 24.99, "P75": 25.83, "P90": 26.57, "P95": 27.01}, {"Age": 17.7, "P3": 22.6, "P5": 22.92, "P10": 23.39, "P25": 24.16, "P50": 25.01, "P75": 25.84, "P90": 26.59, "P95": 27.03}, {"Age": 17.8, "P3": 22.61, "P5": 22.92, "P10": 23.39, "P25": 24.17, "P50": 25.02, "P75": 25.86, "P90": 26.6, "P95": 27.04}, {"Age": 17.9, "P3": 22.61, "P5": 22.93, "P10": 23.4, "P25": 24.18, "P50": 25.04, "P75": 25.87, "P90": 26.62, "P95": 27.06}, {"Age": 18.0, "P3": 22.61, "P5": 22.93, "P10": 23.41, "P25": 24.19, "P50": 25.05, "P75": 25.89, "P90": 26.64, "P95": 27.08}]};
+        // Percentile 데이터 (외부 파일로 로드)
+        const PERCENTILE_DATA = {"male":[{"Age":4,"P3":21.26,"P5":21.41,"P10":21.63,"P25":21.99,"P50":22.39,"P75":22.78,"P90":23.13,"P95":23.33},{"Age":5,"P3":21.49,"P5":21.64,"P10":21.87,"P25":22.26,"P50":22.69,"P75":23.12,"P90":23.51,"P95":23.74},{"Age":6,"P3":21.71,"P5":21.86,"P10":22.1,"P25":22.51,"P50":22.97,"P75":23.45,"P90":23.88,"P95":24.15},{"Age":7,"P3":21.91,"P5":22.07,"P10":22.32,"P25":22.75,"P50":23.25,"P75":23.76,"P90":24.24,"P95":24.54},{"Age":8,"P3":22.09,"P5":22.26,"P10":22.53,"P25":22.98,"P50":23.51,"P75":24.07,"P90":24.6,"P95":24.92},{"Age":9,"P3":22.27,"P5":22.44,"P10":22.72,"P25":23.19,"P50":23.76,"P75":24.36,"P90":24.93,"P95":25.3},{"Age":10,"P3":22.42,"P5":22.6,"P10":22.89,"P25":23.4,"P50":23.99,"P75":24.64,"P90":25.26,"P95":25.65},{"Age":11,"P3":22.56,"P5":22.75,"P10":23.05,"P25":23.58,"P50":24.22,"P75":24.9,"P90":25.57,"P95":25.99},{"Age":12,"P3":22.68,"P5":22.88,"P10":23.2,"P25":23.76,"P50":24.43,"P75":25.15,"P90":25.86,"P95":26.31},{"Age":13,"P3":22.78,"P5":22.99,"P10":23.33,"P25":23.92,"P50":24.62,"P75":25.39,"P90":26.14,"P95":26.61},{"Age":14,"P3":22.86,"P5":23.08,"P10":23.44,"P25":24.06,"P50":24.81,"P75":25.61,"P90":26.39,"P95":26.89},{"Age":15,"P3":22.91,"P5":23.15,"P10":23.53,"P25":24.19,"P50":24.98,"P75":25.82,"P90":26.63,"P95":27.14},{"Age":16,"P3":22.94,"P5":23.2,"P10":23.6,"P25":24.31,"P50":25.13,"P75":26.01,"P90":26.84,"P95":27.36},{"Age":17,"P3":22.95,"P5":23.23,"P10":23.66,"P25":24.41,"P50":25.28,"P75":26.18,"P90":27.04,"P95":27.56},{"Age":18,"P3":22.92,"P5":23.22,"P10":23.69,"P25":24.5,"P50":25.41,"P75":26.35,"P90":27.21,"P95":27.74}],"female":[{"Age":4,"P3":20.74,"P5":20.87,"P10":21.08,"P25":21.41,"P50":21.78,"P75":22.14,"P90":22.46,"P95":22.66},{"Age":5,"P3":20.96,"P5":21.11,"P10":21.33,"P25":21.69,"P50":22.1,"P75":22.5,"P90":22.87,"P95":23.08},{"Age":6,"P3":21.17,"P5":21.33,"P10":21.56,"P25":21.96,"P50":22.41,"P75":22.85,"P90":23.26,"P95":23.5},{"Age":7,"P3":21.37,"P5":21.53,"P10":21.79,"P25":22.22,"P50":22.7,"P75":23.19,"P90":23.63,"P95":23.9},{"Age":8,"P3":21.56,"P5":21.73,"P10":22,"P25":22.46,"P50":22.98,"P75":23.51,"P90":23.99,"P95":24.28},{"Age":9,"P3":21.73,"P5":21.92,"P10":22.21,"P25":22.7,"P50":23.25,"P75":23.82,"P90":24.34,"P95":24.65},{"Age":10,"P3":21.89,"P5":22.09,"P10":22.4,"P25":22.92,"P50":23.51,"P75":24.11,"P90":24.67,"P95":25.01},{"Age":11,"P3":22.04,"P5":22.25,"P10":22.57,"P25":23.12,"P50":23.75,"P75":24.39,"P90":24.98,"P95":25.34},{"Age":12,"P3":22.18,"P5":22.39,"P10":22.73,"P25":23.31,"P50":23.97,"P75":24.65,"P90":25.28,"P95":25.66},{"Age":13,"P3":22.29,"P5":22.53,"P10":22.88,"P25":23.49,"P50":24.19,"P75":24.9,"P90":25.55,"P95":25.95},{"Age":14,"P3":22.4,"P5":22.64,"P10":23.02,"P25":23.66,"P50":24.39,"P75":25.13,"P90":25.81,"P95":26.22},{"Age":15,"P3":22.48,"P5":22.74,"P10":23.14,"P25":23.81,"P50":24.57,"P75":25.34,"P90":26.05,"P95":26.47},{"Age":16,"P3":22.55,"P5":22.82,"P10":23.24,"P25":23.95,"P50":24.75,"P75":25.54,"P90":26.27,"P95":26.7},{"Age":17,"P3":22.59,"P5":22.89,"P10":23.33,"P25":24.08,"P50":24.91,"P75":25.73,"P90":26.46,"P95":26.9},{"Age":18,"P3":22.61,"P5":22.93,"P10":23.41,"P25":24.19,"P50":25.05,"P75":25.89,"P90":26.64,"P95":27.08}]};
         
-        // 전역 변수
         let patients = JSON.parse(localStorage.getItem('myopiaPatients')) || [];
         let currentPatientId = null;
         let progressChart = null;
         let growthChart = null;
         let currentChartType = 'AL';
-        let currentGrowthEye = 'OD';
         
-        // 초기화
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('measureDate').valueAsDate = new Date();
-            updatePatientList();
+            setupSearch();
         });
         
-        // 환자 목록 업데이트
-        function updatePatientList() {
-            const select = document.getElementById('patientSelect');
-            select.innerHTML = '<option value="">환자를 선택하세요</option>';
+        // 검색 기능
+        function setupSearch() {
+            const input = document.getElementById('searchInput');
+            const results = document.getElementById('searchResults');
             
-            patients.forEach(p => {
-                const option = document.createElement('option');
-                option.value = p.id;
-                const genderIcon = p.gender === 'male' ? '👦' : '👧';
-                option.textContent = `${genderIcon} ${p.name} (${p.birthDate})`;
-                select.appendChild(option);
+            input.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                if (query.length === 0) {
+                    results.classList.remove('active');
+                    return;
+                }
+                
+                const filtered = patients.filter(p => 
+                    p.name.toLowerCase().includes(query) || 
+                    (p.regNo && p.regNo.toLowerCase().includes(query))
+                );
+                
+                if (filtered.length === 0) {
+                    results.innerHTML = '<div class="search-item"><span>검색 결과가 없습니다</span></div>';
+                } else {
+                    results.innerHTML = filtered.map(p => {
+                        const icon = p.gender === 'male' ? '👦' : '👧';
+                        return `<div class="search-item" onclick="selectPatient('${p.id}')">
+                            <span class="patient-name">${icon} ${p.name}</span>
+                            <span class="patient-id">${p.regNo || '-'} · ${p.birthDate}</span>
+                        </div>`;
+                    }).join('');
+                }
+                results.classList.add('active');
             });
             
-            select.onchange = (e) => {
-                currentPatientId = e.target.value || null;
-                document.getElementById('mainContent').style.display = currentPatientId ? 'block' : 'none';
-                document.getElementById('deletePatientBtn').style.display = currentPatientId ? 'inline-flex' : 'none';
-                if (currentPatientId) {
-                    updateDisplay();
-                }
-            };
+            input.addEventListener('blur', () => {
+                setTimeout(() => results.classList.remove('active'), 200);
+            });
+            input.addEventListener('focus', () => {
+                if (input.value.trim()) input.dispatchEvent(new Event('input'));
+            });
         }
         
-        // 모달
-        function openPatientModal() {
-            document.getElementById('patientModal').classList.add('active');
+        function selectPatient(id) {
+            currentPatientId = id;
+            const patient = patients.find(p => p.id === id);
+            document.getElementById('searchInput').value = patient.name;
+            document.getElementById('searchResults').classList.remove('active');
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('deletePatientBtn').style.display = 'inline-flex';
+            updateDisplay();
         }
         
-        function closePatientModal() {
-            document.getElementById('patientModal').classList.remove('active');
-        }
+        function openPatientModal() { document.getElementById('patientModal').classList.add('active'); }
+        function closePatientModal() { document.getElementById('patientModal').classList.remove('active'); }
         
-        // 환자 추가
         function addPatient() {
+            const regNo = document.getElementById('newPatientRegNo').value.trim();
             const name = document.getElementById('newPatientName').value.trim();
             const birth = document.getElementById('newPatientBirth').value;
             const gender = document.querySelector('input[name="gender"]:checked').value;
             
-            if (!name || !birth) {
-                alert('이름과 생년월일을 입력하세요.');
-                return;
-            }
+            if (!regNo || !name || !birth) { alert('등록번호, 이름, 생년월일을 모두 입력하세요.'); return; }
+            if (patients.find(p => p.regNo === regNo)) { alert('이미 등록된 등록번호입니다.'); return; }
             
-            const patient = {
-                id: Date.now().toString(),
-                name,
-                birthDate: birth,
-                gender,
-                records: []
-            };
-            
+            const patient = { id: Date.now().toString(), regNo, name, birthDate: birth, gender, records: [] };
             patients.push(patient);
             saveData();
-            updatePatientList();
             closePatientModal();
-            
+            document.getElementById('newPatientRegNo').value = '';
             document.getElementById('newPatientName').value = '';
             document.getElementById('newPatientBirth').value = '';
-            
-            document.getElementById('patientSelect').value = patient.id;
-            document.getElementById('patientSelect').dispatchEvent(new Event('change'));
+            selectPatient(patient.id);
         }
         
-        // 환자 삭제
         function deletePatient() {
             if (!currentPatientId) return;
-            
             const patient = patients.find(p => p.id === currentPatientId);
             if (confirm(`"${patient.name}" 환자를 삭제하시겠습니까?`)) {
                 patients = patients.filter(p => p.id !== currentPatientId);
                 saveData();
                 currentPatientId = null;
-                updatePatientList();
+                document.getElementById('searchInput').value = '';
                 document.getElementById('mainContent').style.display = 'none';
                 document.getElementById('deletePatientBtn').style.display = 'none';
             }
         }
         
-        // 측정값 추가
         function addMeasurement() {
             if (!currentPatientId) return;
-            
             const patient = patients.find(p => p.id === currentPatientId);
             const date = document.getElementById('measureDate').value;
             const odAL = parseFloat(document.getElementById('odAL').value);
@@ -755,137 +441,75 @@
             const osSE = parseFloat(document.getElementById('osSE').value);
             
             if (!date || (isNaN(odAL) && isNaN(odSE) && isNaN(osAL) && isNaN(osSE))) {
-                alert('날짜와 최소 하나의 측정값을 입력하세요.');
-                return;
+                alert('날짜와 최소 하나의 측정값을 입력하세요.'); return;
             }
             
             const age = calculateAgeAtDate(patient.birthDate, date);
+            const record = { date, age, odAL: isNaN(odAL)?null:odAL, odSE: isNaN(odSE)?null:odSE, osAL: isNaN(osAL)?null:osAL, osSE: isNaN(osSE)?null:osSE };
             
-            const record = {
-                date,
-                age,
-                odAL: isNaN(odAL) ? null : odAL,
-                odSE: isNaN(odSE) ? null : odSE,
-                osAL: isNaN(osAL) ? null : osAL,
-                osSE: isNaN(osSE) ? null : osSE
-            };
-            
-            // percentile 계산
-            if (record.odAL && age >= 4 && age <= 18) {
-                record.odPercentile = calculatePercentile(patient.gender, age, record.odAL);
-            }
-            if (record.osAL && age >= 4 && age <= 18) {
-                record.osPercentile = calculatePercentile(patient.gender, age, record.osAL);
-            }
+            if (record.odAL && age >= 4 && age <= 18) record.odPercentile = calculatePercentile(patient.gender, age, record.odAL);
+            if (record.osAL && age >= 4 && age <= 18) record.osPercentile = calculatePercentile(patient.gender, age, record.osAL);
             
             patient.records.push(record);
             patient.records.sort((a, b) => new Date(a.date) - new Date(b.date));
-            
             saveData();
             updateDisplay();
-            
-            // 입력 필드 초기화
-            document.getElementById('odAL').value = '';
-            document.getElementById('odSE').value = '';
-            document.getElementById('osAL').value = '';
-            document.getElementById('osSE').value = '';
+            ['odAL','odSE','osAL','osSE'].forEach(id => document.getElementById(id).value = '');
         }
         
-        // 측정일 기준 나이 계산
         function calculateAgeAtDate(birthDate, measureDate) {
-            const birth = new Date(birthDate);
-            const measure = new Date(measureDate);
+            const birth = new Date(birthDate), measure = new Date(measureDate);
             let age = measure.getFullYear() - birth.getFullYear();
-            const monthDiff = measure.getMonth() - birth.getMonth();
-            const dayDiff = measure.getDate() - birth.getDate();
-            
-            // 소수점 나이 계산
-            age += monthDiff / 12 + dayDiff / 365.25;
-            return Math.round(age * 10) / 10; // 소수점 1자리
+            age += (measure.getMonth() - birth.getMonth()) / 12;
+            age += (measure.getDate() - birth.getDate()) / 365.25;
+            return Math.round(age * 10) / 10;
         }
         
-        // Percentile 계산 (선형 보간)
-        function calculatePercentile(gender, age, axialLength) {
+        function calculatePercentile(gender, age, al) {
             const data = PERCENTILE_DATA[gender];
             if (!data || age < 4 || age > 18) return null;
             
-            // 나이에 해당하는 참조값 찾기 (보간)
-            const percentiles = [3, 5, 10, 25, 50, 75, 90, 95];
-            const refs = {};
-            
-            for (const pKey of percentiles) {
-                refs[pKey] = getPercentileForAge(gender, age, `P${pKey}`);
+            // 나이 보간
+            let lower = data[0], upper = data[data.length-1];
+            for (let i = 0; i < data.length - 1; i++) {
+                if (data[i].Age <= age && data[i+1].Age >= age) { lower = data[i]; upper = data[i+1]; break; }
             }
+            const ratio = upper.Age === lower.Age ? 0 : (age - lower.Age) / (upper.Age - lower.Age);
+            const interp = (key) => lower[key] + ratio * (upper[key] - lower[key]);
             
-            // 안축장이 어느 percentile 구간에 있는지 찾기
-            if (axialLength <= refs[3]) return '<3';
-            if (axialLength >= refs[95]) return '>95';
+            const refs = { 3: interp('P3'), 5: interp('P5'), 10: interp('P10'), 25: interp('P25'), 50: interp('P50'), 75: interp('P75'), 90: interp('P90'), 95: interp('P95') };
             
-            // 선형 보간으로 정확한 percentile 계산
-            for (let i = 0; i < percentiles.length - 1; i++) {
-                const lower = percentiles[i];
-                const upper = percentiles[i + 1];
-                
-                if (axialLength >= refs[lower] && axialLength <= refs[upper]) {
-                    const ratio = (axialLength - refs[lower]) / (refs[upper] - refs[lower]);
-                    const percentile = lower + ratio * (upper - lower);
-                    return Math.round(percentile);
+            if (al <= refs[3]) return '<3';
+            if (al >= refs[95]) return '>95';
+            
+            const pcts = [3,5,10,25,50,75,90,95];
+            for (let i = 0; i < pcts.length - 1; i++) {
+                if (al >= refs[pcts[i]] && al <= refs[pcts[i+1]]) {
+                    const r = (al - refs[pcts[i]]) / (refs[pcts[i+1]] - refs[pcts[i]]);
+                    return Math.round(pcts[i] + r * (pcts[i+1] - pcts[i]));
                 }
             }
-            
             return 50;
         }
         
-        // 나이에 따른 참조값 보간
-        function getPercentileForAge(gender, age, pKey) {
-            const data = PERCENTILE_DATA[gender];
-            
-            // 정확한 나이 찾기
-            const exactMatch = data.find(d => Math.abs(d.Age - age) < 0.05);
-            if (exactMatch) return exactMatch[pKey];
-            
-            // 보간
-            let lower = data[0], upper = data[data.length - 1];
-            for (let i = 0; i < data.length - 1; i++) {
-                if (data[i].Age <= age && data[i + 1].Age >= age) {
-                    lower = data[i];
-                    upper = data[i + 1];
-                    break;
-                }
-            }
-            
-            const ratio = (age - lower.Age) / (upper.Age - lower.Age);
-            return lower[pKey] + ratio * (upper[pKey] - lower[pKey]);
-        }
-        
-        // 진행 속도 계산
         function calculateProgression(records, key) {
-            const validRecords = records.filter(r => r[key] !== null);
-            if (validRecords.length < 2) return null;
-            
-            const first = validRecords[0];
-            const last = validRecords[validRecords.length - 1];
-            
-            const days = (new Date(last.date) - new Date(first.date)) / (1000 * 60 * 60 * 24);
+            const valid = records.filter(r => r[key] !== null);
+            if (valid.length < 2) return null;
+            const days = (new Date(valid[valid.length-1].date) - new Date(valid[0].date)) / 86400000;
             const years = days / 365.25;
-            
             if (years < 0.1) return null;
-            
-            const change = last[key] - first[key];
-            return change / years;
+            return (valid[valid.length-1][key] - valid[0][key]) / years;
         }
         
-        // 화면 업데이트
         function updateDisplay() {
             const patient = patients.find(p => p.id === currentPatientId);
             if (!patient) return;
             
-            // 환자 정보 표시
-            const genderIcon = patient.gender === 'male' ? '👦' : '👧';
+            const icon = patient.gender === 'male' ? '👦' : '👧';
             const genderText = patient.gender === 'male' ? '남자' : '여자';
-            document.getElementById('patientInfo').innerHTML = `
-                <span class="gender-icon">${genderIcon}</span>
-                <strong>${patient.name}</strong> · ${genderText} · ${patient.birthDate}
+            document.getElementById('patientInfoHeader').innerHTML = `
+                <span class="name">${icon} ${patient.name}</span>
+                <span class="details">등록번호: ${patient.regNo} · ${genderText} · ${patient.birthDate}</span>
             `;
             
             updateStats(patient);
@@ -894,100 +518,46 @@
             updateGrowthChart(patient);
         }
         
-        // 통계 업데이트
         function updateStats(patient) {
             const grid = document.getElementById('statsGrid');
-            
-            if (patient.records.length === 0) {
-                grid.innerHTML = '<div class="empty-state"><p>측정 데이터가 없습니다</p></div>';
-                return;
-            }
+            if (patient.records.length === 0) { grid.innerHTML = '<div class="empty-state"><p>측정 데이터가 없습니다</p></div>'; return; }
             
             const last = patient.records[patient.records.length - 1];
             const alProgOD = calculateProgression(patient.records, 'odAL');
             const alProgOS = calculateProgression(patient.records, 'osAL');
             
-            const getProgressClass = (val) => {
-                if (val === null) return '';
-                const abs = Math.abs(val);
-                if (abs < 0.2) return 'stable';
-                if (abs < 0.4) return 'moderate';
-                return 'rapid';
-            };
-            
-            const getPercentileBadge = (percentile) => {
-                if (!percentile) return '';
-                const numVal = typeof percentile === 'string' ? 
-                    (percentile.includes('>') ? 96 : 2) : percentile;
-                let className = 'percentile-low';
-                if (numVal > 75) className = 'percentile-high';
-                else if (numVal > 50) className = 'percentile-mid';
-                return `<span class="percentile-badge ${className}">${percentile}%ile</span>`;
+            const getProgressClass = (v) => v === null ? '' : Math.abs(v) < 0.2 ? 'stable' : Math.abs(v) < 0.4 ? 'moderate' : 'rapid';
+            const getPctBadge = (p) => {
+                if (!p) return '';
+                const n = typeof p === 'string' ? (p.includes('>') ? 96 : 2) : p;
+                const cls = n > 75 ? 'percentile-high' : n > 50 ? 'percentile-mid' : 'percentile-low';
+                return `<span class="percentile-badge ${cls}">${p}%ile</span>`;
             };
             
             grid.innerHTML = `
-                <div class="stat-card left">
-                    <div class="stat-label">우안 안축장</div>
-                    <div class="stat-value">${last.odAL?.toFixed(2) || '-'}</div>
-                    <div class="stat-unit">mm</div>
-                    ${getPercentileBadge(last.odPercentile)}
-                    ${alProgOD !== null ? `<div class="progress-indicator ${getProgressClass(alProgOD)}">${alProgOD >= 0 ? '+' : ''}${alProgOD.toFixed(2)} mm/년</div>` : ''}
-                </div>
-                <div class="stat-card right">
-                    <div class="stat-label">좌안 안축장</div>
-                    <div class="stat-value">${last.osAL?.toFixed(2) || '-'}</div>
-                    <div class="stat-unit">mm</div>
-                    ${getPercentileBadge(last.osPercentile)}
-                    ${alProgOS !== null ? `<div class="progress-indicator ${getProgressClass(alProgOS)}">${alProgOS >= 0 ? '+' : ''}${alProgOS.toFixed(2)} mm/년</div>` : ''}
-                </div>
-                <div class="stat-card left">
-                    <div class="stat-label">우안 굴절력</div>
-                    <div class="stat-value">${last.odSE?.toFixed(2) || '-'}</div>
-                    <div class="stat-unit">D</div>
-                </div>
-                <div class="stat-card right">
-                    <div class="stat-label">좌안 굴절력</div>
-                    <div class="stat-value">${last.osSE?.toFixed(2) || '-'}</div>
-                    <div class="stat-unit">D</div>
-                </div>
+                <div class="stat-card left"><div class="stat-label">우안 안축장</div><div class="stat-value">${last.odAL?.toFixed(2)||'-'}</div><div class="stat-unit">mm</div>${getPctBadge(last.odPercentile)}${alProgOD!==null?`<div class="progress-indicator ${getProgressClass(alProgOD)}">${alProgOD>=0?'+':''}${alProgOD.toFixed(2)} mm/년</div>`:''}</div>
+                <div class="stat-card right"><div class="stat-label">좌안 안축장</div><div class="stat-value">${last.osAL?.toFixed(2)||'-'}</div><div class="stat-unit">mm</div>${getPctBadge(last.osPercentile)}${alProgOS!==null?`<div class="progress-indicator ${getProgressClass(alProgOS)}">${alProgOS>=0?'+':''}${alProgOS.toFixed(2)} mm/년</div>`:''}</div>
+                <div class="stat-card left"><div class="stat-label">우안 굴절력</div><div class="stat-value">${last.odSE?.toFixed(2)||'-'}</div><div class="stat-unit">D</div></div>
+                <div class="stat-card right"><div class="stat-label">좌안 굴절력</div><div class="stat-value">${last.osSE?.toFixed(2)||'-'}</div><div class="stat-unit">D</div></div>
             `;
         }
         
-        // 기록 테이블 업데이트
         function updateRecordsTable(patient) {
             const tbody = document.getElementById('recordsBody');
+            if (patient.records.length === 0) { tbody.innerHTML = '<tr><td colspan="9">기록이 없습니다</td></tr>'; return; }
             
-            if (patient.records.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9">기록이 없습니다</td></tr>';
-                return;
-            }
-            
-            const getPercentileBadge = (percentile) => {
-                if (!percentile) return '-';
-                const numVal = typeof percentile === 'string' ? 
-                    (percentile.includes('>') ? 96 : 2) : percentile;
-                let className = 'percentile-low';
-                if (numVal > 75) className = 'percentile-high';
-                else if (numVal > 50) className = 'percentile-mid';
-                return `<span class="percentile-badge ${className}">${percentile}</span>`;
+            const getPctBadge = (p) => {
+                if (!p) return '-';
+                const n = typeof p === 'string' ? (p.includes('>') ? 96 : 2) : p;
+                const cls = n > 75 ? 'percentile-high' : n > 50 ? 'percentile-mid' : 'percentile-low';
+                return `<span class="percentile-badge ${cls}">${p}</span>`;
             };
             
-            tbody.innerHTML = patient.records.map((r, idx) => `
-                <tr>
-                    <td>${r.date}</td>
-                    <td>${r.age?.toFixed(1) || '-'}세</td>
-                    <td>${r.odAL?.toFixed(2) || '-'}</td>
-                    <td>${getPercentileBadge(r.odPercentile)}</td>
-                    <td>${r.osAL?.toFixed(2) || '-'}</td>
-                    <td>${getPercentileBadge(r.osPercentile)}</td>
-                    <td>${r.odSE?.toFixed(2) || '-'}</td>
-                    <td>${r.osSE?.toFixed(2) || '-'}</td>
-                    <td><button class="delete-btn" onclick="deleteRecord(${idx})">✕</button></td>
-                </tr>
+            tbody.innerHTML = patient.records.map((r, i) => `
+                <tr><td>${r.date}</td><td>${r.age?.toFixed(1)||'-'}세</td><td>${r.odAL?.toFixed(2)||'-'}</td><td>${getPctBadge(r.odPercentile)}</td><td>${r.osAL?.toFixed(2)||'-'}</td><td>${getPctBadge(r.osPercentile)}</td><td>${r.odSE?.toFixed(2)||'-'}</td><td>${r.osSE?.toFixed(2)||'-'}</td><td><button class="delete-btn" onclick="deleteRecord(${i})">✕</button></td></tr>
             `).join('');
         }
         
-        // 기록 삭제
         function deleteRecord(idx) {
             const patient = patients.find(p => p.id === currentPatientId);
             if (confirm('이 기록을 삭제하시겠습니까?')) {
@@ -997,213 +567,118 @@
             }
         }
         
-        // 진행 차트 업데이트
         function updateProgressChart(patient) {
             const ctx = document.getElementById('progressChart').getContext('2d');
+            if (progressChart) progressChart.destroy();
             
-            if (progressChart) {
-                progressChart.destroy();
-            }
-            
-            const key = currentChartType === 'AL' ? 
-                { od: 'odAL', os: 'osAL', label: '안축장 (mm)' } : 
-                { od: 'odSE', os: 'osSE', label: '굴절력 (D)' };
-            
-            const labels = patient.records.map(r => r.date);
-            const odData = patient.records.map(r => r[key.od]);
-            const osData = patient.records.map(r => r[key.os]);
+            const key = currentChartType === 'AL' ? { od: 'odAL', os: 'osAL', label: '안축장 (mm)' } : { od: 'odSE', os: 'osSE', label: '굴절력 (D)' };
             
             progressChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels,
+                    labels: patient.records.map(r => r.date),
                     datasets: [
-                        {
-                            label: '우안 (OD)',
-                            data: odData,
-                            borderColor: '#17a2b8',
-                            backgroundColor: 'rgba(23, 162, 184, 0.1)',
-                            borderWidth: 2,
-                            tension: 0.3,
-                            pointRadius: 5,
-                            pointHoverRadius: 7
-                        },
-                        {
-                            label: '좌안 (OS)',
-                            data: osData,
-                            borderColor: '#6f42c1',
-                            backgroundColor: 'rgba(111, 66, 193, 0.1)',
-                            borderWidth: 2,
-                            tension: 0.3,
-                            pointRadius: 5,
-                            pointHoverRadius: 7
-                        }
+                        { label: '우안 (OD)', data: patient.records.map(r => r[key.od]), borderColor: '#17a2b8', backgroundColor: 'rgba(23,162,184,0.1)', borderWidth: 2, tension: 0.3, pointRadius: 5 },
+                        { label: '좌안 (OS)', data: patient.records.map(r => r[key.os]), borderColor: '#6f42c1', backgroundColor: 'rgba(111,66,193,0.1)', borderWidth: 2, tension: 0.3, pointRadius: 5 }
                     ]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            title: {
-                                display: true,
-                                text: key.label
-                            }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { title: { display: true, text: key.label } } } }
             });
         }
         
-        // 성장 차트 업데이트
         function updateGrowthChart(patient) {
             const ctx = document.getElementById('growthChart').getContext('2d');
+            if (growthChart) growthChart.destroy();
             
-            if (growthChart) {
-                growthChart.destroy();
-            }
+            const data = PERCENTILE_DATA[patient.gender];
+            const ages = data.map(d => d.Age);
             
-            const key = currentGrowthEye === 'OD' ? 'odAL' : 'osAL';
-            const pctKey = currentGrowthEye === 'OD' ? 'odPercentile' : 'osPercentile';
-            
-            // 참조 곡선 데이터 생성
-            const refData = PERCENTILE_DATA[patient.gender];
-            const ages = refData.map(d => d.Age);
-            
-            const createRefDataset = (pKey, color, dash, width, label) => ({
-                label,
-                data: refData.map((d, i) => ({ x: d.Age, y: d[pKey] })),
-                borderColor: color,
-                borderWidth: width,
-                borderDash: dash,
-                pointRadius: 0,
-                tension: 0.3,
-                fill: false
+            const createArea = (pLow, pHigh, color, label) => ({
+                label, data: data.map(d => ({ x: d.Age, y: d[pHigh] })),
+                borderColor: 'transparent', backgroundColor: color,
+                fill: { target: '+1', above: color }, pointRadius: 0, tension: 0.4, order: 10
             });
             
-            // 환자 데이터
-            const patientData = patient.records
-                .filter(r => r[key] && r.age >= 4 && r.age <= 18)
-                .map(r => ({ x: r.age, y: r[key] }));
+            const createLine = (pKey, color, width, dash, label) => ({
+                label, data: data.map(d => ({ x: d.Age, y: d[pKey] })),
+                borderColor: color, borderWidth: width, borderDash: dash || [],
+                pointRadius: 0, tension: 0.4, fill: false, order: 5
+            });
+            
+            const odData = patient.records.filter(r => r.odAL && r.age >= 4 && r.age <= 18).map(r => ({ x: r.age, y: r.odAL }));
+            const osData = patient.records.filter(r => r.osAL && r.age >= 4 && r.age <= 18).map(r => ({ x: r.age, y: r.osAL }));
             
             growthChart = new Chart(ctx, {
                 type: 'scatter',
                 data: {
                     datasets: [
-                        createRefDataset('P5', '#adb5bd', [5, 5], 1, 'P5'),
-                        createRefDataset('P25', '#6c757d', [5, 5], 1, 'P25'),
-                        createRefDataset('P50', '#495057', [], 2.5, 'P50'),
-                        createRefDataset('P75', '#6c757d', [5, 5], 1, 'P75'),
-                        createRefDataset('P95', '#adb5bd', [5, 5], 1, 'P95'),
-                        {
-                            label: currentGrowthEye === 'OD' ? '우안' : '좌안',
-                            data: patientData,
-                            borderColor: currentGrowthEye === 'OD' ? '#17a2b8' : '#6f42c1',
-                            backgroundColor: currentGrowthEye === 'OD' ? 'rgba(23, 162, 184, 0.7)' : 'rgba(111, 66, 193, 0.7)',
-                            pointRadius: 8,
-                            pointHoverRadius: 10,
-                            showLine: true,
-                            borderWidth: 2,
-                            tension: 0.2
-                        }
+                        // 영역 (배경)
+                        { label: '>P95', data: data.map(d => ({ x: d.Age, y: 30 })), backgroundColor: 'rgba(220,53,69,0.15)', fill: { target: '+1', above: 'rgba(220,53,69,0.15)' }, borderColor: 'transparent', pointRadius: 0, tension: 0.4, order: 20 },
+                        { label: 'P95', data: data.map(d => ({ x: d.Age, y: d.P95 })), backgroundColor: 'rgba(255,193,7,0.15)', fill: { target: '+1', above: 'rgba(255,193,7,0.15)' }, borderColor: 'transparent', pointRadius: 0, tension: 0.4, order: 19 },
+                        { label: 'P75', data: data.map(d => ({ x: d.Age, y: d.P75 })), backgroundColor: 'rgba(40,167,69,0.1)', fill: { target: '+1', above: 'rgba(40,167,69,0.1)' }, borderColor: 'transparent', pointRadius: 0, tension: 0.4, order: 18 },
+                        { label: 'P50', data: data.map(d => ({ x: d.Age, y: d.P50 })), backgroundColor: 'rgba(40,167,69,0.1)', fill: { target: '+1', above: 'rgba(40,167,69,0.1)' }, borderColor: 'transparent', pointRadius: 0, tension: 0.4, order: 17 },
+                        { label: 'P25', data: data.map(d => ({ x: d.Age, y: d.P25 })), backgroundColor: 'rgba(108,117,125,0.08)', fill: { target: '+1', above: 'rgba(108,117,125,0.08)' }, borderColor: 'transparent', pointRadius: 0, tension: 0.4, order: 16 },
+                        { label: 'P5', data: data.map(d => ({ x: d.Age, y: d.P5 })), backgroundColor: 'transparent', borderColor: 'transparent', pointRadius: 0, tension: 0.4, order: 15 },
+                        // 선
+                        createLine('P95', '#dc3545', 1.5, [4,4], 'P95선'),
+                        createLine('P75', '#ffc107', 1.5, [4,4], 'P75선'),
+                        createLine('P50', '#28a745', 2.5, [], 'P50선'),
+                        createLine('P25', '#6c757d', 1, [4,4], 'P25선'),
+                        createLine('P5', '#adb5bd', 1, [4,4], 'P5선'),
+                        // 환자 데이터
+                        { label: '우안 (OD)', data: odData, borderColor: '#17a2b8', backgroundColor: '#17a2b8', pointRadius: 8, pointHoverRadius: 10, showLine: true, borderWidth: 3, tension: 0.2, order: 1 },
+                        { label: '좌안 (OS)', data: osData, borderColor: '#6f42c1', backgroundColor: '#6f42c1', pointRadius: 8, pointHoverRadius: 10, showLine: true, borderWidth: 3, tension: 0.2, order: 1 }
                     ]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                filter: (item) => ['P5', 'P50', 'P95', '우안', '좌안'].includes(item.text)
-                            }
-                        },
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: (ctx) => {
-                                    if (ctx.dataset.label === '우안' || ctx.dataset.label === '좌안') {
+                                    if (ctx.dataset.label === '우안 (OD)' || ctx.dataset.label === '좌안 (OS)') {
                                         return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}mm @ ${ctx.parsed.x.toFixed(1)}세`;
                                     }
-                                    return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}mm`;
+                                    return null;
                                 }
                             }
                         }
                     },
                     scales: {
-                        x: {
-                            type: 'linear',
-                            min: 4,
-                            max: 18,
-                            title: {
-                                display: true,
-                                text: '나이 (세)'
-                            },
-                            ticks: {
-                                stepSize: 2
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: '안축장 (mm)'
-                            }
-                        }
+                        x: { type: 'linear', min: 4, max: 18, title: { display: true, text: '나이 (세)' }, ticks: { stepSize: 2 } },
+                        y: { title: { display: true, text: '안축장 (mm)' }, min: 20, max: 28 }
                     }
                 }
             });
         }
         
-        // 차트 전환
         function switchChart(type) {
             currentChartType = type;
             document.getElementById('tabAL').classList.toggle('active', type === 'AL');
             document.getElementById('tabSE').classList.toggle('active', type === 'SE');
-            
             const patient = patients.find(p => p.id === currentPatientId);
             if (patient) updateProgressChart(patient);
         }
         
-        function switchGrowthChart(eye) {
-            currentGrowthEye = eye;
-            document.getElementById('growthTabOD').classList.toggle('active', eye === 'OD');
-            document.getElementById('growthTabOS').classList.toggle('active', eye === 'OS');
-            
-            const patient = patients.find(p => p.id === currentPatientId);
-            if (patient) updateGrowthChart(patient);
-        }
-        
-        // CSV 내보내기
         function exportCSV() {
             const patient = patients.find(p => p.id === currentPatientId);
-            if (!patient || patient.records.length === 0) {
-                alert('내보낼 데이터가 없습니다.');
-                return;
-            }
+            if (!patient || patient.records.length === 0) { alert('내보낼 데이터가 없습니다.'); return; }
             
-            const genderText = patient.gender === 'male' ? '남자' : '여자';
-            let csv = `환자명,${patient.name}\n생년월일,${patient.birthDate}\n성별,${genderText}\n\n`;
+            let csv = `등록번호,${patient.regNo}\n환자명,${patient.name}\n생년월일,${patient.birthDate}\n성별,${patient.gender==='male'?'남자':'여자'}\n\n`;
             csv += '날짜,나이(세),OD_AL(mm),OD_Percentile,OS_AL(mm),OS_Percentile,OD_SE(D),OS_SE(D)\n';
-            
             patient.records.forEach(r => {
-                csv += `${r.date},${r.age?.toFixed(1) || ''},${r.odAL || ''},${r.odPercentile || ''},${r.osAL || ''},${r.osPercentile || ''},${r.odSE || ''},${r.osSE || ''}\n`;
+                csv += `${r.date},${r.age?.toFixed(1)||''},${r.odAL||''},${r.odPercentile||''},${r.osAL||''},${r.osPercentile||''},${r.odSE||''},${r.osSE||''}\n`;
             });
             
             const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `${patient.name}_근시관리_${new Date().toISOString().split('T')[0]}.csv`;
+            link.download = `${patient.regNo}_${patient.name}_근시관리_${new Date().toISOString().split('T')[0]}.csv`;
             link.click();
         }
         
-        // 데이터 저장
-        function saveData() {
-            localStorage.setItem('myopiaPatients', JSON.stringify(patients));
-        }
+        function saveData() { localStorage.setItem('myopiaPatients', JSON.stringify(patients)); }
     </script>
 </body>
 </html>
