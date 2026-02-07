@@ -14,6 +14,7 @@
             --gray-100: #f8f9fa; --gray-200: #e9ecef; --gray-300: #dee2e6;
             --gray-600: #6c757d; --gray-800: #343a40;
             --shadow: 0 2px 8px rgba(0,0,0,0.1); --radius: 12px;
+            --od-color: #0891b2; --os-color: #e11d48;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); min-height: 100vh; color: var(--gray-800); line-height: 1.6; }
@@ -43,6 +44,7 @@
         .btn-outline { background: white; border: 2px solid var(--primary); color: var(--primary); }
         .btn-white { background: white; color: var(--primary); border: none; }
         .btn-sm { padding: 8px 16px; font-size: 0.85rem; }
+        .btn-gray { background: var(--gray-600); color: white; }
         .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-weight: 500; margin-bottom: 6px; color: var(--gray-600); }
@@ -58,8 +60,8 @@
         .eye-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
         .stat-card { background: var(--gray-100); padding: 16px; border-radius: 8px; text-align: center; }
-        .stat-card.left { border-left: 4px solid #0891b2; }
-        .stat-card.right { border-left: 4px solid #7c3aed; }
+        .stat-card.left { border-left: 4px solid var(--od-color); }
+        .stat-card.right { border-left: 4px solid var(--os-color); }
         .stat-label { font-size: 0.85rem; color: var(--gray-600); margin-bottom: 4px; }
         .stat-value { font-size: 1.5rem; font-weight: 700; }
         .stat-unit { font-size: 0.8rem; color: var(--gray-600); }
@@ -115,6 +117,7 @@
         .rate-stable { color: var(--success); font-weight: 600; }
         .rate-moderate { color: #d97706; font-weight: 600; }
         .rate-rapid { color: var(--danger); font-weight: 600; }
+        .admin-actions { display: flex; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--gray-200); }
         @media (max-width: 768px) {
             .container { padding: 12px; }
             header { padding: 60px 16px 20px; }
@@ -186,6 +189,9 @@
                     <button class="btn btn-danger" onclick="deletePatient()" id="deletePatientBtn" style="display:none">🗑️ 삭제</button>
                 </div>
                 <div class="search-results" id="searchResults"></div>
+                <div class="admin-actions">
+                    <button class="btn btn-gray btn-sm" onclick="openPasswordModal()">🔑 비밀번호 변경</button>
+                </div>
             </div>
             
             <div id="mainContent" style="display:none">
@@ -253,8 +259,8 @@
                     </h3>
                     <div class="growth-chart-container"><canvas id="growthChart"></canvas></div>
                     <div class="chart-legend">
-                        <div class="legend-item"><div class="legend-dot" style="background:#0891b2"></div>우안 (OD)</div>
-                        <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div>좌안 (OS)</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:var(--od-color)"></div>우안 (OD)</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:var(--os-color)"></div>좌안 (OS)</div>
                         <div class="legend-item"><div class="legend-line" style="background:#dc2626"></div>P95</div>
                         <div class="legend-item"><div class="legend-line" style="background:#ea580c"></div>P75</div>
                         <div class="legend-item"><div class="legend-line" style="background:#16a34a; height:4px"></div>P50</div>
@@ -294,6 +300,7 @@
         </div>
     </div>
     
+    <!-- 환자 등록 모달 -->
     <div class="modal-overlay" id="patientModal">
         <div class="modal">
             <div class="modal-header"><h3>새 환자 등록</h3><button class="modal-close" onclick="closePatientModal()">&times;</button></div>
@@ -310,9 +317,21 @@
         </div>
     </div>
     
+    <!-- 비밀번호 변경 모달 -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal">
+            <div class="modal-header"><h3>🔑 비밀번호 변경</h3><button class="modal-close" onclick="closePasswordModal()">&times;</button></div>
+            <div class="form-group"><label>현재 비밀번호</label><input type="password" id="currentPassword" placeholder="현재 비밀번호"></div>
+            <div class="form-group"><label>새 비밀번호</label><input type="password" id="newPassword" placeholder="새 비밀번호"></div>
+            <div class="form-group"><label>새 비밀번호 확인</label><input type="password" id="confirmPassword" placeholder="새 비밀번호 확인"></div>
+            <button class="btn btn-primary" onclick="changePassword()" style="width:100%">✅ 변경</button>
+        </div>
+    </div>
+    
     <script>
         const PERCENTILE_DATA = {"male":[{"Age":4,"P3":21.26,"P5":21.41,"P10":21.63,"P25":21.99,"P50":22.39,"P75":22.78,"P90":23.13,"P95":23.33},{"Age":5,"P3":21.49,"P5":21.64,"P10":21.87,"P25":22.26,"P50":22.69,"P75":23.12,"P90":23.51,"P95":23.74},{"Age":6,"P3":21.71,"P5":21.86,"P10":22.1,"P25":22.51,"P50":22.97,"P75":23.45,"P90":23.88,"P95":24.15},{"Age":7,"P3":21.91,"P5":22.07,"P10":22.32,"P25":22.75,"P50":23.25,"P75":23.76,"P90":24.24,"P95":24.54},{"Age":8,"P3":22.09,"P5":22.26,"P10":22.53,"P25":22.98,"P50":23.51,"P75":24.07,"P90":24.6,"P95":24.92},{"Age":9,"P3":22.27,"P5":22.44,"P10":22.72,"P25":23.19,"P50":23.76,"P75":24.36,"P90":24.93,"P95":25.3},{"Age":10,"P3":22.42,"P5":22.6,"P10":22.89,"P25":23.4,"P50":23.99,"P75":24.64,"P90":25.26,"P95":25.65},{"Age":11,"P3":22.56,"P5":22.75,"P10":23.05,"P25":23.58,"P50":24.22,"P75":24.9,"P90":25.57,"P95":25.99},{"Age":12,"P3":22.68,"P5":22.88,"P10":23.2,"P25":23.76,"P50":24.43,"P75":25.15,"P90":25.86,"P95":26.31},{"Age":13,"P3":22.78,"P5":22.99,"P10":23.33,"P25":23.92,"P50":24.62,"P75":25.39,"P90":26.14,"P95":26.61},{"Age":14,"P3":22.86,"P5":23.08,"P10":23.44,"P25":24.06,"P50":24.81,"P75":25.61,"P90":26.39,"P95":26.89},{"Age":15,"P3":22.91,"P5":23.15,"P10":23.53,"P25":24.19,"P50":24.98,"P75":25.82,"P90":26.63,"P95":27.14},{"Age":16,"P3":22.94,"P5":23.2,"P10":23.6,"P25":24.31,"P50":25.13,"P75":26.01,"P90":26.84,"P95":27.36},{"Age":17,"P3":22.95,"P5":23.23,"P10":23.66,"P25":24.41,"P50":25.28,"P75":26.18,"P90":27.04,"P95":27.56},{"Age":18,"P3":22.92,"P5":23.22,"P10":23.69,"P25":24.5,"P50":25.41,"P75":26.35,"P90":27.21,"P95":27.74}],"female":[{"Age":4,"P3":20.74,"P5":20.87,"P10":21.08,"P25":21.41,"P50":21.78,"P75":22.14,"P90":22.46,"P95":22.66},{"Age":5,"P3":20.96,"P5":21.11,"P10":21.33,"P25":21.69,"P50":22.1,"P75":22.5,"P90":22.87,"P95":23.08},{"Age":6,"P3":21.17,"P5":21.33,"P10":21.56,"P25":21.96,"P50":22.41,"P75":22.85,"P90":23.26,"P95":23.5},{"Age":7,"P3":21.37,"P5":21.53,"P10":21.79,"P25":22.22,"P50":22.7,"P75":23.19,"P90":23.63,"P95":23.9},{"Age":8,"P3":21.56,"P5":21.73,"P10":22,"P25":22.46,"P50":22.98,"P75":23.51,"P90":23.99,"P95":24.28},{"Age":9,"P3":21.73,"P5":21.92,"P10":22.21,"P25":22.7,"P50":23.25,"P75":23.82,"P90":24.34,"P95":24.65},{"Age":10,"P3":21.89,"P5":22.09,"P10":22.4,"P25":22.92,"P50":23.51,"P75":24.11,"P90":24.67,"P95":25.01},{"Age":11,"P3":22.04,"P5":22.25,"P10":22.57,"P25":23.12,"P50":23.75,"P75":24.39,"P90":24.98,"P95":25.34},{"Age":12,"P3":22.18,"P5":22.39,"P10":22.73,"P25":23.31,"P50":23.97,"P75":24.65,"P90":25.28,"P95":25.66},{"Age":13,"P3":22.29,"P5":22.53,"P10":22.88,"P25":23.49,"P50":24.19,"P75":24.9,"P90":25.55,"P95":25.95},{"Age":14,"P3":22.4,"P5":22.64,"P10":23.02,"P25":23.66,"P50":24.39,"P75":25.13,"P90":25.81,"P95":26.22},{"Age":15,"P3":22.48,"P5":22.74,"P10":23.14,"P25":23.81,"P50":24.57,"P75":25.34,"P90":26.05,"P95":26.47},{"Age":16,"P3":22.55,"P5":22.82,"P10":23.24,"P25":23.95,"P50":24.75,"P75":25.54,"P90":26.27,"P95":26.7},{"Age":17,"P3":22.59,"P5":22.89,"P10":23.33,"P25":24.08,"P50":24.91,"P75":25.73,"P90":26.46,"P95":26.9},{"Age":18,"P3":22.61,"P5":22.93,"P10":23.41,"P25":24.19,"P50":25.05,"P75":25.89,"P90":26.64,"P95":27.08}]};
-        const TREATMENT_COLORS = {'아트로핀 0.01%':{bg:'rgba(239,68,68,0.2)',border:'#ef4444'},'아트로핀 0.025%':{bg:'rgba(249,115,22,0.2)',border:'#f97316'},'아트로핀 0.05%':{bg:'rgba(234,179,8,0.2)',border:'#eab308'},'아트로핀 0.1%':{bg:'rgba(132,204,22,0.2)',border:'#84cc16'},'드림렌즈':{bg:'rgba(34,197,94,0.2)',border:'#22c55e'},'마이사이트':{bg:'rgba(6,182,212,0.2)',border:'#06b6d4'},'PPSL':{bg:'rgba(139,92,246,0.2)',border:'#8b5cf6'}};
+        const TREATMENT_COLORS = {'아트로핀 0.01%':'#dc2626','아트로핀 0.025%':'#ea580c','아트로핀 0.05%':'#d97706','아트로핀 0.1%':'#65a30d','드림렌즈':'#059669','마이사이트':'#0891b2','PPSL':'#7c3aed'};
+        const OD_COLOR = '#0891b2', OS_COLOR = '#e11d48';
         
         let patients = JSON.parse(localStorage.getItem('myopiaPatients')) || [];
         let adminPassword = localStorage.getItem('adminPassword') || '1234';
@@ -361,6 +380,28 @@
             document.getElementById('patientLoginName').value='';
             document.getElementById('patientLoginBirth').value='';
         }
+        
+        // 비밀번호 변경
+        function openPasswordModal() { document.getElementById('passwordModal').classList.add('active'); }
+        function closePasswordModal() { 
+            document.getElementById('passwordModal').classList.remove('active');
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        }
+        function changePassword() {
+            const current = document.getElementById('currentPassword').value;
+            const newPw = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            if (current !== adminPassword) { alert('현재 비밀번호가 틀렸습니다.'); return; }
+            if (newPw.length < 4) { alert('새 비밀번호는 4자 이상이어야 합니다.'); return; }
+            if (newPw !== confirm) { alert('새 비밀번호가 일치하지 않습니다.'); return; }
+            adminPassword = newPw;
+            localStorage.setItem('adminPassword', adminPassword);
+            alert('비밀번호가 변경되었습니다.');
+            closePasswordModal();
+        }
+        
         function setupSearch() {
             const input=document.getElementById('searchInput'), results=document.getElementById('searchResults');
             input.addEventListener('input',e=>{
@@ -461,7 +502,7 @@
         function updateTreatments(p,listId,editable){
             const list=document.getElementById(listId);
             if(!p.treatments||!p.treatments.length){list.innerHTML='<span style="color:var(--gray-600)">등록된 치료가 없습니다</span>';return;}
-            list.innerHTML=p.treatments.map((t,i)=>{const c=TREATMENT_COLORS[t.type]||{bg:'rgba(107,114,128,0.2)',border:'#6b7280'};return`<div class="treatment-tag" style="background:${c.bg};border-color:${c.border}"><span class="name" style="color:${c.border}">${t.type}</span><span class="date">${t.date} (${t.age}세)</span>${editable?`<button class="remove" onclick="removeTreatment(${i})">×</button>`:''}</div>`;}).join('');
+            list.innerHTML=p.treatments.map((t,i)=>{const c=TREATMENT_COLORS[t.type]||'#6b7280';return`<div class="treatment-tag" style="background:${c}20;border-color:${c}"><span class="name" style="color:${c}">${t.type}</span><span class="date">${t.date} (${t.age}세)</span>${editable?`<button class="remove" onclick="removeTreatment(${i})">×</button>`:''}</div>`;}).join('');
         }
         function updateRateTable(p){
             const tbody=document.getElementById('rateTableBody');
@@ -490,7 +531,7 @@
         function updateProgressChart(p){
             const ctx=document.getElementById('progressChart').getContext('2d');if(progressChart)progressChart.destroy();
             const key=currentChartType==='AL'?{od:'odAL',os:'osAL',label:'안축장 (mm)'}:{od:'odSE',os:'osSE',label:'굴절력 (D)'};
-            progressChart=new Chart(ctx,{type:'line',data:{labels:p.records.map(r=>r.date),datasets:[{label:'우안 (OD)',data:p.records.map(r=>r[key.od]),borderColor:'#0891b2',backgroundColor:'rgba(8,145,178,0.1)',borderWidth:3,tension:0.3,pointRadius:5},{label:'좌안 (OS)',data:p.records.map(r=>r[key.os]),borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.1)',borderWidth:3,tension:0.3,pointRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{title:{display:true,text:key.label}}}}});
+            progressChart=new Chart(ctx,{type:'line',data:{labels:p.records.map(r=>r.date),datasets:[{label:'우안 (OD)',data:p.records.map(r=>r[key.od]),borderColor:OD_COLOR,backgroundColor:OD_COLOR+'20',borderWidth:3,tension:0.3,pointRadius:5},{label:'좌안 (OS)',data:p.records.map(r=>r[key.os]),borderColor:OS_COLOR,backgroundColor:OS_COLOR+'20',borderWidth:3,tension:0.3,pointRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{title:{display:true,text:key.label}}}}});
         }
         function generateCurveData(gender,pKey){const data=PERCENTILE_DATA[gender];const points=[];for(let age=4;age<=18;age+=0.5){points.push({x:age,y:interpolateValue(data,age,pKey)});}return points;}
         function updateGrowthChart(p){
@@ -499,9 +540,46 @@
             const createRefLine=(pKey,color,width,dash,label)=>({type:'line',label,data:generateCurveData(gender,pKey),borderColor:color,borderWidth:width,borderDash:dash,pointRadius:0,tension:0.4,fill:false,order:10});
             const odData=p.records.filter(r=>r.odAL&&r.age>=4&&r.age<=18).map(r=>({x:r.age,y:r.odAL}));
             const osData=p.records.filter(r=>r.osAL&&r.age>=4&&r.age<=18).map(r=>({x:r.age,y:r.osAL}));
+            
+            // 치료 annotation - 얇은 세로선으로 변경
             const annotations={};
-            if(p.treatments){p.treatments.forEach((t,i)=>{if(t.age>=4&&t.age<=18){const c=TREATMENT_COLORS[t.type]||{bg:'rgba(139,92,246,0.3)',border:'#8b5cf6'};annotations[`t${i}`]={type:'box',xMin:t.age,xMax:t.age+0.3,yMin:20,yMax:29,backgroundColor:c.bg,borderColor:c.border,borderWidth:2,label:{display:true,content:t.type,position:{x:'center',y:'start'},backgroundColor:c.border,color:'white',font:{size:9,weight:'bold'},padding:3}};}});}
-            growthChart=new Chart(ctx,{type:'scatter',data:{datasets:[createRefLine('P95','#dc2626',2,[6,3],'P95'),createRefLine('P90','#ea580c',1.5,[4,4],'P90'),createRefLine('P75','#f59e0b',2,[6,3],'P75'),createRefLine('P50','#16a34a',3,[],'P50'),createRefLine('P25','#6b7280',2,[6,3],'P25'),createRefLine('P10','#9ca3af',1.5,[4,4],'P10'),createRefLine('P5','#d1d5db',2,[6,3],'P5'),{type:'scatter',label:'우안 (OD)',data:odData,borderColor:'#0891b2',backgroundColor:'#0891b2',pointRadius:5,pointHoverRadius:7,showLine:true,borderWidth:2,tension:0.2,order:1},{type:'scatter',label:'좌안 (OS)',data:osData,borderColor:'#7c3aed',backgroundColor:'#7c3aed',pointRadius:5,pointHoverRadius:7,showLine:true,borderWidth:2,tension:0.2,order:1}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'nearest'},plugins:{legend:{display:false},tooltip:{filter:item=>item.dataset.label==='우안 (OD)'||item.dataset.label==='좌안 (OS)',callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}mm @ ${ctx.parsed.x.toFixed(1)}세`}},annotation:{annotations}},scales:{x:{type:'linear',min:4,max:18,title:{display:true,text:'나이 (세)',font:{weight:'bold',size:13}},ticks:{stepSize:2},grid:{color:'rgba(0,0,0,0.08)'}},y:{min:20,max:29,title:{display:true,text:'안축장 (mm)',font:{weight:'bold',size:13}},ticks:{stepSize:1},grid:{color:'rgba(0,0,0,0.08)'}}}}});
+            if(p.treatments){
+                p.treatments.forEach((t,i)=>{
+                    if(t.age>=4&&t.age<=18){
+                        const c=TREATMENT_COLORS[t.type]||'#7c3aed';
+                        annotations[`t${i}`]={
+                            type:'line',
+                            xMin:t.age,
+                            xMax:t.age,
+                            borderColor:c,
+                            borderWidth:2,
+                            borderDash:[6,4],
+                            label:{
+                                display:true,
+                                content:t.type,
+                                position:'start',
+                                backgroundColor:'rgba(255,255,255,0.9)',
+                                color:c,
+                                font:{size:10,weight:'bold'},
+                                padding:{x:4,y:2},
+                                borderRadius:4
+                            }
+                        };
+                    }
+                });
+            }
+            
+            growthChart=new Chart(ctx,{type:'scatter',data:{datasets:[
+                createRefLine('P95','#dc2626',2,[6,3],'P95'),
+                createRefLine('P90','#ea580c',1.5,[4,4],'P90'),
+                createRefLine('P75','#f59e0b',2,[6,3],'P75'),
+                createRefLine('P50','#16a34a',3,[],'P50'),
+                createRefLine('P25','#6b7280',2,[6,3],'P25'),
+                createRefLine('P10','#9ca3af',1.5,[4,4],'P10'),
+                createRefLine('P5','#d1d5db',2,[6,3],'P5'),
+                {type:'scatter',label:'우안 (OD)',data:odData,borderColor:OD_COLOR,backgroundColor:OD_COLOR,pointRadius:5,pointHoverRadius:7,showLine:true,borderWidth:2,tension:0.2,order:1},
+                {type:'scatter',label:'좌안 (OS)',data:osData,borderColor:OS_COLOR,backgroundColor:OS_COLOR,pointRadius:5,pointHoverRadius:7,showLine:true,borderWidth:2,tension:0.2,order:1}
+            ]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'nearest'},plugins:{legend:{display:false},tooltip:{filter:item=>item.dataset.label==='우안 (OD)'||item.dataset.label==='좌안 (OS)',callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}mm @ ${ctx.parsed.x.toFixed(1)}세`}},annotation:{annotations}},scales:{x:{type:'linear',min:4,max:18,title:{display:true,text:'나이 (세)',font:{weight:'bold',size:13}},ticks:{stepSize:2},grid:{color:'rgba(0,0,0,0.08)'}},y:{min:20,max:29,title:{display:true,text:'안축장 (mm)',font:{weight:'bold',size:13}},ticks:{stepSize:1},grid:{color:'rgba(0,0,0,0.08)'}}}}});
         }
         function saveChartAsImage(){
             const p=patients.find(x=>x.id===currentPatientId);if(!p||!growthChart)return;
