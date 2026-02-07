@@ -18,11 +18,12 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); min-height: 100vh; color: var(--gray-800); line-height: 1.6; }
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; padding: 30px 20px; text-align: center; box-shadow: var(--shadow); }
+        header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; padding: 30px 20px; text-align: center; box-shadow: var(--shadow); position: relative; }
         header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; }
         header p { opacity: 0.9; font-size: 0.95rem; }
+        .header-actions { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 10px; }
         .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px; }
-        .card-title { font-size: 1.1rem; font-weight: 600; color: var(--primary); margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-light); }
+        .card-title { font-size: 1.1rem; font-weight: 600; color: var(--primary); margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--primary-light); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .search-box { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
         .search-input { flex: 1; min-width: 200px; padding: 12px 16px; border: 2px solid var(--gray-300); border-radius: 8px; font-size: 0.95rem; }
         .search-input:focus { outline: none; border-color: var(--primary); }
@@ -34,13 +35,13 @@
         .patient-id { color: var(--gray-600); font-size: 0.85rem; }
         select, input, button { font-family: inherit; font-size: 0.95rem; }
         select { padding: 10px 12px; border: 2px solid var(--gray-300); border-radius: 8px; background: white; cursor: pointer; }
-        select:focus { outline: none; border-color: var(--primary); }
         .btn { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover { background: var(--primary-dark); }
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
         .btn-outline { background: white; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-white { background: white; color: var(--primary); border: none; }
         .btn-sm { padding: 8px 16px; font-size: 0.85rem; }
         .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .form-group { margin-bottom: 16px; }
@@ -75,22 +76,22 @@
         th { background: var(--gray-100); font-weight: 600; color: var(--gray-600); font-size: 0.85rem; }
         tbody tr:hover { background: var(--gray-100); }
         .delete-btn { background: none; border: none; color: var(--danger); cursor: pointer; padding: 4px 8px; }
-        .chart-container { position: relative; height: 450px; margin-top: 16px; background: #fafafa; border-radius: 8px; padding: 10px; }
+        .growth-chart-container { position: relative; height: 550px; margin-top: 16px; background: #fafafa; border-radius: 8px; padding: 15px; }
+        .chart-container { position: relative; height: 300px; margin-top: 16px; }
         .chart-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
         .chart-tab { padding: 8px 20px; border: 2px solid var(--gray-300); background: white; border-radius: 20px; cursor: pointer; font-weight: 500; }
         .chart-tab.active { background: var(--primary); border-color: var(--primary); color: white; }
         .chart-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding: 12px; background: var(--gray-100); border-radius: 8px; justify-content: center; }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
         .legend-line { width: 24px; height: 3px; border-radius: 2px; }
-        .legend-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-        .treatment-section { margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--gray-200); }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
         .treatment-form { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
         .treatment-form .form-group { margin-bottom: 0; flex: 1; min-width: 150px; }
         .treatment-list { display: flex; flex-wrap: wrap; gap: 8px; }
         .treatment-tag { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 20px; font-size: 0.85rem; border: 2px solid; }
         .treatment-tag .name { font-weight: 600; }
         .treatment-tag .date { color: var(--gray-600); font-size: 0.8rem; }
-        .treatment-tag .remove { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.1rem; padding: 0 4px; margin-left: 4px; }
+        .treatment-tag .remove { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.1rem; }
         .empty-state { text-align: center; padding: 40px; color: var(--gray-600); }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
         .modal-overlay.active { display: flex; }
@@ -102,152 +103,204 @@
         .patient-info-header .name { font-size: 1.2rem; font-weight: 600; color: var(--primary); }
         .patient-info-header .details { color: var(--gray-600); font-size: 0.9rem; }
         .table-container { overflow-x: auto; }
+        .login-container { max-width: 400px; margin: 100px auto; }
+        .login-tabs { display: flex; margin-bottom: 20px; }
+        .login-tab { flex: 1; padding: 15px; text-align: center; background: var(--gray-200); cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .login-tab:first-child { border-radius: 8px 0 0 8px; }
+        .login-tab:last-child { border-radius: 0 8px 8px 0; }
+        .login-tab.active { background: var(--primary); color: white; }
+        .user-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; background: rgba(255,255,255,0.2); border-radius: 20px; font-size: 0.85rem; }
+        .rate-table th { font-size: 0.8rem; padding: 8px; }
+        .rate-table td { font-size: 0.85rem; padding: 8px; }
+        .rate-stable { color: var(--success); font-weight: 600; }
+        .rate-moderate { color: #d97706; font-weight: 600; }
+        .rate-rapid { color: var(--danger); font-weight: 600; }
         @media (max-width: 768px) {
             .container { padding: 12px; }
-            header { padding: 20px 16px; }
+            header { padding: 60px 16px 20px; }
             header h1 { font-size: 1.4rem; }
+            .header-actions { position: absolute; top: 10px; right: 10px; transform: none; }
             .card { padding: 16px; }
             .eye-inputs { grid-template-columns: 1fr; }
             .btn { padding: 10px 16px; font-size: 0.9rem; }
             .treatment-form { flex-direction: column; }
             .treatment-form .form-group { width: 100%; }
+            .growth-chart-container { height: 400px; }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>👁️ 근시 관리표</h1>
-        <p>Myopia Management Tracker with Growth Chart</p>
-    </header>
-    
-    <div class="container">
-        <div class="card">
-            <div class="search-box">
-                <input type="text" class="search-input" id="searchInput" placeholder="🔍 환자 이름 또는 등록번호로 검색...">
-                <button class="btn btn-primary" onclick="openPatientModal()">➕ 새 환자</button>
-                <button class="btn btn-danger" onclick="deletePatient()" id="deletePatientBtn" style="display:none">🗑️ 삭제</button>
-            </div>
-            <div class="search-results" id="searchResults"></div>
-        </div>
-        
-        <div id="mainContent" style="display:none">
-            <div class="patient-info-header" id="patientInfoHeader"></div>
-            
-            <div class="grid-2">
+    <!-- 로그인 화면 -->
+    <div id="loginScreen">
+        <header>
+            <h1>👁️ 근시 관리표</h1>
+            <p>Myopia Management Tracker</p>
+        </header>
+        <div class="container">
+            <div class="login-container">
                 <div class="card">
-                    <h3 class="card-title">📝 새 측정값 입력</h3>
-                    <div class="form-group">
-                        <label>측정일</label>
-                        <input type="date" id="measureDate">
+                    <div class="login-tabs">
+                        <div class="login-tab active" onclick="switchLoginTab('admin')">👨‍⚕️ 관리자</div>
+                        <div class="login-tab" onclick="switchLoginTab('patient')">👤 환자 조회</div>
                     </div>
-                    <div class="eye-section">
-                        <h4>👁️ 우안 (OD)</h4>
-                        <div class="eye-inputs">
-                            <div class="form-group"><label>안축장 (mm)</label><input type="number" step="0.01" id="odAL" placeholder="24.50"></div>
-                            <div class="form-group"><label>굴절력 (D)</label><input type="number" step="0.25" id="odSE" placeholder="-3.00"></div>
+                    <div id="adminLoginForm">
+                        <div class="form-group">
+                            <label>관리자 비밀번호</label>
+                            <input type="password" id="adminPassword" placeholder="비밀번호 입력">
                         </div>
+                        <button class="btn btn-primary" style="width:100%" onclick="adminLogin()">🔐 로그인</button>
+                        <p style="margin-top:12px;font-size:0.85rem;color:var(--gray-600);text-align:center">초기 비밀번호: 1234</p>
                     </div>
-                    <div class="eye-section">
-                        <h4>👁️ 좌안 (OS)</h4>
-                        <div class="eye-inputs">
-                            <div class="form-group"><label>안축장 (mm)</label><input type="number" step="0.01" id="osAL" placeholder="24.50"></div>
-                            <div class="form-group"><label>굴절력 (D)</label><input type="number" step="0.25" id="osSE" placeholder="-3.00"></div>
+                    <div id="patientLoginForm" style="display:none">
+                        <div class="form-group">
+                            <label>환자 이름</label>
+                            <input type="text" id="patientLoginName" placeholder="홍길동">
                         </div>
+                        <div class="form-group">
+                            <label>생년월일</label>
+                            <input type="date" id="patientLoginBirth">
+                        </div>
+                        <button class="btn btn-primary" style="width:100%" onclick="patientLogin()">🔍 내 기록 조회</button>
                     </div>
-                    <button class="btn btn-success" onclick="addMeasurement()" style="width:100%">✅ 측정값 저장</button>
-                </div>
-                
-                <div class="card">
-                    <h3 class="card-title">📊 현재 상태</h3>
-                    <div class="stats-grid" id="statsGrid">
-                        <div class="empty-state"><p>측정 데이터가 없습니다</p></div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 치료 기록 -->
-            <div class="card">
-                <h3 class="card-title">💊 근시 억제 치료 기록</h3>
-                <div class="treatment-form">
-                    <div class="form-group">
-                        <label>치료 종류</label>
-                        <select id="treatmentType">
-                            <option value="아트로핀 0.01%">아트로핀 0.01%</option>
-                            <option value="아트로핀 0.025%">아트로핀 0.025%</option>
-                            <option value="아트로핀 0.05%">아트로핀 0.05%</option>
-                            <option value="아트로핀 0.1%">아트로핀 0.1%</option>
-                            <option value="드림렌즈">드림렌즈 (Ortho-K)</option>
-                            <option value="마이사이트">마이사이트 (MiSight)</option>
-                            <option value="PPSL">PPSL</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>시작일</label>
-                        <input type="date" id="treatmentDate">
-                    </div>
-                    <button class="btn btn-primary btn-sm" onclick="addTreatment()">➕ 추가</button>
-                </div>
-                <div class="treatment-list" id="treatmentList"></div>
-            </div>
-            
-            <!-- 성장 차트 -->
-            <div class="card">
-                <h3 class="card-title">📈 안축장 성장 차트 (Percentile Growth Chart)</h3>
-                <div class="chart-container">
-                    <canvas id="growthChart"></canvas>
-                </div>
-                <div class="chart-legend">
-                    <div class="legend-item"><div class="legend-dot" style="background:#0891b2"></div>우안 (OD)</div>
-                    <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div>좌안 (OS)</div>
-                    <div class="legend-item"><div class="legend-line" style="background:#dc2626"></div>P95</div>
-                    <div class="legend-item"><div class="legend-line" style="background:#ea580c"></div>P75</div>
-                    <div class="legend-item"><div class="legend-line" style="background:#16a34a; height:4px"></div>P50</div>
-                    <div class="legend-item"><div class="legend-line" style="background:#6b7280"></div>P25</div>
-                    <div class="legend-item"><div class="legend-line" style="background:#9ca3af"></div>P5</div>
-                    <div class="legend-item"><div style="width:20px;height:20px;background:rgba(139,92,246,0.3);border-left:3px solid #8b5cf6"></div>치료 시작</div>
-                </div>
-            </div>
-            
-            <!-- 변화 그래프 -->
-            <div class="card">
-                <h3 class="card-title">📈 시간에 따른 변화</h3>
-                <div class="chart-tabs">
-                    <button class="chart-tab active" onclick="switchChart('AL')" id="tabAL">안축장</button>
-                    <button class="chart-tab" onclick="switchChart('SE')" id="tabSE">굴절력</button>
-                </div>
-                <div class="chart-container" style="height:300px">
-                    <canvas id="progressChart"></canvas>
-                </div>
-            </div>
-            
-            <!-- 측정 기록 -->
-            <div class="card">
-                <h3 class="card-title">📋 측정 기록</h3>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>날짜</th><th>나이</th><th>OD AL</th><th>OD %ile</th><th>OS AL</th><th>OS %ile</th><th>OD SE</th><th>OS SE</th><th></th></tr></thead>
-                        <tbody id="recordsBody"></tbody>
-                    </table>
-                </div>
-                <div style="margin-top:16px">
-                    <button class="btn btn-outline" onclick="exportCSV()">📥 CSV 내보내기</button>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- 환자 등록 모달 -->
+    <!-- 메인 앱 -->
+    <div id="mainApp" style="display:none">
+        <header>
+            <h1>👁️ 근시 관리표</h1>
+            <p>Myopia Management Tracker</p>
+            <div class="header-actions">
+                <span class="user-badge" id="userBadge"></span>
+                <button class="btn btn-white btn-sm" onclick="logout()">로그아웃</button>
+            </div>
+        </header>
+        
+        <div class="container">
+            <div class="card" id="adminSearchCard">
+                <div class="search-box">
+                    <input type="text" class="search-input" id="searchInput" placeholder="🔍 환자 이름 또는 등록번호로 검색...">
+                    <button class="btn btn-primary" onclick="openPatientModal()">➕ 새 환자</button>
+                    <button class="btn btn-danger" onclick="deletePatient()" id="deletePatientBtn" style="display:none">🗑️ 삭제</button>
+                </div>
+                <div class="search-results" id="searchResults"></div>
+            </div>
+            
+            <div id="mainContent" style="display:none">
+                <div class="patient-info-header" id="patientInfoHeader"></div>
+                
+                <div class="grid-2" id="adminInputSection">
+                    <div class="card">
+                        <h3 class="card-title">📝 새 측정값 입력</h3>
+                        <div class="form-group"><label>측정일</label><input type="date" id="measureDate"></div>
+                        <div class="eye-section">
+                            <h4>👁️ 우안 (OD)</h4>
+                            <div class="eye-inputs">
+                                <div class="form-group"><label>안축장 (mm)</label><input type="number" step="0.01" id="odAL" placeholder="24.50"></div>
+                                <div class="form-group"><label>굴절력 (D)</label><input type="number" step="0.25" id="odSE" placeholder="-3.00"></div>
+                            </div>
+                        </div>
+                        <div class="eye-section">
+                            <h4>👁️ 좌안 (OS)</h4>
+                            <div class="eye-inputs">
+                                <div class="form-group"><label>안축장 (mm)</label><input type="number" step="0.01" id="osAL" placeholder="24.50"></div>
+                                <div class="form-group"><label>굴절력 (D)</label><input type="number" step="0.25" id="osSE" placeholder="-3.00"></div>
+                            </div>
+                        </div>
+                        <button class="btn btn-success" onclick="addMeasurement()" style="width:100%">✅ 측정값 저장</button>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">📊 현재 상태</h3>
+                        <div class="stats-grid" id="statsGrid"><div class="empty-state"><p>측정 데이터가 없습니다</p></div></div>
+                    </div>
+                </div>
+                
+                <div class="card" id="adminTreatmentCard">
+                    <h3 class="card-title">💊 근시 억제 치료 기록</h3>
+                    <div class="treatment-form">
+                        <div class="form-group"><label>치료 종류</label>
+                            <select id="treatmentType">
+                                <option value="아트로핀 0.01%">아트로핀 0.01%</option>
+                                <option value="아트로핀 0.025%">아트로핀 0.025%</option>
+                                <option value="아트로핀 0.05%">아트로핀 0.05%</option>
+                                <option value="아트로핀 0.1%">아트로핀 0.1%</option>
+                                <option value="드림렌즈">드림렌즈 (Ortho-K)</option>
+                                <option value="마이사이트">마이사이트 (MiSight)</option>
+                                <option value="PPSL">PPSL</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>시작일</label><input type="date" id="treatmentDate"></div>
+                        <button class="btn btn-primary btn-sm" onclick="addTreatment()">➕ 추가</button>
+                    </div>
+                    <div class="treatment-list" id="treatmentList"></div>
+                </div>
+                
+                <div class="card" id="patientStatsCard" style="display:none">
+                    <h3 class="card-title">📊 현재 상태</h3>
+                    <div class="stats-grid" id="patientStatsGrid"></div>
+                </div>
+                <div class="card" id="patientTreatmentCard" style="display:none">
+                    <h3 class="card-title">💊 치료 기록</h3>
+                    <div class="treatment-list" id="patientTreatmentList"></div>
+                </div>
+                
+                <div class="card">
+                    <h3 class="card-title">
+                        <span>📈 안축장 성장 차트 (Percentile Growth Chart)</span>
+                        <button class="btn btn-outline btn-sm" onclick="saveChartAsImage()">📷 이미지 저장</button>
+                    </h3>
+                    <div class="growth-chart-container"><canvas id="growthChart"></canvas></div>
+                    <div class="chart-legend">
+                        <div class="legend-item"><div class="legend-dot" style="background:#0891b2"></div>우안 (OD)</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div>좌안 (OS)</div>
+                        <div class="legend-item"><div class="legend-line" style="background:#dc2626"></div>P95</div>
+                        <div class="legend-item"><div class="legend-line" style="background:#ea580c"></div>P75</div>
+                        <div class="legend-item"><div class="legend-line" style="background:#16a34a; height:4px"></div>P50</div>
+                        <div class="legend-item"><div class="legend-line" style="background:#6b7280"></div>P25</div>
+                        <div class="legend-item"><div class="legend-line" style="background:#9ca3af"></div>P5</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 class="card-title">📐 구간별 안축장 증가 속도</h3>
+                    <div class="table-container">
+                        <table class="rate-table">
+                            <thead><tr><th>구간</th><th>기간</th><th>OD 변화량</th><th>OD 속도</th><th>OS 변화량</th><th>OS 속도</th></tr></thead>
+                            <tbody id="rateTableBody"></tbody>
+                        </table>
+                    </div>
+                    <p style="margin-top:12px;font-size:0.8rem;color:var(--gray-600)">* 속도 기준: <span class="rate-stable">안정(&lt;0.2mm/년)</span>, <span class="rate-moderate">보통(0.2~0.4mm/년)</span>, <span class="rate-rapid">빠름(&gt;0.4mm/년)</span></p>
+                </div>
+                
+                <div class="card">
+                    <h3 class="card-title">📈 시간에 따른 변화</h3>
+                    <div class="chart-tabs">
+                        <button class="chart-tab active" onclick="switchChart('AL')" id="tabAL">안축장</button>
+                        <button class="chart-tab" onclick="switchChart('SE')" id="tabSE">굴절력</button>
+                    </div>
+                    <div class="chart-container"><canvas id="progressChart"></canvas></div>
+                </div>
+                
+                <div class="card">
+                    <h3 class="card-title">📋 측정 기록</h3>
+                    <div class="table-container">
+                        <table><thead><tr><th>날짜</th><th>나이</th><th>OD AL</th><th>OD %ile</th><th>OS AL</th><th>OS %ile</th><th>OD SE</th><th>OS SE</th><th class="admin-col"></th></tr></thead><tbody id="recordsBody"></tbody></table>
+                    </div>
+                    <div style="margin-top:16px"><button class="btn btn-outline" onclick="exportCSV()">📥 CSV 내보내기</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="modal-overlay" id="patientModal">
         <div class="modal">
-            <div class="modal-header">
-                <h3>새 환자 등록</h3>
-                <button class="modal-close" onclick="closePatientModal()">&times;</button>
-            </div>
+            <div class="modal-header"><h3>새 환자 등록</h3><button class="modal-close" onclick="closePatientModal()">&times;</button></div>
             <div class="form-group"><label>등록번호 *</label><input type="text" id="newPatientRegNo" placeholder="12345678"></div>
             <div class="form-group"><label>환자 이름 *</label><input type="text" id="newPatientName" placeholder="홍길동"></div>
             <div class="form-group"><label>생년월일 *</label><input type="date" id="newPatientBirth"></div>
-            <div class="form-group">
-                <label>성별 *</label>
+            <div class="form-group"><label>성별 *</label>
                 <div class="gender-selector">
                     <div class="gender-option"><input type="radio" name="gender" id="genderMale" value="male" checked><label for="genderMale">👦 남자</label></div>
                     <div class="gender-option"><input type="radio" name="gender" id="genderFemale" value="female"><label for="genderFemale">👧 여자</label></div>
@@ -258,405 +311,216 @@
     </div>
     
     <script>
-        // Percentile 데이터 (남/여, 나이 4~18세)
         const PERCENTILE_DATA = {"male":[{"Age":4,"P3":21.26,"P5":21.41,"P10":21.63,"P25":21.99,"P50":22.39,"P75":22.78,"P90":23.13,"P95":23.33},{"Age":5,"P3":21.49,"P5":21.64,"P10":21.87,"P25":22.26,"P50":22.69,"P75":23.12,"P90":23.51,"P95":23.74},{"Age":6,"P3":21.71,"P5":21.86,"P10":22.1,"P25":22.51,"P50":22.97,"P75":23.45,"P90":23.88,"P95":24.15},{"Age":7,"P3":21.91,"P5":22.07,"P10":22.32,"P25":22.75,"P50":23.25,"P75":23.76,"P90":24.24,"P95":24.54},{"Age":8,"P3":22.09,"P5":22.26,"P10":22.53,"P25":22.98,"P50":23.51,"P75":24.07,"P90":24.6,"P95":24.92},{"Age":9,"P3":22.27,"P5":22.44,"P10":22.72,"P25":23.19,"P50":23.76,"P75":24.36,"P90":24.93,"P95":25.3},{"Age":10,"P3":22.42,"P5":22.6,"P10":22.89,"P25":23.4,"P50":23.99,"P75":24.64,"P90":25.26,"P95":25.65},{"Age":11,"P3":22.56,"P5":22.75,"P10":23.05,"P25":23.58,"P50":24.22,"P75":24.9,"P90":25.57,"P95":25.99},{"Age":12,"P3":22.68,"P5":22.88,"P10":23.2,"P25":23.76,"P50":24.43,"P75":25.15,"P90":25.86,"P95":26.31},{"Age":13,"P3":22.78,"P5":22.99,"P10":23.33,"P25":23.92,"P50":24.62,"P75":25.39,"P90":26.14,"P95":26.61},{"Age":14,"P3":22.86,"P5":23.08,"P10":23.44,"P25":24.06,"P50":24.81,"P75":25.61,"P90":26.39,"P95":26.89},{"Age":15,"P3":22.91,"P5":23.15,"P10":23.53,"P25":24.19,"P50":24.98,"P75":25.82,"P90":26.63,"P95":27.14},{"Age":16,"P3":22.94,"P5":23.2,"P10":23.6,"P25":24.31,"P50":25.13,"P75":26.01,"P90":26.84,"P95":27.36},{"Age":17,"P3":22.95,"P5":23.23,"P10":23.66,"P25":24.41,"P50":25.28,"P75":26.18,"P90":27.04,"P95":27.56},{"Age":18,"P3":22.92,"P5":23.22,"P10":23.69,"P25":24.5,"P50":25.41,"P75":26.35,"P90":27.21,"P95":27.74}],"female":[{"Age":4,"P3":20.74,"P5":20.87,"P10":21.08,"P25":21.41,"P50":21.78,"P75":22.14,"P90":22.46,"P95":22.66},{"Age":5,"P3":20.96,"P5":21.11,"P10":21.33,"P25":21.69,"P50":22.1,"P75":22.5,"P90":22.87,"P95":23.08},{"Age":6,"P3":21.17,"P5":21.33,"P10":21.56,"P25":21.96,"P50":22.41,"P75":22.85,"P90":23.26,"P95":23.5},{"Age":7,"P3":21.37,"P5":21.53,"P10":21.79,"P25":22.22,"P50":22.7,"P75":23.19,"P90":23.63,"P95":23.9},{"Age":8,"P3":21.56,"P5":21.73,"P10":22,"P25":22.46,"P50":22.98,"P75":23.51,"P90":23.99,"P95":24.28},{"Age":9,"P3":21.73,"P5":21.92,"P10":22.21,"P25":22.7,"P50":23.25,"P75":23.82,"P90":24.34,"P95":24.65},{"Age":10,"P3":21.89,"P5":22.09,"P10":22.4,"P25":22.92,"P50":23.51,"P75":24.11,"P90":24.67,"P95":25.01},{"Age":11,"P3":22.04,"P5":22.25,"P10":22.57,"P25":23.12,"P50":23.75,"P75":24.39,"P90":24.98,"P95":25.34},{"Age":12,"P3":22.18,"P5":22.39,"P10":22.73,"P25":23.31,"P50":23.97,"P75":24.65,"P90":25.28,"P95":25.66},{"Age":13,"P3":22.29,"P5":22.53,"P10":22.88,"P25":23.49,"P50":24.19,"P75":24.9,"P90":25.55,"P95":25.95},{"Age":14,"P3":22.4,"P5":22.64,"P10":23.02,"P25":23.66,"P50":24.39,"P75":25.13,"P90":25.81,"P95":26.22},{"Age":15,"P3":22.48,"P5":22.74,"P10":23.14,"P25":23.81,"P50":24.57,"P75":25.34,"P90":26.05,"P95":26.47},{"Age":16,"P3":22.55,"P5":22.82,"P10":23.24,"P25":23.95,"P50":24.75,"P75":25.54,"P90":26.27,"P95":26.7},{"Age":17,"P3":22.59,"P5":22.89,"P10":23.33,"P25":24.08,"P50":24.91,"P75":25.73,"P90":26.46,"P95":26.9},{"Age":18,"P3":22.61,"P5":22.93,"P10":23.41,"P25":24.19,"P50":25.05,"P75":25.89,"P90":26.64,"P95":27.08}]};
-        
-        // 치료별 색상
-        const TREATMENT_COLORS = {
-            '아트로핀 0.01%': { bg: 'rgba(239,68,68,0.2)', border: '#ef4444' },
-            '아트로핀 0.025%': { bg: 'rgba(249,115,22,0.2)', border: '#f97316' },
-            '아트로핀 0.05%': { bg: 'rgba(234,179,8,0.2)', border: '#eab308' },
-            '아트로핀 0.1%': { bg: 'rgba(132,204,22,0.2)', border: '#84cc16' },
-            '드림렌즈': { bg: 'rgba(34,197,94,0.2)', border: '#22c55e' },
-            '마이사이트': { bg: 'rgba(6,182,212,0.2)', border: '#06b6d4' },
-            'PPSL': { bg: 'rgba(139,92,246,0.2)', border: '#8b5cf6' }
-        };
+        const TREATMENT_COLORS = {'아트로핀 0.01%':{bg:'rgba(239,68,68,0.2)',border:'#ef4444'},'아트로핀 0.025%':{bg:'rgba(249,115,22,0.2)',border:'#f97316'},'아트로핀 0.05%':{bg:'rgba(234,179,8,0.2)',border:'#eab308'},'아트로핀 0.1%':{bg:'rgba(132,204,22,0.2)',border:'#84cc16'},'드림렌즈':{bg:'rgba(34,197,94,0.2)',border:'#22c55e'},'마이사이트':{bg:'rgba(6,182,212,0.2)',border:'#06b6d4'},'PPSL':{bg:'rgba(139,92,246,0.2)',border:'#8b5cf6'}};
         
         let patients = JSON.parse(localStorage.getItem('myopiaPatients')) || [];
-        let currentPatientId = null;
-        let progressChart = null;
-        let growthChart = null;
-        let currentChartType = 'AL';
+        let adminPassword = localStorage.getItem('adminPassword') || '1234';
+        let currentPatientId = null, currentMode = null, progressChart = null, growthChart = null, currentChartType = 'AL';
         
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('measureDate').valueAsDate = new Date();
-            document.getElementById('treatmentDate').valueAsDate = new Date();
-            setupSearch();
-        });
-        
+        function switchLoginTab(tab) {
+            document.querySelectorAll('.login-tab').forEach((t,i) => t.classList.toggle('active', (tab==='admin'?i===0:i===1)));
+            document.getElementById('adminLoginForm').style.display = tab==='admin'?'block':'none';
+            document.getElementById('patientLoginForm').style.display = tab==='patient'?'block':'none';
+        }
+        function adminLogin() {
+            if (document.getElementById('adminPassword').value === adminPassword) { currentMode='admin'; showMainApp(); }
+            else alert('비밀번호가 틀렸습니다.');
+        }
+        function patientLogin() {
+            const name = document.getElementById('patientLoginName').value.trim();
+            const birth = document.getElementById('patientLoginBirth').value;
+            if (!name||!birth) { alert('이름과 생년월일을 입력하세요.'); return; }
+            const p = patients.find(x => x.name===name && x.birthDate===birth);
+            if (p) { currentMode='patient'; currentPatientId=p.id; showMainApp(); document.getElementById('mainContent').style.display='block'; updateDisplay(); }
+            else alert('일치하는 환자 정보가 없습니다.');
+        }
+        function showMainApp() {
+            document.getElementById('loginScreen').style.display='none';
+            document.getElementById('mainApp').style.display='block';
+            if (currentMode==='admin') {
+                document.getElementById('userBadge').innerHTML='👨‍⚕️ 관리자';
+                document.getElementById('adminSearchCard').style.display='block';
+                document.querySelectorAll('.admin-col').forEach(el=>el.style.display='');
+                setupSearch();
+                document.getElementById('measureDate').valueAsDate = new Date();
+                document.getElementById('treatmentDate').valueAsDate = new Date();
+            } else {
+                const p = patients.find(x=>x.id===currentPatientId);
+                document.getElementById('userBadge').innerHTML=`👤 ${p.name}`;
+                document.getElementById('adminSearchCard').style.display='none';
+                document.querySelectorAll('.admin-col').forEach(el=>el.style.display='none');
+            }
+        }
+        function logout() {
+            currentMode=null; currentPatientId=null;
+            document.getElementById('loginScreen').style.display='block';
+            document.getElementById('mainApp').style.display='none';
+            document.getElementById('mainContent').style.display='none';
+            document.getElementById('adminPassword').value='';
+            document.getElementById('patientLoginName').value='';
+            document.getElementById('patientLoginBirth').value='';
+        }
         function setupSearch() {
-            const input = document.getElementById('searchInput');
-            const results = document.getElementById('searchResults');
-            input.addEventListener('input', (e) => {
-                const q = e.target.value.toLowerCase().trim();
-                if (!q) { results.classList.remove('active'); return; }
-                const filtered = patients.filter(p => p.name.toLowerCase().includes(q) || (p.regNo && p.regNo.toLowerCase().includes(q)));
-                results.innerHTML = filtered.length === 0 ? '<div class="search-item">검색 결과가 없습니다</div>' :
-                    filtered.map(p => `<div class="search-item" onclick="selectPatient('${p.id}')"><span class="patient-name">${p.gender==='male'?'👦':'👧'} ${p.name}</span><span class="patient-id">${p.regNo||'-'} · ${p.birthDate}</span></div>`).join('');
+            const input=document.getElementById('searchInput'), results=document.getElementById('searchResults');
+            input.addEventListener('input',e=>{
+                const q=e.target.value.toLowerCase().trim();
+                if(!q){results.classList.remove('active');return;}
+                const f=patients.filter(p=>p.name.toLowerCase().includes(q)||(p.regNo&&p.regNo.toLowerCase().includes(q)));
+                results.innerHTML=f.length===0?'<div class="search-item">검색 결과 없음</div>':f.map(p=>`<div class="search-item" onclick="selectPatient('${p.id}')"><span class="patient-name">${p.gender==='male'?'👦':'👧'} ${p.name}</span><span class="patient-id">${p.regNo||'-'} · ${p.birthDate}</span></div>`).join('');
                 results.classList.add('active');
             });
-            input.addEventListener('blur', () => setTimeout(() => results.classList.remove('active'), 200));
+            input.addEventListener('blur',()=>setTimeout(()=>results.classList.remove('active'),200));
         }
-        
         function selectPatient(id) {
-            currentPatientId = id;
-            const p = patients.find(x => x.id === id);
-            document.getElementById('searchInput').value = p.name;
+            currentPatientId=id;
+            const p=patients.find(x=>x.id===id);
+            document.getElementById('searchInput').value=p.name;
             document.getElementById('searchResults').classList.remove('active');
-            document.getElementById('mainContent').style.display = 'block';
-            document.getElementById('deletePatientBtn').style.display = 'inline-flex';
+            document.getElementById('mainContent').style.display='block';
+            document.getElementById('deletePatientBtn').style.display='inline-flex';
             updateDisplay();
         }
-        
-        function openPatientModal() { document.getElementById('patientModal').classList.add('active'); }
-        function closePatientModal() { document.getElementById('patientModal').classList.remove('active'); }
-        
+        function openPatientModal(){document.getElementById('patientModal').classList.add('active');}
+        function closePatientModal(){document.getElementById('patientModal').classList.remove('active');}
         function addPatient() {
-            const regNo = document.getElementById('newPatientRegNo').value.trim();
-            const name = document.getElementById('newPatientName').value.trim();
-            const birth = document.getElementById('newPatientBirth').value;
-            const gender = document.querySelector('input[name="gender"]:checked').value;
-            if (!regNo || !name || !birth) { alert('모든 필드를 입력하세요.'); return; }
-            if (patients.find(p => p.regNo === regNo)) { alert('이미 등록된 등록번호입니다.'); return; }
-            const patient = { id: Date.now().toString(), regNo, name, birthDate: birth, gender, records: [], treatments: [] };
-            patients.push(patient);
-            saveData();
-            closePatientModal();
-            ['newPatientRegNo','newPatientName','newPatientBirth'].forEach(id => document.getElementById(id).value = '');
+            const regNo=document.getElementById('newPatientRegNo').value.trim(),name=document.getElementById('newPatientName').value.trim(),birth=document.getElementById('newPatientBirth').value,gender=document.querySelector('input[name="gender"]:checked').value;
+            if(!regNo||!name||!birth){alert('모든 필드를 입력하세요.');return;}
+            if(patients.find(p=>p.regNo===regNo)){alert('이미 등록된 등록번호입니다.');return;}
+            const patient={id:Date.now().toString(),regNo,name,birthDate:birth,gender,records:[],treatments:[]};
+            patients.push(patient);saveData();closePatientModal();
+            ['newPatientRegNo','newPatientName','newPatientBirth'].forEach(id=>document.getElementById(id).value='');
             selectPatient(patient.id);
         }
-        
         function deletePatient() {
-            if (!currentPatientId) return;
-            const p = patients.find(x => x.id === currentPatientId);
-            if (confirm(`"${p.name}" 환자를 삭제하시겠습니까?`)) {
-                patients = patients.filter(x => x.id !== currentPatientId);
-                saveData();
-                currentPatientId = null;
-                document.getElementById('searchInput').value = '';
-                document.getElementById('mainContent').style.display = 'none';
-                document.getElementById('deletePatientBtn').style.display = 'none';
+            if(!currentPatientId)return;
+            const p=patients.find(x=>x.id===currentPatientId);
+            if(confirm(`"${p.name}" 환자를 삭제하시겠습니까?`)){
+                patients=patients.filter(x=>x.id!==currentPatientId);saveData();currentPatientId=null;
+                document.getElementById('searchInput').value='';
+                document.getElementById('mainContent').style.display='none';
+                document.getElementById('deletePatientBtn').style.display='none';
             }
         }
-        
         function addMeasurement() {
-            if (!currentPatientId) return;
-            const p = patients.find(x => x.id === currentPatientId);
-            const date = document.getElementById('measureDate').value;
-            const odAL = parseFloat(document.getElementById('odAL').value);
-            const odSE = parseFloat(document.getElementById('odSE').value);
-            const osAL = parseFloat(document.getElementById('osAL').value);
-            const osSE = parseFloat(document.getElementById('osSE').value);
-            if (!date || (isNaN(odAL) && isNaN(odSE) && isNaN(osAL) && isNaN(osSE))) { alert('날짜와 최소 하나의 측정값을 입력하세요.'); return; }
-            const age = calcAge(p.birthDate, date);
-            const r = { date, age, odAL: isNaN(odAL)?null:odAL, odSE: isNaN(odSE)?null:odSE, osAL: isNaN(osAL)?null:osAL, osSE: isNaN(osSE)?null:osSE };
-            if (r.odAL && age >= 4 && age <= 18) r.odPct = calcPct(p.gender, age, r.odAL);
-            if (r.osAL && age >= 4 && age <= 18) r.osPct = calcPct(p.gender, age, r.osAL);
-            p.records.push(r);
-            p.records.sort((a,b) => new Date(a.date) - new Date(b.date));
-            saveData();
-            updateDisplay();
-            ['odAL','odSE','osAL','osSE'].forEach(id => document.getElementById(id).value = '');
+            if(!currentPatientId||currentMode!=='admin')return;
+            const p=patients.find(x=>x.id===currentPatientId);
+            const date=document.getElementById('measureDate').value;
+            const odAL=parseFloat(document.getElementById('odAL').value),odSE=parseFloat(document.getElementById('odSE').value);
+            const osAL=parseFloat(document.getElementById('osAL').value),osSE=parseFloat(document.getElementById('osSE').value);
+            if(!date||(isNaN(odAL)&&isNaN(odSE)&&isNaN(osAL)&&isNaN(osSE))){alert('날짜와 최소 하나의 측정값을 입력하세요.');return;}
+            const age=calcAge(p.birthDate,date);
+            const r={date,age,odAL:isNaN(odAL)?null:odAL,odSE:isNaN(odSE)?null:odSE,osAL:isNaN(osAL)?null:osAL,osSE:isNaN(osSE)?null:osSE};
+            if(r.odAL&&age>=4&&age<=18)r.odPct=calcPct(p.gender,age,r.odAL);
+            if(r.osAL&&age>=4&&age<=18)r.osPct=calcPct(p.gender,age,r.osAL);
+            p.records.push(r);p.records.sort((a,b)=>new Date(a.date)-new Date(b.date));saveData();updateDisplay();
+            ['odAL','odSE','osAL','osSE'].forEach(id=>document.getElementById(id).value='');
         }
-        
         function addTreatment() {
-            if (!currentPatientId) return;
-            const p = patients.find(x => x.id === currentPatientId);
-            const type = document.getElementById('treatmentType').value;
-            const date = document.getElementById('treatmentDate').value;
-            if (!date) { alert('시작일을 입력하세요.'); return; }
-            if (!p.treatments) p.treatments = [];
-            p.treatments.push({ type, date, age: calcAge(p.birthDate, date) });
-            p.treatments.sort((a,b) => new Date(a.date) - new Date(b.date));
-            saveData();
-            updateDisplay();
+            if(!currentPatientId||currentMode!=='admin')return;
+            const p=patients.find(x=>x.id===currentPatientId);
+            const type=document.getElementById('treatmentType').value,date=document.getElementById('treatmentDate').value;
+            if(!date){alert('시작일을 입력하세요.');return;}
+            if(!p.treatments)p.treatments=[];
+            p.treatments.push({type,date,age:calcAge(p.birthDate,date)});
+            p.treatments.sort((a,b)=>new Date(a.date)-new Date(b.date));saveData();updateDisplay();
         }
-        
-        function removeTreatment(idx) {
-            const p = patients.find(x => x.id === currentPatientId);
-            p.treatments.splice(idx, 1);
-            saveData();
-            updateDisplay();
-        }
-        
-        function calcAge(birth, date) {
-            const b = new Date(birth), d = new Date(date);
-            return Math.round((d.getFullYear() - b.getFullYear() + (d.getMonth() - b.getMonth())/12 + (d.getDate() - b.getDate())/365.25) * 10) / 10;
-        }
-        
-        function interpolateValue(data, age, key) {
-            if (age <= data[0].Age) return data[0][key];
-            if (age >= data[data.length-1].Age) return data[data.length-1][key];
-            for (let i = 0; i < data.length - 1; i++) {
-                if (data[i].Age <= age && data[i+1].Age >= age) {
-                    const r = (age - data[i].Age) / (data[i+1].Age - data[i].Age);
-                    return data[i][key] + r * (data[i+1][key] - data[i][key]);
-                }
-            }
-            return data[0][key];
-        }
-        
-        function calcPct(gender, age, al) {
-            const data = PERCENTILE_DATA[gender];
-            if (!data || age < 4 || age > 18) return null;
-            const refs = {};
-            ['P3','P5','P10','P25','P50','P75','P90','P95'].forEach(k => refs[k] = interpolateValue(data, age, k));
-            if (al <= refs.P3) return '<3';
-            if (al >= refs.P95) return '>95';
-            const pcts = [['P3',3],['P5',5],['P10',10],['P25',25],['P50',50],['P75',75],['P90',90],['P95',95]];
-            for (let i = 0; i < pcts.length - 1; i++) {
-                if (al >= refs[pcts[i][0]] && al <= refs[pcts[i+1][0]]) {
-                    const r = (al - refs[pcts[i][0]]) / (refs[pcts[i+1][0]] - refs[pcts[i][0]]);
-                    return Math.round(pcts[i][1] + r * (pcts[i+1][1] - pcts[i][1]));
-                }
-            }
-            return 50;
-        }
-        
-        function calcProg(records, key) {
-            const v = records.filter(r => r[key] !== null);
-            if (v.length < 2) return null;
-            const days = (new Date(v[v.length-1].date) - new Date(v[0].date)) / 86400000;
-            const years = days / 365.25;
-            return years < 0.1 ? null : (v[v.length-1][key] - v[0][key]) / years;
-        }
+        function removeTreatment(idx){if(currentMode!=='admin')return;const p=patients.find(x=>x.id===currentPatientId);p.treatments.splice(idx,1);saveData();updateDisplay();}
+        function calcAge(birth,date){const b=new Date(birth),d=new Date(date);return Math.round((d.getFullYear()-b.getFullYear()+(d.getMonth()-b.getMonth())/12+(d.getDate()-b.getDate())/365.25)*10)/10;}
+        function interpolateValue(data,age,key){if(age<=data[0].Age)return data[0][key];if(age>=data[data.length-1].Age)return data[data.length-1][key];for(let i=0;i<data.length-1;i++){if(data[i].Age<=age&&data[i+1].Age>=age){const r=(age-data[i].Age)/(data[i+1].Age-data[i].Age);return data[i][key]+r*(data[i+1][key]-data[i][key]);}}return data[0][key];}
+        function calcPct(gender,age,al){const data=PERCENTILE_DATA[gender];if(!data||age<4||age>18)return null;const refs={};['P3','P5','P10','P25','P50','P75','P90','P95'].forEach(k=>refs[k]=interpolateValue(data,age,k));if(al<=refs.P3)return'<3';if(al>=refs.P95)return'>95';const pcts=[['P3',3],['P5',5],['P10',10],['P25',25],['P50',50],['P75',75],['P90',90],['P95',95]];for(let i=0;i<pcts.length-1;i++){if(al>=refs[pcts[i][0]]&&al<=refs[pcts[i+1][0]]){return Math.round(pcts[i][1]+(al-refs[pcts[i][0]])/(refs[pcts[i+1][0]]-refs[pcts[i][0]])*(pcts[i+1][1]-pcts[i][1]));}}return 50;}
+        function calcProg(records,key){const v=records.filter(r=>r[key]!==null);if(v.length<2)return null;const years=(new Date(v[v.length-1].date)-new Date(v[0].date))/86400000/365.25;return years<0.1?null:(v[v.length-1][key]-v[0][key])/years;}
         
         function updateDisplay() {
-            const p = patients.find(x => x.id === currentPatientId);
-            if (!p) return;
-            document.getElementById('patientInfoHeader').innerHTML = `<span class="name">${p.gender==='male'?'👦':'👧'} ${p.name}</span><span class="details">등록번호: ${p.regNo} · ${p.gender==='male'?'남자':'여자'} · ${p.birthDate}</span>`;
-            updateStats(p);
-            updateTreatments(p);
-            updateRecords(p);
-            updateProgressChart(p);
-            updateGrowthChart(p);
-        }
-        
-        function updateStats(p) {
-            const g = document.getElementById('statsGrid');
-            if (!p.records.length) { g.innerHTML = '<div class="empty-state"><p>측정 데이터가 없습니다</p></div>'; return; }
-            const last = p.records[p.records.length - 1];
-            const progOD = calcProg(p.records, 'odAL'), progOS = calcProg(p.records, 'osAL');
-            const cls = v => v === null ? '' : Math.abs(v) < 0.2 ? 'stable' : Math.abs(v) < 0.4 ? 'moderate' : 'rapid';
-            const badge = pct => { if (!pct) return ''; const n = typeof pct === 'string' ? (pct.includes('>') ? 96 : 2) : pct; return `<span class="percentile-badge ${n > 75 ? 'percentile-high' : n > 50 ? 'percentile-mid' : 'percentile-low'}">${pct}%ile</span>`; };
-            g.innerHTML = `
-                <div class="stat-card left"><div class="stat-label">우안 안축장</div><div class="stat-value">${last.odAL?.toFixed(2)||'-'}</div><div class="stat-unit">mm</div>${badge(last.odPct)}${progOD!==null?`<div class="progress-indicator ${cls(progOD)}">${progOD>=0?'+':''}${progOD.toFixed(2)} mm/년</div>`:''}</div>
-                <div class="stat-card right"><div class="stat-label">좌안 안축장</div><div class="stat-value">${last.osAL?.toFixed(2)||'-'}</div><div class="stat-unit">mm</div>${badge(last.osPct)}${progOS!==null?`<div class="progress-indicator ${cls(progOS)}">${progOS>=0?'+':''}${progOS.toFixed(2)} mm/년</div>`:''}</div>
-                <div class="stat-card left"><div class="stat-label">우안 굴절력</div><div class="stat-value">${last.odSE?.toFixed(2)||'-'}</div><div class="stat-unit">D</div></div>
-                <div class="stat-card right"><div class="stat-label">좌안 굴절력</div><div class="stat-value">${last.osSE?.toFixed(2)||'-'}</div><div class="stat-unit">D</div></div>
-            `;
-        }
-        
-        function updateTreatments(p) {
-            const list = document.getElementById('treatmentList');
-            if (!p.treatments || !p.treatments.length) { list.innerHTML = '<span style="color:var(--gray-600)">등록된 치료가 없습니다</span>'; return; }
-            list.innerHTML = p.treatments.map((t, i) => {
-                const c = TREATMENT_COLORS[t.type] || { bg: 'rgba(107,114,128,0.2)', border: '#6b7280' };
-                return `<div class="treatment-tag" style="background:${c.bg};border-color:${c.border}"><span class="name" style="color:${c.border}">${t.type}</span><span class="date">${t.date} (${t.age}세)</span><button class="remove" onclick="removeTreatment(${i})">×</button></div>`;
-            }).join('');
-        }
-        
-        function updateRecords(p) {
-            const tbody = document.getElementById('recordsBody');
-            if (!p.records.length) { tbody.innerHTML = '<tr><td colspan="9">기록이 없습니다</td></tr>'; return; }
-            const badge = pct => { if (!pct) return '-'; const n = typeof pct === 'string' ? (pct.includes('>') ? 96 : 2) : pct; return `<span class="percentile-badge ${n > 75 ? 'percentile-high' : n > 50 ? 'percentile-mid' : 'percentile-low'}">${pct}</span>`; };
-            tbody.innerHTML = p.records.map((r, i) => `<tr><td>${r.date}</td><td>${r.age?.toFixed(1)||'-'}세</td><td>${r.odAL?.toFixed(2)||'-'}</td><td>${badge(r.odPct)}</td><td>${r.osAL?.toFixed(2)||'-'}</td><td>${badge(r.osPct)}</td><td>${r.odSE?.toFixed(2)||'-'}</td><td>${r.osSE?.toFixed(2)||'-'}</td><td><button class="delete-btn" onclick="deleteRecord(${i})">✕</button></td></tr>`).join('');
-        }
-        
-        function deleteRecord(i) {
-            const p = patients.find(x => x.id === currentPatientId);
-            if (confirm('이 기록을 삭제하시겠습니까?')) { p.records.splice(i, 1); saveData(); updateDisplay(); }
-        }
-        
-        function updateProgressChart(p) {
-            const ctx = document.getElementById('progressChart').getContext('2d');
-            if (progressChart) progressChart.destroy();
-            const key = currentChartType === 'AL' ? { od: 'odAL', os: 'osAL', label: '안축장 (mm)' } : { od: 'odSE', os: 'osSE', label: '굴절력 (D)' };
-            progressChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: p.records.map(r => r.date),
-                    datasets: [
-                        { label: '우안 (OD)', data: p.records.map(r => r[key.od]), borderColor: '#0891b2', backgroundColor: 'rgba(8,145,178,0.1)', borderWidth: 3, tension: 0.3, pointRadius: 6 },
-                        { label: '좌안 (OS)', data: p.records.map(r => r[key.os]), borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.1)', borderWidth: 3, tension: 0.3, pointRadius: 6 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { title: { display: true, text: key.label } } } }
-            });
-        }
-        
-        // 부드러운 곡선 데이터 생성 (0.5세 간격)
-        function generateCurveData(gender, pKey) {
-            const data = PERCENTILE_DATA[gender];
-            const points = [];
-            for (let age = 4; age <= 18; age += 0.5) {
-                points.push({ x: age, y: interpolateValue(data, age, pKey) });
+            const p=patients.find(x=>x.id===currentPatientId);if(!p)return;
+            document.getElementById('patientInfoHeader').innerHTML=`<span class="name">${p.gender==='male'?'👦':'👧'} ${p.name}</span><span class="details">등록번호: ${p.regNo} · ${p.gender==='male'?'남자':'여자'} · ${p.birthDate}</span>`;
+            if(currentMode==='admin'){
+                document.getElementById('adminInputSection').style.display='grid';
+                document.getElementById('adminTreatmentCard').style.display='block';
+                document.getElementById('patientStatsCard').style.display='none';
+                document.getElementById('patientTreatmentCard').style.display='none';
+                updateStats(p,'statsGrid');updateTreatments(p,'treatmentList',true);
+            }else{
+                document.getElementById('adminInputSection').style.display='none';
+                document.getElementById('adminTreatmentCard').style.display='none';
+                document.getElementById('patientStatsCard').style.display='block';
+                document.getElementById('patientTreatmentCard').style.display='block';
+                updateStats(p,'patientStatsGrid');updateTreatments(p,'patientTreatmentList',false);
             }
-            return points;
+            updateRecords(p);updateRateTable(p);updateProgressChart(p);updateGrowthChart(p);
         }
         
-        function updateGrowthChart(p) {
-            const ctx = document.getElementById('growthChart').getContext('2d');
-            if (growthChart) growthChart.destroy();
-            
-            const gender = p.gender;
-            
-            // 참조선 데이터셋 생성
-            const createRefLine = (pKey, color, width, dash, label) => ({
-                type: 'line',
-                label: label,
-                data: generateCurveData(gender, pKey),
-                borderColor: color,
-                borderWidth: width,
-                borderDash: dash,
-                pointRadius: 0,
-                tension: 0.4,
-                fill: false,
-                order: 10
-            });
-            
-            // 환자 데이터
-            const odData = p.records.filter(r => r.odAL && r.age >= 4 && r.age <= 18).map(r => ({ x: r.age, y: r.odAL }));
-            const osData = p.records.filter(r => r.osAL && r.age >= 4 && r.age <= 18).map(r => ({ x: r.age, y: r.osAL }));
-            
-            // 치료 시작선 (annotation)
-            const annotations = {};
-            if (p.treatments) {
-                p.treatments.forEach((t, i) => {
-                    if (t.age >= 4 && t.age <= 18) {
-                        const c = TREATMENT_COLORS[t.type] || { bg: 'rgba(139,92,246,0.3)', border: '#8b5cf6' };
-                        annotations[`treatment${i}`] = {
-                            type: 'box',
-                            xMin: t.age,
-                            xMax: t.age + 0.3,
-                            yMin: 20,
-                            yMax: 29,
-                            backgroundColor: c.bg,
-                            borderColor: c.border,
-                            borderWidth: 2,
-                            label: {
-                                display: true,
-                                content: t.type,
-                                position: { x: 'center', y: 'start' },
-                                backgroundColor: c.border,
-                                color: 'white',
-                                font: { size: 9, weight: 'bold' },
-                                padding: 3
-                            }
-                        };
-                    }
-                });
+        function updateStats(p,gridId){
+            const g=document.getElementById(gridId);if(!p.records.length){g.innerHTML='<div class="empty-state"><p>측정 데이터가 없습니다</p></div>';return;}
+            const last=p.records[p.records.length-1];
+            const progOD=calcProg(p.records,'odAL'),progOS=calcProg(p.records,'osAL');
+            const cls=v=>v===null?'':Math.abs(v)<0.2?'stable':Math.abs(v)<0.4?'moderate':'rapid';
+            const badge=pct=>{if(!pct)return'';const n=typeof pct==='string'?(pct.includes('>')?96:2):pct;return`<span class="percentile-badge ${n>75?'percentile-high':n>50?'percentile-mid':'percentile-low'}">${pct}%ile</span>`;};
+            g.innerHTML=`<div class="stat-card left"><div class="stat-label">우안 안축장</div><div class="stat-value">${last.odAL?.toFixed(2)||'-'}</div><div class="stat-unit">mm</div>${badge(last.odPct)}${progOD!==null?`<div class="progress-indicator ${cls(progOD)}">${progOD>=0?'+':''}${progOD.toFixed(2)} mm/년</div>`:''}</div><div class="stat-card right"><div class="stat-label">좌안 안축장</div><div class="stat-value">${last.osAL?.toFixed(2)||'-'}</div><div class="stat-unit">mm</div>${badge(last.osPct)}${progOS!==null?`<div class="progress-indicator ${cls(progOS)}">${progOS>=0?'+':''}${progOS.toFixed(2)} mm/년</div>`:''}</div><div class="stat-card left"><div class="stat-label">우안 굴절력</div><div class="stat-value">${last.odSE?.toFixed(2)||'-'}</div><div class="stat-unit">D</div></div><div class="stat-card right"><div class="stat-label">좌안 굴절력</div><div class="stat-value">${last.osSE?.toFixed(2)||'-'}</div><div class="stat-unit">D</div></div>`;
+        }
+        function updateTreatments(p,listId,editable){
+            const list=document.getElementById(listId);
+            if(!p.treatments||!p.treatments.length){list.innerHTML='<span style="color:var(--gray-600)">등록된 치료가 없습니다</span>';return;}
+            list.innerHTML=p.treatments.map((t,i)=>{const c=TREATMENT_COLORS[t.type]||{bg:'rgba(107,114,128,0.2)',border:'#6b7280'};return`<div class="treatment-tag" style="background:${c.bg};border-color:${c.border}"><span class="name" style="color:${c.border}">${t.type}</span><span class="date">${t.date} (${t.age}세)</span>${editable?`<button class="remove" onclick="removeTreatment(${i})">×</button>`:''}</div>`;}).join('');
+        }
+        function updateRateTable(p){
+            const tbody=document.getElementById('rateTableBody');
+            const records=p.records.filter(r=>r.odAL!==null||r.osAL!==null);
+            if(records.length<2){tbody.innerHTML='<tr><td colspan="6" style="color:var(--gray-600)">2회 이상 측정 시 표시됩니다</td></tr>';return;}
+            const getRateClass=rate=>{if(rate===null)return'';const r=Math.abs(rate);return r<0.2?'rate-stable':r<0.4?'rate-moderate':'rate-rapid';};
+            let rows='';
+            for(let i=1;i<records.length;i++){
+                const prev=records[i-1],curr=records[i];
+                const years=(new Date(curr.date)-new Date(prev.date))/86400000/365.25;
+                const months=Math.round(years*12);
+                const odDiff=(prev.odAL&&curr.odAL)?(curr.odAL-prev.odAL):null;
+                const osDiff=(prev.osAL&&curr.osAL)?(curr.osAL-prev.osAL):null;
+                const odRate=(odDiff!==null&&years>=0.1)?odDiff/years:null;
+                const osRate=(osDiff!==null&&years>=0.1)?osDiff/years:null;
+                rows+=`<tr><td>${prev.date} → ${curr.date}</td><td>${months}개월</td><td>${odDiff!==null?(odDiff>=0?'+':'')+odDiff.toFixed(2)+'mm':'-'}</td><td class="${getRateClass(odRate)}">${odRate!==null?(odRate>=0?'+':'')+odRate.toFixed(2)+'mm/년':'-'}</td><td>${osDiff!==null?(osDiff>=0?'+':'')+osDiff.toFixed(2)+'mm':'-'}</td><td class="${getRateClass(osRate)}">${osRate!==null?(osRate>=0?'+':'')+osRate.toFixed(2)+'mm/년':'-'}</td></tr>`;
             }
-            
-            growthChart = new Chart(ctx, {
-                type: 'scatter',
-                data: {
-                    datasets: [
-                        // Percentile 참조선들 (뒤에서부터)
-                        createRefLine('P95', '#dc2626', 2, [6, 3], 'P95'),
-                        createRefLine('P90', '#ea580c', 1.5, [4, 4], 'P90'),
-                        createRefLine('P75', '#f59e0b', 2, [6, 3], 'P75'),
-                        createRefLine('P50', '#16a34a', 3, [], 'P50'),
-                        createRefLine('P25', '#6b7280', 2, [6, 3], 'P25'),
-                        createRefLine('P10', '#9ca3af', 1.5, [4, 4], 'P10'),
-                        createRefLine('P5', '#d1d5db', 2, [6, 3], 'P5'),
-                        
-                        // 환자 측정 데이터 (앞에)
-                        {
-                            type: 'scatter',
-                            label: '우안 (OD)',
-                            data: odData,
-                            borderColor: '#0891b2',
-                            backgroundColor: '#0891b2',
-                            pointRadius: 10,
-                            pointHoverRadius: 14,
-                            pointStyle: 'circle',
-                            showLine: true,
-                            borderWidth: 3,
-                            tension: 0.2,
-                            order: 1
-                        },
-                        {
-                            type: 'scatter',
-                            label: '좌안 (OS)',
-                            data: osData,
-                            borderColor: '#7c3aed',
-                            backgroundColor: '#7c3aed',
-                            pointRadius: 10,
-                            pointHoverRadius: 14,
-                            pointStyle: 'circle',
-                            showLine: true,
-                            borderWidth: 3,
-                            tension: 0.2,
-                            order: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        intersect: false,
-                        mode: 'nearest'
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            filter: (item) => item.dataset.label === '우안 (OD)' || item.dataset.label === '좌안 (OS)',
-                            callbacks: {
-                                label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}mm @ ${ctx.parsed.x.toFixed(1)}세`
-                            }
-                        },
-                        annotation: { annotations }
-                    },
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            min: 4,
-                            max: 18,
-                            title: { display: true, text: '나이 (세)', font: { weight: 'bold', size: 13 } },
-                            ticks: { stepSize: 2 },
-                            grid: { color: 'rgba(0,0,0,0.08)' }
-                        },
-                        y: {
-                            min: 20,
-                            max: 29,
-                            title: { display: true, text: '안축장 (mm)', font: { weight: 'bold', size: 13 } },
-                            ticks: { stepSize: 1 },
-                            grid: { color: 'rgba(0,0,0,0.08)' }
-                        }
-                    }
-                }
-            });
+            tbody.innerHTML=rows;
         }
-        
-        function switchChart(type) {
-            currentChartType = type;
-            document.getElementById('tabAL').classList.toggle('active', type === 'AL');
-            document.getElementById('tabSE').classList.toggle('active', type === 'SE');
-            const p = patients.find(x => x.id === currentPatientId);
-            if (p) updateProgressChart(p);
+        function updateRecords(p){
+            const tbody=document.getElementById('recordsBody');if(!p.records.length){tbody.innerHTML='<tr><td colspan="9">기록이 없습니다</td></tr>';return;}
+            const badge=pct=>{if(!pct)return'-';const n=typeof pct==='string'?(pct.includes('>')?96:2):pct;return`<span class="percentile-badge ${n>75?'percentile-high':n>50?'percentile-mid':'percentile-low'}">${pct}</span>`;};
+            tbody.innerHTML=p.records.map((r,i)=>`<tr><td>${r.date}</td><td>${r.age?.toFixed(1)||'-'}세</td><td>${r.odAL?.toFixed(2)||'-'}</td><td>${badge(r.odPct)}</td><td>${r.osAL?.toFixed(2)||'-'}</td><td>${badge(r.osPct)}</td><td>${r.odSE?.toFixed(2)||'-'}</td><td>${r.osSE?.toFixed(2)||'-'}</td><td class="admin-col">${currentMode==='admin'?`<button class="delete-btn" onclick="deleteRecord(${i})">✕</button>`:''}</td></tr>`).join('');
         }
-        
-        function exportCSV() {
-            const p = patients.find(x => x.id === currentPatientId);
-            if (!p || !p.records.length) { alert('내보낼 데이터가 없습니다.'); return; }
-            let csv = `등록번호,${p.regNo}\n환자명,${p.name}\n생년월일,${p.birthDate}\n성별,${p.gender==='male'?'남자':'여자'}\n\n`;
-            if (p.treatments && p.treatments.length) {
-                csv += '치료기록\n치료종류,시작일,시작나이\n';
-                p.treatments.forEach(t => csv += `${t.type},${t.date},${t.age}\n`);
-                csv += '\n';
-            }
-            csv += '측정기록\n날짜,나이,OD_AL,OD_Pct,OS_AL,OS_Pct,OD_SE,OS_SE\n';
-            p.records.forEach(r => csv += `${r.date},${r.age?.toFixed(1)||''},${r.odAL||''},${r.odPct||''},${r.osAL||''},${r.osPct||''},${r.odSE||''},${r.osSE||''}\n`);
-            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `${p.regNo}_${p.name}_근시관리_${new Date().toISOString().split('T')[0]}.csv`;
-            link.click();
+        function deleteRecord(i){if(currentMode!=='admin')return;const p=patients.find(x=>x.id===currentPatientId);if(confirm('이 기록을 삭제하시겠습니까?')){p.records.splice(i,1);saveData();updateDisplay();}}
+        function updateProgressChart(p){
+            const ctx=document.getElementById('progressChart').getContext('2d');if(progressChart)progressChart.destroy();
+            const key=currentChartType==='AL'?{od:'odAL',os:'osAL',label:'안축장 (mm)'}:{od:'odSE',os:'osSE',label:'굴절력 (D)'};
+            progressChart=new Chart(ctx,{type:'line',data:{labels:p.records.map(r=>r.date),datasets:[{label:'우안 (OD)',data:p.records.map(r=>r[key.od]),borderColor:'#0891b2',backgroundColor:'rgba(8,145,178,0.1)',borderWidth:3,tension:0.3,pointRadius:5},{label:'좌안 (OS)',data:p.records.map(r=>r[key.os]),borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.1)',borderWidth:3,tension:0.3,pointRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{title:{display:true,text:key.label}}}}});
         }
-        
-        function saveData() { localStorage.setItem('myopiaPatients', JSON.stringify(patients)); }
+        function generateCurveData(gender,pKey){const data=PERCENTILE_DATA[gender];const points=[];for(let age=4;age<=18;age+=0.5){points.push({x:age,y:interpolateValue(data,age,pKey)});}return points;}
+        function updateGrowthChart(p){
+            const ctx=document.getElementById('growthChart').getContext('2d');if(growthChart)growthChart.destroy();
+            const gender=p.gender;
+            const createRefLine=(pKey,color,width,dash,label)=>({type:'line',label,data:generateCurveData(gender,pKey),borderColor:color,borderWidth:width,borderDash:dash,pointRadius:0,tension:0.4,fill:false,order:10});
+            const odData=p.records.filter(r=>r.odAL&&r.age>=4&&r.age<=18).map(r=>({x:r.age,y:r.odAL}));
+            const osData=p.records.filter(r=>r.osAL&&r.age>=4&&r.age<=18).map(r=>({x:r.age,y:r.osAL}));
+            const annotations={};
+            if(p.treatments){p.treatments.forEach((t,i)=>{if(t.age>=4&&t.age<=18){const c=TREATMENT_COLORS[t.type]||{bg:'rgba(139,92,246,0.3)',border:'#8b5cf6'};annotations[`t${i}`]={type:'box',xMin:t.age,xMax:t.age+0.3,yMin:20,yMax:29,backgroundColor:c.bg,borderColor:c.border,borderWidth:2,label:{display:true,content:t.type,position:{x:'center',y:'start'},backgroundColor:c.border,color:'white',font:{size:9,weight:'bold'},padding:3}};}});}
+            growthChart=new Chart(ctx,{type:'scatter',data:{datasets:[createRefLine('P95','#dc2626',2,[6,3],'P95'),createRefLine('P90','#ea580c',1.5,[4,4],'P90'),createRefLine('P75','#f59e0b',2,[6,3],'P75'),createRefLine('P50','#16a34a',3,[],'P50'),createRefLine('P25','#6b7280',2,[6,3],'P25'),createRefLine('P10','#9ca3af',1.5,[4,4],'P10'),createRefLine('P5','#d1d5db',2,[6,3],'P5'),{type:'scatter',label:'우안 (OD)',data:odData,borderColor:'#0891b2',backgroundColor:'#0891b2',pointRadius:5,pointHoverRadius:7,showLine:true,borderWidth:2,tension:0.2,order:1},{type:'scatter',label:'좌안 (OS)',data:osData,borderColor:'#7c3aed',backgroundColor:'#7c3aed',pointRadius:5,pointHoverRadius:7,showLine:true,borderWidth:2,tension:0.2,order:1}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'nearest'},plugins:{legend:{display:false},tooltip:{filter:item=>item.dataset.label==='우안 (OD)'||item.dataset.label==='좌안 (OS)',callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}mm @ ${ctx.parsed.x.toFixed(1)}세`}},annotation:{annotations}},scales:{x:{type:'linear',min:4,max:18,title:{display:true,text:'나이 (세)',font:{weight:'bold',size:13}},ticks:{stepSize:2},grid:{color:'rgba(0,0,0,0.08)'}},y:{min:20,max:29,title:{display:true,text:'안축장 (mm)',font:{weight:'bold',size:13}},ticks:{stepSize:1},grid:{color:'rgba(0,0,0,0.08)'}}}}});
+        }
+        function saveChartAsImage(){
+            const p=patients.find(x=>x.id===currentPatientId);if(!p||!growthChart)return;
+            const canvas=document.getElementById('growthChart');
+            const link=document.createElement('a');
+            link.download=`${p.regNo}_${p.name}_성장차트_${new Date().toISOString().split('T')[0]}.png`;
+            link.href=canvas.toDataURL('image/png');link.click();
+        }
+        function switchChart(type){currentChartType=type;document.getElementById('tabAL').classList.toggle('active',type==='AL');document.getElementById('tabSE').classList.toggle('active',type==='SE');const p=patients.find(x=>x.id===currentPatientId);if(p)updateProgressChart(p);}
+        function exportCSV(){
+            const p=patients.find(x=>x.id===currentPatientId);if(!p||!p.records.length){alert('내보낼 데이터가 없습니다.');return;}
+            let csv=`등록번호,${p.regNo}\n환자명,${p.name}\n생년월일,${p.birthDate}\n성별,${p.gender==='male'?'남자':'여자'}\n\n`;
+            if(p.treatments&&p.treatments.length){csv+='치료기록\n치료종류,시작일,시작나이\n';p.treatments.forEach(t=>csv+=`${t.type},${t.date},${t.age}\n`);csv+='\n';}
+            csv+='측정기록\n날짜,나이,OD_AL,OD_Pct,OS_AL,OS_Pct,OD_SE,OS_SE\n';
+            p.records.forEach(r=>csv+=`${r.date},${r.age?.toFixed(1)||''},${r.odAL||''},${r.odPct||''},${r.osAL||''},${r.osPct||''},${r.odSE||''},${r.osSE||''}\n`);
+            const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+            const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`${p.regNo}_${p.name}_근시관리_${new Date().toISOString().split('T')[0]}.csv`;link.click();
+        }
+        function saveData(){localStorage.setItem('myopiaPatients',JSON.stringify(patients));}
     </script>
 </body>
 </html>
