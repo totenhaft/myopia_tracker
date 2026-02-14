@@ -792,14 +792,14 @@
         function hideAllScreens() {
             ['authScreen','registerScreen','customerRegisterScreen','doctorRegisterScreen','pendingScreen','anonymousScreen','adminScreen','doctorScreen','customerScreen','searchResultScreen'].forEach(id => {
                 document.getElementById(id).style.display = 'none';
-            });
+            // });
         }
         
         // 로그인 탭 전환
         function switchAuthTab(tab) {
             document.querySelectorAll('.login-tab').forEach((t, i) => {
                 t.classList.toggle('active', (tab === 'search' && i === 0) || (tab === 'login' && i === 1) || (tab === 'register' && i === 2));
-            });
+            // });
             document.getElementById('searchForm').style.display = tab === 'search' ? 'block' : 'none';
             document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
             document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
@@ -902,6 +902,7 @@
                 currentUserData = null;
                 hideAllScreens();
                 document.getElementById('authScreen').style.display = 'block';
+                loadClinicsForSearch();
             }
             showLoading(false);
         });
@@ -1034,7 +1035,7 @@
                     clinicName: clinicName,
                     children: tempChildren,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                // });
                 
                 tempChildren = [];
                 await loadUserData();
@@ -1092,7 +1093,7 @@
                         name: clinicName,
                         createdBy: currentUser.uid,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    // });
                     clinicId = clinicRef.id;
                 }
                 
@@ -1104,7 +1105,7 @@
                     clinicName: clinicName,
                     approved: false,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                // });
                 
                 await db.collection('approvalRequests').add({
                     userId: currentUser.uid,
@@ -1114,7 +1115,7 @@
                     clinicName: clinicName,
                     status: 'pending',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                // });
                 
                 await loadUserData();
             } catch (error) {
@@ -1137,7 +1138,7 @@
             event.target.classList.add('active');
             ['adminApprovalsTab', 'adminDoctorsTab', 'adminClinicsTab', 'adminStatsTab'].forEach(id => {
                 document.getElementById(id).style.display = 'none';
-            });
+            // });
             document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Tab').style.display = 'block';
         }
         
@@ -1153,7 +1154,7 @@
                 const d = doc.data();
                 const date = d.createdAt ? d.createdAt.toDate().toLocaleDateString() : '-';
                 html += '<tr><td>'+d.doctorName+'</td><td>'+d.email+'</td><td>'+d.clinicName+'</td><td>'+date+'</td><td><button class="btn btn-success btn-sm" onclick="approveDoctor(\''+doc.id+'\',\''+d.userId+'\')">승인</button> <button class="btn btn-danger btn-sm" onclick="rejectDoctor(\''+doc.id+'\',\''+d.userId+'\')">거절</button></td></tr>';
-            });
+            // });
             html += '</tbody></table>';
             container.innerHTML = html;
         }
@@ -1199,7 +1200,7 @@
                 const d = doc.data();
                 const date = d.createdAt ? d.createdAt.toDate().toLocaleDateString() : '-';
                 html += '<tr><td>'+d.name+'</td><td>'+d.email+'</td><td>'+d.clinicName+'</td><td>'+date+'</td></tr>';
-            });
+            // });
             html += '</tbody></table>';
             container.innerHTML = html;
         }
@@ -1215,7 +1216,7 @@
             clinics.forEach(c => {
                 const date = c.createdAt ? c.createdAt.toDate().toLocaleDateString() : '-';
                 html += '<tr><td>'+c.name+'</td><td>'+date+'</td></tr>';
-            });
+            // });
             html += '</tbody></table>';
             container.innerHTML = html;
         }
@@ -1286,7 +1287,7 @@
             const results = document.getElementById('doctorSearchResults');
             const input = document.getElementById('doctorSearchInput');
             if (results && input && !results.contains(e.target) && e.target !== input) results.classList.remove('active');
-        });
+        // });
         
         function openPatientModal() { document.getElementById('patientModal').classList.add('active'); }
         function closePatientModal() { document.getElementById('patientModal').classList.remove('active'); }
@@ -1537,7 +1538,7 @@
                         const c = TREATMENT_COLORS[t.type] || '#7c3aed';
                         const positions = ['start', 'end', 'start', 'end']; const yOffsets = [0, 0, 20, 20]; const pos = positions[i % 4]; const yOff = yOffsets[i % 4] + Math.floor(i/4)*10; annotations['t'+i] = {type:'line',xMin:t.age,xMax:t.age,borderColor:c,borderWidth:2,borderDash:[6,4],label:{display:true,content:t.type,position:pos,backgroundColor:'rgba(255,255,255,0.95)',color:c,font:{size:10,weight:'bold'},padding:{x:6,y:3},borderRadius:4,yAdjust:yOff}};
                     }
-                });
+                // });
             }
             const chart = new Chart(ctx, {type:'scatter',data:{datasets:[
                 createRefLine('P95','#dc2626',2,[6,3],'P95'),createRefLine('P90','#ea580c',1.5,[4,4],'P90'),createRefLine('P75','#f59e0b',2,[6,3],'P75'),
@@ -1918,7 +1919,7 @@
                         if (!data.clinicId) {
                             docs.push({ id: doc.id, ...data });
                         }
-                    });
+                    // });
                     if (docs.length === 0) {
                         errorDiv.textContent = '해당 환자를 찾을 수 없습니다.';
                         errorDiv.style.display = 'block';
@@ -1977,9 +1978,7 @@
         }
         
         // 페이지 로드 시 안과 목록 로드
-        document.addEventListener('DOMContentLoaded', function() {
-            loadClinicsForSearch();
-        });
+        // 안과 목록은 auth.onAuthStateChanged에서 로드됨
 
     </script>
 </body>
