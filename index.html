@@ -1474,7 +1474,7 @@
                 p.treatments.forEach((t,i) => {
                     if (t.age >= 4 && t.age <= 18) {
                         const c = TREATMENT_COLORS[t.type] || '#7c3aed';
-                        const pos = i % 2 === 0 ? 'start' : 'end'; const yAdj = i % 2 === 0 ? 0 : 0; annotations['t'+i] = {type:'line',xMin:t.age,xMax:t.age,borderColor:c,borderWidth:2,borderDash:[6,4],label:{display:true,content:t.type,position:pos,backgroundColor:'rgba(255,255,255,0.95)',color:c,font:{size:10,weight:'bold'},padding:{x:6,y:3},borderRadius:4,yAdjust:i*15}};
+                        const positions = ['start', 'end', 'start', 'end']; const yOffsets = [0, 0, 20, 20]; const pos = positions[i % 4]; const yOff = yOffsets[i % 4] + Math.floor(i/4)*10; annotations['t'+i] = {type:'line',xMin:t.age,xMax:t.age,borderColor:c,borderWidth:2,borderDash:[6,4],label:{display:true,content:t.type,position:pos,backgroundColor:'rgba(255,255,255,0.95)',color:c,font:{size:10,weight:'bold'},padding:{x:6,y:3},borderRadius:4,yAdjust:yOff}};
                     }
                 });
             }
