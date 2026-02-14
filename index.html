@@ -1855,21 +1855,21 @@
         }
 
         // ==================== 환자 검색 (비로그인) ====================
-        let searchClinics = [];
+        let searchClinicsList = [];
         let foundPatient = null;
         
         async function loadClinicsForSearch() {
             const select = document.getElementById('searchClinicSelect');
-            if (searchClinics.length > 0) return; // 이미 로드됨
+            if (searchClinicsList.length > 0) return; // 이미 로드됨
             
             try {
                 const snapshot = await db.collection('clinics').get();
-                searchClinics = [{id: '', name: '-- 안과를 선택하세요 --'}];
+                searchClinicsList = [{id: '', name: '-- 안과를 선택하세요 --'}];
                 // 기존 데이터용 옵션 추가
-                searchClinics.push({id: '__legacy__', name: '📋 기존 등록 환자 (연세솔안과)'});
-                snapshot.forEach(doc => searchClinics.push({ id: doc.id, name: doc.data().name }));
+                searchClinicsList.push({id: '__legacy__', name: '📋 기존 등록 환자 (연세솔안과)'});
+                snapshot.forEach(doc => searchClinicsList.push({ id: doc.id, name: doc.data().name }));
                 
-                select.innerHTML = searchClinics.map(c => 
+                select.innerHTML = searchClinicsList.map(c => 
                     '<option value="' + c.id + '">' + c.name + '</option>'
                 ).join('');
             } catch (error) {
