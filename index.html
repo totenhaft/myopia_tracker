@@ -181,12 +181,34 @@
                     <p class="login-subtitle">자녀의 눈 건강을 체계적으로 관리하세요</p>
                     
                     <div class="login-tabs">
-                        <button class="login-tab active" onclick="switchAuthTab('login')">로그인</button>
+                        <button class="login-tab active" onclick="switchAuthTab('search')">환자검색</button>
+                        <button class="login-tab" onclick="switchAuthTab('login')">로그인</button>
                         <button class="login-tab" onclick="switchAuthTab('register')">회원가입</button>
                     </div>
                     
+                    <!-- 환자검색 폼 -->
+                    <div id="patientSearchForm">
+                        <div class="form-group">
+                            <label>안과 선택</label>
+                            <select id="clinicSelectDropdown">
+                                <option value="">-- 안과를 선택하세요 --</option>
+                                <option value="__legacy__">📋 기존 등록 환자 (연세솔안과)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>환자 이름</label>
+                            <input type="text" id="patientSearchName" placeholder="홍길동">
+                        </div>
+                        <div class="form-group">
+                            <label>생년월일</label>
+                            <input type="date" id="patientSearchBirth">
+                        </div>
+                        <button class="btn btn-primary" style="width:100%" onclick="searchPatientByInfo()">🔍 기록 검색</button>
+                        <div id="patientSearchError" class="error-text" style="display:none;margin-top:12px;text-align:center"></div>
+                    </div>
+                    
                     <!-- 로그인 폼 -->
-                    <div id="loginForm">
+                    <div id="loginForm" style="display:none">
                         <div class="form-group">
                             <label>이메일</label>
                             <input type="email" id="loginEmail" placeholder="example@email.com">
@@ -237,6 +259,41 @@
                         • 익명: 기능 둘러보기 (저장 불가)
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 환자 검색 결과 화면 -->
+    <div id="patientSearchResultScreen" style="display:none">
+        <header>
+            <div class="header-content">
+                <div><h1>근시관리 트래커</h1><p>환자 기록 조회</p></div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-white btn-sm" onclick="backToAuthScreen()">← 돌아가기</button>
+            </div>
+        </header>
+        <div class="container">
+            <div class="patient-info-header" id="patientSearchResultHeader"></div>
+            
+            <div class="card"><h3 class="card-title">📊 현재 상태</h3><div class="stats-grid" id="patientSearchResultStats"></div></div>
+            
+            <div class="card"><h3 class="card-title">💊 치료 기록</h3><div class="treatment-list" id="patientSearchResultTreatments"></div></div>
+            
+            <div class="card">
+                <h3 class="card-title">📈 안축장 성장 차트</h3>
+                <div class="growth-chart-container"><canvas id="patientSearchResultChart"></canvas></div>
+                <div class="chart-legend">
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--od-color)"></div>우안 (OD)</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--os-color)"></div>좌안 (OS)</div>
+                </div>
+            </div>
+            
+            <div class="card"><h3 class="card-title">📋 측정 기록</h3><div class="table-container"><table><thead><tr><th>날짜</th><th>나이</th><th>OD AL</th><th>OD %ile</th><th>OS AL</th><th>OS %ile</th><th>OD SE</th><th>OS SE</th></tr></thead><tbody id="patientSearchResultRecords"></tbody></table></div></div>
+            
+            <div class="info-box" style="margin-top:20px">
+                <strong>📌 안내</strong><br>
+                더 자세한 기록 관리를 원하시면 회원가입 후 이용해주세요.
             </div>
         </div>
     </div>
@@ -698,7 +755,7 @@
         let patients = [];
         let clinics = [];
         let tempChildren = [];
-        let progressChart = null, growthChart = null, customerGrowthChart = null;
+        let progressChart = null, growthChart = null, customerGrowthChart = null, patientSearchChart = null;
         let currentChartType = 'AL';
         let duplicatePatients = [];
         
@@ -734,14 +791,17 @@
             if (type === 'synced') setTimeout(() => el.className = 'sync-status', 2000);
         }
         function hideAllScreens() {
-            ['authScreen','registerScreen','customerRegisterScreen','doctorRegisterScreen','pendingScreen','anonymousScreen','adminScreen','doctorScreen','customerScreen'].forEach(id => {
+            ['authScreen','registerScreen','customerRegisterScreen','doctorRegisterScreen','pendingScreen','anonymousScreen','adminScreen','doctorScreen','customerScreen','patientSearchResultScreen'].forEach(id => {
                 document.getElementById(id).style.display = 'none';
             });
         }
         
         // 로그인 탭 전환
         function switchAuthTab(tab) {
-            document.querySelectorAll('.login-tab').forEach((t, i) => t.classList.toggle('active', (tab === 'login' ? i === 0 : i === 1)));
+            document.querySelectorAll('.login-tab').forEach((t, i) => {
+                t.classList.toggle('active', (tab === 'search' && i === 0) || (tab === 'login' && i === 1) || (tab === 'register' && i === 2));
+            });
+            document.getElementById('patientSearchForm').style.display = tab === 'search' ? 'block' : 'none';
             document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
             document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
         }
@@ -842,6 +902,7 @@
                 currentUserData = null;
                 hideAllScreens();
                 document.getElementById('authScreen').style.display = 'block';
+                loadClinicDropdown();
             }
             showLoading(false);
         });
@@ -1462,6 +1523,7 @@
         function updateGrowthChart(p, canvasId) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (canvasId === 'growthChart' && growthChart) growthChart.destroy();
+            if (canvasId === 'patientSearchResultChart' && patientSearchChart) patientSearchChart.destroy();
             if (canvasId === 'customerGrowthChart' && customerGrowthChart) customerGrowthChart.destroy();
             
             const gender = p.gender;
@@ -1486,7 +1548,8 @@
             ]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'nearest'},plugins:{legend:{display:false},tooltip:{filter:item=>item.dataset.label==='우안 (OD)'||item.dataset.label==='좌안 (OS)'},annotation:{annotations}},scales:{x:{type:'linear',min:4,max:18,title:{display:true,text:'나이 (세)'},ticks:{stepSize:2}},y:{min:20,max:29,title:{display:true,text:'안축장 (mm)'},ticks:{stepSize:1}}}}});
             
             if (canvasId === 'growthChart') growthChart = chart;
-            else customerGrowthChart = chart;
+            else if (canvasId === 'customerGrowthChart') customerGrowthChart = chart;
+            else if (canvasId === 'patientSearchResultChart') patientSearchChart = chart;
         }
         
         function switchChart(type) {
@@ -1791,6 +1854,123 @@
             }
             tbody.innerHTML = rows;
         }
+
+        // ==================== 환자 검색 (비로그인) ====================
+        let clinicDropdownList = [];
+        
+        async function loadClinicDropdown() {
+            const select = document.getElementById('clinicSelectDropdown');
+            if (!select || clinicDropdownList.length > 0) return;
+            
+            try {
+                const snapshot = await db.collection('clinics').get();
+                clinicDropdownList = [
+                    {id: '', name: '-- 안과를 선택하세요 --'},
+                    {id: '__legacy__', name: '📋 기존 등록 환자 (연세솔안과)'}
+                ];
+                snapshot.forEach(doc => clinicDropdownList.push({ id: doc.id, name: doc.data().name }));
+                
+                select.innerHTML = clinicDropdownList.map(c => 
+                    '<option value="' + c.id + '">' + c.name + '</option>'
+                ).join('');
+            } catch (error) {
+                console.error('안과 목록 로드 실패:', error);
+            }
+        }
+        
+        async function searchPatientByInfo() {
+            const clinicId = document.getElementById('clinicSelectDropdown').value;
+            const name = document.getElementById('patientSearchName').value.trim();
+            const birth = document.getElementById('patientSearchBirth').value;
+            const errorDiv = document.getElementById('patientSearchError');
+            
+            errorDiv.style.display = 'none';
+            
+            if (!clinicId) {
+                errorDiv.textContent = '안과를 선택해주세요.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (!name) {
+                errorDiv.textContent = '환자 이름을 입력해주세요.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (!birth) {
+                errorDiv.textContent = '생년월일을 선택해주세요.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                let foundPatient = null;
+                
+                if (clinicId === '__legacy__') {
+                    // 기존 데이터 검색 (clinicId가 없는 환자)
+                    const snapshot = await db.collection('patients')
+                        .where('name', '==', name)
+                        .where('birthDate', '==', birth)
+                        .get();
+                    
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (!data.clinicId && !foundPatient) {
+                            foundPatient = { id: doc.id, ...data };
+                        }
+                    });
+                } else {
+                    // 새 데이터 검색 (clinicId가 있는 환자)
+                    const snapshot = await db.collection('patients')
+                        .where('clinicId', '==', clinicId)
+                        .where('name', '==', name)
+                        .where('birthDate', '==', birth)
+                        .get();
+                    
+                    if (!snapshot.empty) {
+                        foundPatient = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+                    }
+                }
+                
+                if (!foundPatient) {
+                    errorDiv.textContent = '해당 환자를 찾을 수 없습니다. 정보를 다시 확인해주세요.';
+                    errorDiv.style.display = 'block';
+                    showLoading(false);
+                    return;
+                }
+                
+                // 검색 결과 표시
+                showPatientSearchResult(foundPatient);
+                
+            } catch (error) {
+                console.error('검색 실패:', error);
+                errorDiv.textContent = '검색 중 오류가 발생했습니다.';
+                errorDiv.style.display = 'block';
+            }
+            
+            showLoading(false);
+        }
+        
+        function showPatientSearchResult(p) {
+            hideAllScreens();
+            document.getElementById('patientSearchResultScreen').style.display = 'block';
+            
+            document.getElementById('patientSearchResultHeader').innerHTML = 
+                '<span class="name">' + (p.gender==='male'?'👦':'👧') + ' ' + p.name + '</span>' +
+                '<span class="details">' + (p.gender==='male'?'남자':'여자') + ' · ' + p.birthDate + '</span>';
+            
+            updateStats(p, 'patientSearchResultStats');
+            updateTreatments(p, 'patientSearchResultTreatments', false);
+            updateRecords(p, 'patientSearchResultRecords', false);
+            updateGrowthChart(p, 'patientSearchResultChart');
+        }
+        
+        function backToAuthScreen() {
+            hideAllScreens();
+            document.getElementById('authScreen').style.display = 'block';
+        }
+
     </script>
 </body>
 </html>
