@@ -1143,12 +1143,15 @@
         }
         
         async function loadApprovalRequests() {
-            const snapshot = await db.collection('approvalRequests').where('status', '==', 'pending').get();
             const container = document.getElementById('approvalList');
-            if (snapshot.empty) {
-                container.innerHTML = '<div class="empty-state">승인 대기 중인 요청이 없습니다</div>';
-                return;
-            }
+            try {
+                console.log('승인 요청 로드 시작...');
+                const snapshot = await db.collection('approvalRequests').where('status', '==', 'pending').get();
+                console.log('승인 요청 개수:', snapshot.size);
+                if (snapshot.empty) {
+                    container.innerHTML = '<div class="empty-state">승인 대기 중인 요청이 없습니다</div>';
+                    return;
+                }
             let html = '<table><thead><tr><th>이름</th><th>이메일</th><th>안과</th><th>요청일</th><th>액션</th></tr></thead><tbody>';
             snapshot.forEach(doc => {
                 const d = doc.data();
@@ -1156,7 +1159,11 @@
                 html += '<tr><td>'+d.doctorName+'</td><td>'+d.email+'</td><td>'+d.clinicName+'</td><td>'+date+'</td><td><button class="btn btn-success btn-sm" onclick="approveDoctor(\''+doc.id+'\',\''+d.userId+'\')">승인</button> <button class="btn btn-danger btn-sm" onclick="rejectDoctor(\''+doc.id+'\',\''+d.userId+'\')">거절</button></td></tr>';
             });
             html += '</tbody></table>';
-            container.innerHTML = html;
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('승인 요청 로드 오류:', error);
+                container.innerHTML = '<div class="empty-state" style="color:red">로드 실패: ' + error.message + '</div>';
+            }
         }
         
         async function approveDoctor(requestId, userId) {
