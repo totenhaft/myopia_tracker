@@ -804,6 +804,7 @@
             document.getElementById('patientSearchForm').style.display = tab === 'search' ? 'block' : 'none';
             document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
             document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+            if (tab === 'search') loadClinicDropdown();
         }
         
         // 이메일 로그인
@@ -1867,7 +1868,7 @@
         
         async function loadClinicDropdown() {
             const select = document.getElementById('clinicSelectDropdown');
-            if (!select || clinicDropdownList.length > 0) return;
+            if (!select) return;
             
             try {
                 const snapshot = await db.collection('clinics').get();
@@ -1880,6 +1881,8 @@
                 select.innerHTML = clinicDropdownList.map(c => 
                     '<option value="' + c.id + '">' + c.name + '</option>'
                 ).join('');
+                
+                console.log('안과 목록 로드 완료:', clinicDropdownList.length - 2, '개 안과');
             } catch (error) {
                 console.error('안과 목록 로드 실패:', error);
             }
