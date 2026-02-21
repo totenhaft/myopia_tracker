@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>근시관리 트래커 - Myopia Tracker</title>
-    
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4076027291883451"
-     crossorigin="anonymous"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.0.0/dist/chartjs-plugin-annotation.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
@@ -770,8 +766,16 @@
         // 차트 플러그인
         const logoPlugin = {
             id: 'logoPlugin',
+            beforeDraw: (chart) => {
+                const ctx = chart.ctx;
+                ctx.save();
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, chart.width, chart.height);
+                ctx.restore();
+            },
             afterDraw: (chart) => {
-                if (!chart.canvas.id.includes('growthChart') || !logoImage.complete) return;
+                if (!chart.canvas.id.includes('growthChart') && !chart.canvas.id.includes('GrowthChart') && !chart.canvas.id.includes('ResultChart')) return;
+                if (!logoImage.complete) return;
                 const ctx = chart.ctx;
                 const xScale = chart.scales.x;
                 const yScale = chart.scales.y;
@@ -1557,7 +1561,7 @@
                 createRefLine('P50','#16a34a',3,[],'P50'),createRefLine('P25','#6b7280',2,[6,3],'P25'),createRefLine('P10','#9ca3af',1.5,[4,4],'P10'),createRefLine('P5','#d1d5db',2,[6,3],'P5'),
                 {type:'scatter',label:'우안 (OD)',data:odData,borderColor:OD_COLOR,backgroundColor:OD_COLOR,pointRadius:5,pointHoverRadius:7,showLine:true,borderWidth:2,tension:0.2,order:1},
                 {type:'scatter',label:'좌안 (OS)',data:osData,borderColor:OS_COLOR,backgroundColor:OS_COLOR,pointRadius:5,pointHoverRadius:7,showLine:true,borderWidth:2,tension:0.2,order:1}
-            ]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'nearest'},plugins:{legend:{display:false},tooltip:{filter:item=>item.dataset.label==='우안 (OD)'||item.dataset.label==='좌안 (OS)'},annotation:{annotations}},scales:{x:{type:'linear',min:4,max:18,title:{display:true,text:'나이 (세)'},ticks:{stepSize:2}},y:{min:20,max:29,title:{display:true,text:'안축장 (mm)'},ticks:{stepSize:1}}}}});
+            ]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'nearest'},plugins:{legend:{display:false},tooltip:{filter:item=>item.dataset.label==='우안 (OD)'||item.dataset.label==='좌안 (OS)'},annotation:{annotations}},scales:{x:{type:'linear',min:4,max:18,title:{display:true,text:'나이 (세)',color:'#333'},ticks:{stepSize:2,color:'#333'},grid:{color:'#e0e0e0'}},y:{min:20,max:29,title:{display:true,text:'안축장 (mm)',color:'#333'},ticks:{stepSize:1,color:'#333'},grid:{color:'#e0e0e0'}}}}});
             
             if (canvasId === 'growthChart') growthChart = chart;
             else if (canvasId === 'customerGrowthChart') customerGrowthChart = chart;
@@ -1575,10 +1579,37 @@
         function saveChartAsImage() {
             const p = patients.find(x => x.id === currentPatientId);
             if (!p) return;
-            const canvas = document.getElementById('growthChart');
+            
+            const chartCanvas = document.getElementById('growthChart');
+            const headerHeight = 60;
+            const padding = 20;
+            
+            // 새 캔버스 생성 (헤더 공간 추가)
+            const newCanvas = document.createElement('canvas');
+            newCanvas.width = chartCanvas.width;
+            newCanvas.height = chartCanvas.height + headerHeight;
+            const ctx = newCanvas.getContext('2d');
+            
+            // 흰색 배경
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+            
+            // 환자 정보 텍스트
+            const currentAge = p.records && p.records.length > 0 ? p.records[p.records.length - 1].age : '-';
+            const patientInfo = '등록번호: ' + p.regNo + '  |  이름: ' + p.name + '  |  생년월일: ' + p.birthDate + '  |  현재 나이: ' + (typeof currentAge === 'number' ? currentAge.toFixed(1) : currentAge) + '세';
+            
+            ctx.fillStyle = '#333333';
+            ctx.font = 'bold 16px "Noto Sans KR", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(patientInfo, newCanvas.width / 2, 35);
+            
+            // 차트 이미지 복사
+            ctx.drawImage(chartCanvas, 0, headerHeight);
+            
+            // 저장
             const link = document.createElement('a');
-            link.download = p.regNo+'_'+p.name+'_성장차트_'+new Date().toISOString().split('T')[0]+'.png';
-            link.href = canvas.toDataURL('image/png');
+            link.download = p.regNo + '_' + p.name + '_성장차트_' + new Date().toISOString().split('T')[0] + '.png';
+            link.href = newCanvas.toDataURL('image/png');
             link.click();
         }
         
