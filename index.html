@@ -552,7 +552,7 @@
             
             <div id="adminApprovalsTab">
                 <div class="card">
-                    <h3 class="card-title">승인 대기 요청</h3>
+                    <h3 class="card-title">승인 대기 요청 <button class="btn btn-success btn-sm" onclick="approveAllPending()" style="margin-left:10px">전체 승인</button></h3>
                     <div id="approvalList"></div>
                 </div>
             </div>
@@ -1112,7 +1112,7 @@
                     role: 'doctor',
                     clinicId: clinicId,
                     clinicName: clinicName,
-                    approved: false,
+                    approved: true,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
@@ -1173,6 +1173,34 @@
                 console.error('승인 요청 로드 오류:', error);
                 container.innerHTML = '<div class="empty-state" style="color:red">로드 실패: ' + error.message + '</div>';
             }
+        }
+        
+        async function approveAllPending() {
+            if (!confirm('모든 대기 중인 요청을 승인하시겠습니까?')) return;
+            showLoading(true);
+            try {
+                const snapshot = await db.collection('approvalRequests').where('status', '==', 'pending').get();
+                if (snapshot.empty) {
+                    alert('승인 대기 중인 요청이 없습니다.');
+                    showLoading(false);
+                    return;
+                }
+                
+                let count = 0;
+                for (const doc of snapshot.docs) {
+                    const data = doc.data();
+                    await db.collection('users').doc(data.userId).update({ approved: true });
+                    await db.collection('approvalRequests').doc(doc.id).update({ status: 'approved' });
+                    count++;
+                }
+                
+                alert(count + '명의 의사가 승인되었습니다.');
+                await loadAdminData();
+            } catch (error) {
+                console.error('전체 승인 오류:', error);
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+            showLoading(false);
         }
         
         async function approveDoctor(requestId, userId) {
