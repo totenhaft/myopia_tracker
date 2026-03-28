@@ -545,6 +545,7 @@
         <div class="container">
             <div class="tab-container">
                 <button class="tab-btn active" onclick="showAdminTab('approvals')">승인 요청</button>
+                <button class="tab-btn" onclick="showAdminTab('users')">사용자 관리</button>
                 <button class="tab-btn" onclick="showAdminTab('doctors')">안과의사 목록</button>
                 <button class="tab-btn" onclick="showAdminTab('clinics')">안과 목록</button>
                 <button class="tab-btn" onclick="showAdminTab('stats')">통계</button>
@@ -1144,6 +1145,7 @@
         // ==================== 관리자 기능 ====================
         async function loadAdminData() {
             await loadApprovalRequests();
+            await loadAllUsers();
             await loadDoctorList();
             await loadClinicList();
             await loadAdminStats();
@@ -1152,7 +1154,7 @@
         function showAdminTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
-            ['adminApprovalsTab', 'adminDoctorsTab', 'adminClinicsTab', 'adminStatsTab'].forEach(id => {
+            ['adminApprovalsTab', 'adminUsersTab', 'adminDoctorsTab', 'adminClinicsTab', 'adminStatsTab'].forEach(id => {
                 document.getElementById(id).style.display = 'none';
             });
             document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Tab').style.display = 'block';
