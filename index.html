@@ -564,6 +564,13 @@
                 </div>
             </div>
             
+            <div id="adminUsersTab" style="display:none">
+                <div class="card">
+                    <h3 class="card-title">전체 사용자 목록</h3>
+                    <div id="usersList"></div>
+                </div>
+            </div>
+            
             <div id="adminClinicsTab" style="display:none">
                 <div class="card">
                     <h3 class="card-title">등록된 안과</h3>
@@ -1207,6 +1214,73 @@
                 console.error('승인 요청 로드 오류:', error);
                 container.innerHTML = '<div class="empty-state" style="color:red">로드 실패: ' + error.message + '</div>';
             }
+        }
+        
+        async function loadAllUsers() {
+            const container = document.getElementById('usersList');
+            try {
+                const snapshot = await db.collection('users').get();
+                if (snapshot.empty) {
+                    container.innerHTML = '<div class="empty-state">등록된 사용자가 없습니다</div>';
+                    return;
+                }
+                
+                let html = '<table><thead><tr><th>이름</th><th>이메일</th><th>역할</th><th>안과</th><th>승인</th><th>액션</th></tr></thead><tbody>';
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    const roleText = d.role === 'doctor' ? '👨‍⚕️ 의사' : d.role === 'customer' ? '👤 고객' : d.role || '-';
+                    const approvedText = d.role === 'doctor' ? (d.approved ? '✅' : '❌') : '-';
+                    html += '<tr><td>'+(d.name||'-')+'</td><td>'+(d.email||'-')+'</td><td>'+roleText+'</td><td>'+(d.clinicName||'-')+'</td><td>'+approvedText+'</td><td>';
+                    
+                    if (d.role === 'customer') {
+                        html += '<button class="btn btn-primary btn-sm" onclick="changeUserRole(\''+doc.id+'\',\'doctor\')">의사로 변경</button>';
+                    } else if (d.role === 'doctor') {
+                        if (!d.approved) {
+                            html += '<button class="btn btn-success btn-sm" onclick="approveUser(\''+doc.id+'\')">승인</button> ';
+                        }
+                        html += '<button class="btn btn-gray btn-sm" onclick="changeUserRole(\''+doc.id+'\',\'customer\')">고객으로 변경</button>';
+                    }
+                    html += '</td></tr>';
+                });
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('사용자 목록 로드 오류:', error);
+                container.innerHTML = '<div class="empty-state" style="color:red">로드 실패: ' + error.message + '</div>';
+            }
+        }
+        
+        async function changeUserRole(userId, newRole) {
+            const roleText = newRole === 'doctor' ? '의사' : '고객';
+            if (!confirm('이 사용자를 ' + roleText + '(으)로 변경하시겠습니까?')) return;
+            showLoading(true);
+            try {
+                const updateData = { role: newRole };
+                if (newRole === 'doctor') {
+                    updateData.approved = true;
+                }
+                await db.collection('users').doc(userId).update(updateData);
+                alert('변경되었습니다.');
+                await loadAdminData();
+            } catch (error) {
+                console.error('역할 변경 오류:', error);
+                alert('변경에 실패했습니다: ' + error.message);
+            }
+            showLoading(false);
+        }
+        
+        async function approveUser(userId) {
+            if (!confirm('이 사용자를 승인하시겠습니까?')) return;
+            showLoading(true);
+            try {
+                await db.collection('users').doc(userId).update({ approved: true });
+                alert('승인되었습니다.');
+                await loadAdminData();
+            } catch (error) {
+                console.error('승인 오류:', error);
+                alert('승인에 실패했습니다.');
+            }
+            showLoading(false);
         }
         
         async function approveAllPending() {
