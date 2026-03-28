@@ -1155,19 +1155,53 @@
             const container = document.getElementById('approvalList');
             try {
                 console.log('승인 요청 로드 시작...');
-                const snapshot = await db.collection('approvalRequests').where('status', '==', 'pending').get();
-                console.log('승인 요청 개수:', snapshot.size);
-                if (snapshot.empty) {
+                
+                // 1. approvalRequests에서 pending 또는 status 없는 요청
+                const reqSnapshot = await db.collection('approvalRequests').get();
+                const pendingRequests = [];
+                reqSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (!data.status || data.status === 'pending') {
+                        pendingRequests.push({ id: doc.id, source: 'request', ...data });
+                    }
+                });
+                
+                // 2. users에서 approved: false인 의사들
+                const usersSnapshot = await db.collection('users').where('role', '==', 'doctor').where('approved', '==', false).get();
+                const pendingUsers = [];
+                usersSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    // approvalRequests에 없는 경우만 추가
+                    const exists = pendingRequests.some(r => r.userId === doc.id);
+                    if (!exists) {
+                        pendingUsers.push({ 
+                            id: 'user_' + doc.id, 
+                            source: 'user',
+                            userId: doc.id,
+                            doctorName: data.name,
+                            email: data.email,
+                            clinicName: data.clinicName,
+                            createdAt: data.createdAt,
+                            status: 'pending'
+                        });
+                    }
+                });
+                
+                const allPending = [...pendingRequests, ...pendingUsers];
+                console.log('대기 중 요청 개수:', allPending.length);
+                
+                if (allPending.length === 0) {
                     container.innerHTML = '<div class="empty-state">승인 대기 중인 요청이 없습니다</div>';
                     return;
                 }
-            let html = '<table><thead><tr><th>이름</th><th>이메일</th><th>안과</th><th>요청일</th><th>액션</th></tr></thead><tbody>';
-            snapshot.forEach(doc => {
-                const d = doc.data();
-                const date = d.createdAt ? d.createdAt.toDate().toLocaleDateString() : '-';
-                html += '<tr><td>'+d.doctorName+'</td><td>'+d.email+'</td><td>'+d.clinicName+'</td><td>'+date+'</td><td><button class="btn btn-success btn-sm" onclick="approveDoctor(\''+doc.id+'\',\''+d.userId+'\')">승인</button> <button class="btn btn-danger btn-sm" onclick="rejectDoctor(\''+doc.id+'\',\''+d.userId+'\')">거절</button></td></tr>';
-            });
-            html += '</tbody></table>';
+                
+                let html = '<table><thead><tr><th>이름</th><th>이메일</th><th>안과</th><th>요청일</th><th>액션</th></tr></thead><tbody>';
+                allPending.forEach(d => {
+                    const date = d.createdAt ? (d.createdAt.toDate ? d.createdAt.toDate().toLocaleDateString() : '-') : '-';
+                    const docId = d.source === 'user' ? '' : d.id;
+                    html += '<tr><td>'+(d.doctorName||'-')+'</td><td>'+(d.email||'-')+'</td><td>'+(d.clinicName||'-')+'</td><td>'+date+'</td><td><button class="btn btn-success btn-sm" onclick="approveDoctor(\''+docId+'\',\''+d.userId+'\')">승인</button></td></tr>';
+                });
+                html += '</tbody></table>';
                 container.innerHTML = html;
             } catch (error) {
                 console.error('승인 요청 로드 오류:', error);
@@ -1179,22 +1213,31 @@
             if (!confirm('모든 대기 중인 요청을 승인하시겠습니까?')) return;
             showLoading(true);
             try {
-                const snapshot = await db.collection('approvalRequests').where('status', '==', 'pending').get();
-                if (snapshot.empty) {
-                    alert('승인 대기 중인 요청이 없습니다.');
-                    showLoading(false);
-                    return;
+                let count = 0;
+                
+                // 1. approvalRequests에서 pending 처리
+                const reqSnapshot = await db.collection('approvalRequests').get();
+                for (const doc of reqSnapshot.docs) {
+                    const data = doc.data();
+                    if (!data.status || data.status === 'pending') {
+                        await db.collection('users').doc(data.userId).update({ approved: true });
+                        await db.collection('approvalRequests').doc(doc.id).update({ status: 'approved' });
+                        count++;
+                    }
                 }
                 
-                let count = 0;
-                for (const doc of snapshot.docs) {
-                    const data = doc.data();
-                    await db.collection('users').doc(data.userId).update({ approved: true });
-                    await db.collection('approvalRequests').doc(doc.id).update({ status: 'approved' });
+                // 2. users에서 approved: false인 의사 처리
+                const usersSnapshot = await db.collection('users').where('role', '==', 'doctor').where('approved', '==', false).get();
+                for (const doc of usersSnapshot.docs) {
+                    await db.collection('users').doc(doc.id).update({ approved: true });
                     count++;
                 }
                 
-                alert(count + '명의 의사가 승인되었습니다.');
+                if (count === 0) {
+                    alert('승인 대기 중인 요청이 없습니다.');
+                } else {
+                    alert(count + '명의 의사가 승인되었습니다.');
+                }
                 await loadAdminData();
             } catch (error) {
                 console.error('전체 승인 오류:', error);
@@ -1208,7 +1251,9 @@
             showLoading(true);
             try {
                 await db.collection('users').doc(userId).update({ approved: true });
-                await db.collection('approvalRequests').doc(requestId).update({ status: 'approved' });
+                if (requestId) {
+                    await db.collection('approvalRequests').doc(requestId).update({ status: 'approved' });
+                }
                 alert('승인되었습니다.');
                 await loadAdminData();
             } catch (error) {
