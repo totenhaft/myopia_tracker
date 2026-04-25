@@ -1411,9 +1411,26 @@
         }
         
         async function loadPatients() {
+            console.log('=== 환자 로딩 디버깅 ===');
+            console.log('현재 의사 clinicId:', currentUserData.clinicId);
+            console.log('현재 의사 정보:', currentUserData);
+            
+            // clinicId가 없으면 경고
+            if (!currentUserData.clinicId) {
+                console.error('❌ clinicId가 없습니다! 환자를 불러올 수 없습니다.');
+                alert('오류: 의사 계정에 clinicId가 설정되지 않았습니다. 관리자에게 문의하세요.');
+                return;
+            }
+            
             const snapshot = await db.collection('patients').where('clinicId', '==', currentUserData.clinicId).get();
             patients = [];
             snapshot.forEach(doc => patients.push({ id: doc.id, ...doc.data() }));
+            
+            console.log('로드된 환자 수:', patients.length);
+            if (patients.length > 0) {
+                console.log('환자 목록:', patients.map(p => ({ name: p.name, clinicId: p.clinicId })));
+            }
+            console.log('=== 디버깅 끝 ===');
         }
         
         function showRecentPatients() {
@@ -1473,7 +1490,14 @@
                     records: [], treatments: [],
                     createdAt: Date.now()
                 };
+                
+                console.log('=== 환자 저장 디버깅 ===');
+                console.log('저장할 환자 데이터:', patient);
+                console.log('clinicId:', currentUserData.clinicId);
+                
                 const docRef = await db.collection('patients').add(patient);
+                console.log('저장 완료! 문서 ID:', docRef.id);
+                console.log('=== 저장 디버깅 끝 ===');
                 patient.id = docRef.id;
                 patients.push(patient);
                 closePatientModal();
