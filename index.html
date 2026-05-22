@@ -769,6 +769,28 @@
             }
         }
         
+        // 가입 신청 알림 이메일 (관리자에게)
+        async function sendRegistrationNotifyEmail(doctorName, doctorEmail, clinicName) {
+            try {
+                const now = new Date();
+                const requestDate = now.toLocaleString('ko-KR');
+                
+                const templateParams = {
+                    doctor_name: doctorName,
+                    doctor_email: doctorEmail,
+                    clinic_name: clinicName,
+                    request_date: requestDate
+                };
+                
+                const response = await emailjs.send('service_u9m5asp', 'template_qdyd3v3', templateParams);
+                console.log('가입 신청 알림 이메일 발송 성공:', response);
+                return true;
+            } catch (error) {
+                console.error('가입 신청 알림 이메일 발송 실패:', error);
+                return false;
+            }
+        }
+        
         // 관리자 이메일
         const ADMIN_EMAIL = "totenhaft@gmail.com";
         
@@ -1155,6 +1177,9 @@
                     status: 'pending',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                
+                // 관리자에게 가입 신청 알림 이메일 발송
+                await sendRegistrationNotifyEmail(doctorName, currentUser.email || '', clinicName);
                 
                 await loadUserData();
             } catch (error) {
