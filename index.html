@@ -1155,6 +1155,49 @@
         }
         
         // 인증 상태 감시
+        // IOL Master 이미지 붙여넣기 이벤트 리스너
+        document.addEventListener('paste', async (e) => {
+            console.log('붙여넣기 이벤트 감지');
+            
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            
+            let imageFile = null;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    imageFile = item.getAsFile();
+                    break;
+                }
+            }
+            
+            if (!imageFile) {
+                console.log('이미지 아님');
+                return;
+            }
+            
+            console.log('이미지 감지됨');
+            
+            const patientModal = document.getElementById('patientModal');
+            const doctorScreen = document.getElementById('doctorScreen');
+            
+            if (patientModal && patientModal.classList.contains('active')) {
+                console.log('새 환자 등록 모달에서 처리');
+                e.preventDefault();
+                await handlePatientImagePaste(e);
+            } else if (doctorScreen && doctorScreen.style.display !== 'none') {
+                console.log('측정값 입력에서 처리');
+                e.preventDefault();
+                await handleMeasurementImagePaste(e);
+            }
+        });
+        
+        // 붙여넣기 영역 클릭 안내
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.paste-zone')) {
+                alert('IOL Master 이미지를 복사(Ctrl+C 또는 캡처)한 후\n이 화면에서 Ctrl+V를 눌러주세요.');
+            }
+        });
+        
         auth.onAuthStateChanged(async (user) => {
             showLoading(true);
             if (user) {
