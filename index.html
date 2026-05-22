@@ -163,7 +163,7 @@
         @media(max-width:768px){.container{padding:12px}header{padding:60px 16px 20px}header h1{font-size:1.3rem}.header-actions{position:absolute;top:10px;right:10px;transform:none}.card{padding:16px}.eye-inputs{grid-template-columns:1fr}.btn{padding:10px 16px;font-size:0.9rem}.treatment-form{flex-direction:column}.treatment-form .form-group{width:100%}.growth-chart-container{height:400px}.role-selector{flex-direction:column}}
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
 </head>
 <body>
     <div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div><p>로딩 중...</p></div>
@@ -785,24 +785,26 @@
             try {
                 console.log('OCR 처리 시작...');
                 
-                // Tesseract.js v4 방식
-                const worker = await Tesseract.createWorker('kor+eng', 1, {
-                    logger: m => console.log('OCR 진행:', m.status, Math.round(m.progress * 100) + '%')
-                });
+                // Tesseract.js v2 방식 - recognize 직접 호출
+                const result = await Tesseract.recognize(
+                    imageFile,
+                    'kor+eng',
+                    {
+                        logger: m => {
+                            console.log('OCR 진행:', m.status, Math.round((m.progress || 0) * 100) + '%');
+                        }
+                    }
+                );
                 
-                console.log('OCR Worker 생성 완료');
-                
-                const { data: { text } } = await worker.recognize(imageFile);
+                const text = result.data.text;
                 console.log('OCR 추출 텍스트:', text);
                 
-                await worker.terminate();
-                
                 // 데이터 파싱
-                const result = parseIOLMasterText(text);
-                console.log('파싱 결과:', result);
+                const parsed = parseIOLMasterText(text);
+                console.log('파싱 결과:', parsed);
                 
                 showLoading(false);
-                return result;
+                return parsed;
             } catch (error) {
                 console.error('OCR 처리 실패:', error);
                 alert('이미지 인식에 실패했습니다. 오류: ' + error.message);
