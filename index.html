@@ -163,6 +163,7 @@
         @media(max-width:768px){.container{padding:12px}header{padding:60px 16px 20px}header h1{font-size:1.3rem}.header-actions{position:absolute;top:10px;right:10px;transform:none}.card{padding:16px}.eye-inputs{grid-template-columns:1fr}.btn{padding:10px 16px;font-size:0.9rem}.treatment-form{flex-direction:column}.treatment-form .form-group{width:100%}.growth-chart-container{height:400px}.role-selector{flex-direction:column}}
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 </head>
 <body>
     <div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div><p>로딩 중...</p></div>
@@ -617,6 +618,10 @@
                 <div class="grid-2">
                     <div class="card">
                         <h3 class="card-title">📝 새 측정값 입력</h3>
+                        <div id="measurePasteZone" class="paste-zone" style="background:#e3f2fd; border:2px dashed #2196f3; border-radius:8px; padding:12px; margin-bottom:12px; text-align:center; cursor:pointer;">
+                            <span style="font-size:20px;">📋</span>
+                            <span style="color:#1565c0; font-weight:bold;">IOL Master 이미지 붙여넣기 (Ctrl+V)</span>
+                        </div>
                         <div class="form-group"><label>측정일</label><input type="date" id="measureDate"></div>
                         <div class="eye-section"><h4>👁️ 우안 (OD)</h4><div class="eye-inputs"><div class="form-group"><label>안축장 (mm)</label><input type="number" step="0.01" id="odAL" placeholder="24.50"></div><div class="form-group"><label>굴절력 (D)</label><input type="number" step="0.25" id="odSE" placeholder="-3.00"></div></div></div>
                         <div class="eye-section"><h4>👁️ 좌안 (OS)</h4><div class="eye-inputs"><div class="form-group"><label>안축장 (mm)</label><input type="number" step="0.01" id="osAL" placeholder="24.50"></div><div class="form-group"><label>굴절력 (D)</label><input type="number" step="0.25" id="osSE" placeholder="-3.00"></div></div></div>
@@ -702,6 +707,11 @@
     <div class="modal-overlay" id="patientModal">
         <div class="modal">
             <div class="modal-header"><h3>새 환자 등록</h3><button class="modal-close" onclick="closePatientModal()">&times;</button></div>
+            <div id="patientPasteZone" class="paste-zone" style="background:#e8f5e9; border:2px dashed #4caf50; border-radius:8px; padding:15px; margin-bottom:15px; text-align:center; cursor:pointer;">
+                <div style="font-size:24px;">📋</div>
+                <div style="color:#2e7d32; font-weight:bold;">IOL Master 이미지 붙여넣기</div>
+                <div style="color:#666; font-size:12px;">Ctrl+V로 이미지를 붙여넣으면 자동 입력됩니다</div>
+            </div>
             <div class="form-group"><label>등록번호 *</label><input type="text" id="newPatientRegNo" placeholder="12345678"></div>
             <div class="form-group"><label>환자 이름 *</label><input type="text" id="newPatientName" placeholder="홍길동"></div>
             <div class="form-group"><label>생년월일 *</label><input type="date" id="newPatientBirth"></div>
@@ -769,6 +779,198 @@
             }
         }
         
+        // IOL Master 이미지 OCR 처리
+        let ocrWorker = null;
+        
+        async function initOCR() {
+            if (ocrWorker) return ocrWorker;
+            showLoading(true);
+            try {
+                ocrWorker = await Tesseract.createWorker('kor+eng');
+                console.log('OCR 초기화 완료');
+            } catch (error) {
+                console.error('OCR 초기화 실패:', error);
+            }
+            showLoading(false);
+            return ocrWorker;
+        }
+        
+        async function extractIOLMasterData(imageFile) {
+            showLoading(true);
+            try {
+                const worker = await initOCR();
+                if (!worker) {
+                    alert('OCR 초기화에 실패했습니다.');
+                    showLoading(false);
+                    return null;
+                }
+                
+                const { data: { text } } = await worker.recognize(imageFile);
+                console.log('OCR 추출 텍스트:', text);
+                
+                // 데이터 파싱
+                const result = parseIOLMasterText(text);
+                console.log('파싱 결과:', result);
+                
+                showLoading(false);
+                return result;
+            } catch (error) {
+                console.error('OCR 처리 실패:', error);
+                alert('이미지 인식에 실패했습니다.');
+                showLoading(false);
+                return null;
+            }
+        }
+        
+        function parseIOLMasterText(text) {
+            const result = {
+                name: '',
+                birthDate: '',
+                gender: '',
+                regNo: '',
+                eye: '',
+                examDate: '',
+                axialLength: ''
+            };
+            
+            // 텍스트 정규화
+            const lines = text.replace(/\r/g, '').split('\n').map(l => l.trim()).filter(l => l);
+            const fullText = text.replace(/\s+/g, ' ');
+            
+            // 환자 이름 추출 (환자: 또는 첫 줄에서)
+            const nameMatch = fullText.match(/환자[:\s]+([가-힣]+)[,\s]*([가-힣]+)/);
+            if (nameMatch) {
+                result.name = nameMatch[1] + nameMatch[2];
+            } else {
+                const nameMatch2 = fullText.match(/([가-힣]{1,2})[,\s]+([가-힣]{2,3})/);
+                if (nameMatch2) {
+                    result.name = nameMatch2[1] + nameMatch2[2];
+                }
+            }
+            
+            // 생년월일 추출 (YYYY-MM-DD 또는 YYYY.MM.DD)
+            const birthMatch = fullText.match(/(19|20)\d{2}[-.\/](0[1-9]|1[0-2])[-.\/](0[1-9]|[12]\d|3[01])/);
+            if (birthMatch) {
+                result.birthDate = birthMatch[0].replace(/[.\/]/g, '-');
+            }
+            
+            // 성별 추출
+            if (fullText.includes('여') && !fullText.includes('남')) {
+                result.gender = 'F';
+            } else if (fullText.includes('남')) {
+                result.gender = 'M';
+            }
+            
+            // 등록번호 추출 (안과 ID, 연속된 4-6자리 숫자)
+            const regNoMatch = fullText.match(/(?:ID|번호)[:\s]*(\d{4,6})/i);
+            if (regNoMatch) {
+                result.regNo = regNoMatch[1];
+            } else {
+                const regNoMatch2 = fullText.match(/\b(\d{5,6})\b/);
+                if (regNoMatch2) {
+                    result.regNo = regNoMatch2[1];
+                }
+            }
+            
+            // OD/OS 추출
+            if (fullText.includes('OD') || fullText.includes('0D')) {
+                result.eye = 'OD';
+            } else if (fullText.includes('OS') || fullText.includes('0S')) {
+                result.eye = 'OS';
+            }
+            
+            // 검사 날짜 추출 (두 번째로 나오는 날짜 또는 측정/검사 관련)
+            const dateMatches = fullText.match(/(19|20)\d{2}[-.\/](0[1-9]|1[0-2])[-.\/](0[1-9]|[12]\d|3[01])/g);
+            if (dateMatches && dateMatches.length >= 2) {
+                result.examDate = dateMatches[1].replace(/[.\/]/g, '-');
+            } else if (dateMatches && dateMatches.length === 1) {
+                // 생년월일과 같으면 검사일로 사용하지 않음
+                const date = dateMatches[0].replace(/[.\/]/g, '-');
+                if (date !== result.birthDate) {
+                    result.examDate = date;
+                }
+            }
+            
+            // 안축장(AL) 추출
+            const alMatch = fullText.match(/AL[:\s]*(\d{2}[.,]\d{1,2})/i);
+            if (alMatch) {
+                result.axialLength = alMatch[1].replace(',', '.');
+            } else {
+                // mm 앞의 숫자 찾기 (22-27 범위)
+                const alMatch2 = fullText.match(/(2[2-7][.,]\d{1,2})\s*mm/i);
+                if (alMatch2) {
+                    result.axialLength = alMatch2[1].replace(',', '.');
+                }
+            }
+            
+            return result;
+        }
+        
+        // 이미지 붙여넣기 핸들러 - 새 환자 등록용
+        async function handlePatientImagePaste(e) {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    const data = await extractIOLMasterData(file);
+                    
+                    if (data) {
+                        if (data.regNo) document.getElementById('newPatientRegNo').value = data.regNo;
+                        if (data.name) document.getElementById('newPatientName').value = data.name;
+                        if (data.birthDate) document.getElementById('newPatientBirth').value = data.birthDate;
+                        if (data.gender === 'M') document.getElementById('genderMale').checked = true;
+                        if (data.gender === 'F') document.getElementById('genderFemale').checked = true;
+                        
+                        let msg = 'IOL Master 이미지에서 정보를 추출했습니다:\n';
+                        msg += '등록번호: ' + (data.regNo || '인식 실패') + '\n';
+                        msg += '이름: ' + (data.name || '인식 실패') + '\n';
+                        msg += '생년월일: ' + (data.birthDate || '인식 실패') + '\n';
+                        msg += '성별: ' + (data.gender === 'M' ? '남' : data.gender === 'F' ? '여' : '인식 실패') + '\n';
+                        msg += '\n추출된 정보를 확인해주세요.';
+                        alert(msg);
+                    }
+                    break;
+                }
+            }
+        }
+        
+        // 이미지 붙여넣기 핸들러 - 측정값 입력용
+        async function handleMeasurementImagePaste(e) {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    const data = await extractIOLMasterData(file);
+                    
+                    if (data) {
+                        if (data.examDate) document.getElementById('measureDate').value = data.examDate;
+                        if (data.axialLength && data.eye === 'OD') {
+                            document.getElementById('odAL').value = data.axialLength;
+                        } else if (data.axialLength && data.eye === 'OS') {
+                            document.getElementById('osAL').value = data.axialLength;
+                        } else if (data.axialLength) {
+                            // eye가 인식 안되면 OD에 입력
+                            document.getElementById('odAL').value = data.axialLength;
+                        }
+                        
+                        let msg = 'IOL Master 이미지에서 정보를 추출했습니다:\n';
+                        msg += '검사일: ' + (data.examDate || '인식 실패') + '\n';
+                        msg += '눈: ' + (data.eye || '인식 실패') + '\n';
+                        msg += '안축장: ' + (data.axialLength || '인식 실패') + ' mm\n';
+                        msg += '\n추출된 정보를 확인해주세요.';
+                        alert(msg);
+                    }
+                    break;
+                }
+            }
+        }
+
         // 가입 신청 알림 이메일 (관리자에게)
         async function sendRegistrationNotifyEmail(doctorName, doctorEmail, clinicName) {
             try {
