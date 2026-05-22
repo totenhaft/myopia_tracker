@@ -780,33 +780,22 @@
         }
         
         // IOL Master 이미지 OCR 처리
-        let ocrWorker = null;
-        
-        async function initOCR() {
-            if (ocrWorker) return ocrWorker;
-            showLoading(true);
-            try {
-                ocrWorker = await Tesseract.createWorker('kor+eng');
-                console.log('OCR 초기화 완료');
-            } catch (error) {
-                console.error('OCR 초기화 실패:', error);
-            }
-            showLoading(false);
-            return ocrWorker;
-        }
-        
         async function extractIOLMasterData(imageFile) {
             showLoading(true);
             try {
-                const worker = await initOCR();
-                if (!worker) {
-                    alert('OCR 초기화에 실패했습니다.');
-                    showLoading(false);
-                    return null;
-                }
+                console.log('OCR 처리 시작...');
+                
+                // Tesseract.js v4 방식
+                const worker = await Tesseract.createWorker('kor+eng', 1, {
+                    logger: m => console.log('OCR 진행:', m.status, Math.round(m.progress * 100) + '%')
+                });
+                
+                console.log('OCR Worker 생성 완료');
                 
                 const { data: { text } } = await worker.recognize(imageFile);
                 console.log('OCR 추출 텍스트:', text);
+                
+                await worker.terminate();
                 
                 // 데이터 파싱
                 const result = parseIOLMasterText(text);
@@ -816,7 +805,7 @@
                 return result;
             } catch (error) {
                 console.error('OCR 처리 실패:', error);
-                alert('이미지 인식에 실패했습니다.');
+                alert('이미지 인식에 실패했습니다. 오류: ' + error.message);
                 showLoading(false);
                 return null;
             }
