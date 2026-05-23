@@ -839,117 +839,131 @@
         }
         
         function parseIOLMasterText(text) {
-            const result = {
+            console.log('=== IOL Master 파싱 시작 ===');
+            console.log('원본 텍스트:', text);
+            
+            // 기본 환자 정보
+            const patientInfo = {
                 name: '',
                 birthDate: '',
                 gender: '',
-                regNo: '',
-                eye: '',
-                examDate: '',
-                axialLength: ''
+                regNo: ''
             };
             
-            // 텍스트를 줄 단위로 분리
+            // 측정 데이터 배열 (여러 날짜 지원)
+            const measurements = [];
+            
             const lines = text.split('\n').map(l => l.trim()).filter(l => l);
             const fullText = text;
             
-            console.log('파싱 시작, 라인 수:', lines.length);
-            
-            // 환자 이름 추출 (환자: 또는 "성, 이름" 형식)
-            // IOL Master 형식: "환자  강, 준서" 또는 "강, 준서"
-            for (const line of lines) {
-                // "환자" 키워드가 있는 줄
-                if (line.includes('환자')) {
-                    const nameMatch = line.match(/환자[\s:]+([가-힣]+)[,\s]+([가-힣]+)/);
-                    if (nameMatch) {
-                        result.name = nameMatch[1] + nameMatch[2];
-                        break;
-                    }
-                }
-                // 첫 줄에서 "성, 이름" 형식 찾기
-                const nameMatch2 = line.match(/^([가-힣]{1,2})[,\s]+([가-힣]{2,3})$/);
-                if (nameMatch2 && !result.name) {
-                    result.name = nameMatch2[1] + nameMatch2[2];
-                }
+            // 환자 이름 추출
+            const nameMatch = fullText.match(/([가-힣]{1,2})[,\s]+([가-힣]{2,3})/);
+            if (nameMatch) {
+                patientInfo.name = nameMatch[1] + nameMatch[2];
             }
             
-            // 이름을 못 찾은 경우 더 넓은 패턴으로 시도
-            if (!result.name) {
-                const nameMatch3 = fullText.match(/([가-힣]{1,2})[,\s]+([가-힣]{2,3})/);
-                if (nameMatch3) {
-                    result.name = nameMatch3[1] + nameMatch3[2];
-                }
+            // 생년월일 추출 (첫 번째 날짜 중 2000~2020년대)
+            const birthMatch = fullText.match(/(20[0-2]\d)[-.\/](0[1-9]|1[0-2])[-.\/](0[1-9]|[12]\d|3[01])/);
+            if (birthMatch) {
+                patientInfo.birthDate = birthMatch[0].replace(/[.\/]/g, '-');
             }
             
-            // 생년월일 추출 (YYYY-MM-DD 형식, 첫 번째 날짜)
-            const allDates = fullText.match(/(19|20)\d{2}[-.\/](0[1-9]|1[0-2])[-.\/](0[1-9]|[12]\d|3[01])/g) || [];
-            if (allDates.length > 0) {
-                result.birthDate = allDates[0].replace(/[.\/]/g, '-');
+            // 성별 추출
+            if (fullText.includes('여')) {
+                patientInfo.gender = 'F';
+            } else if (fullText.includes('남')) {
+                patientInfo.gender = 'M';
             }
             
-            // 검사 날짜 (두 번째 날짜 또는 보험/측정 관련 줄의 날짜)
-            if (allDates.length >= 2) {
-                result.examDate = allDates[1].replace(/[.\/]/g, '-');
-            }
-            
-            // 성별 추출 (성별 키워드 근처 또는 남/여 단독)
-            const genderLine = lines.find(l => l.includes('성별') || /^[남여]$/.test(l.trim()));
-            if (genderLine) {
-                if (genderLine.includes('남') || genderLine === '남') {
-                    result.gender = 'M';
-                } else if (genderLine.includes('여') || genderLine === '여') {
-                    result.gender = 'F';
-                }
+            // 등록번호 추출
+            const regNoMatch = fullText.match(/(?:안과\s*ID|원자\s*ID|ID)[\s:]*([\d]+)/i);
+            if (regNoMatch) {
+                patientInfo.regNo = regNoMatch[1];
             } else {
-                // 전체 텍스트에서 성별 찾기
-                const genderMatch = fullText.match(/성별[\s:]*(남|여)/);
-                if (genderMatch) {
-                    result.gender = genderMatch[1] === '남' ? 'M' : 'F';
+                const numMatch = fullText.match(/\b(\d{5})\b/);
+                if (numMatch && !numMatch[1].startsWith('20')) {
+                    patientInfo.regNo = numMatch[1];
                 }
             }
             
-            // 등록번호 추출 (안과 ID 근처 또는 5자리 숫자)
-            const idMatch = fullText.match(/(?:안과\s*ID|ID)[\s:]*([\d]+)/i);
-            if (idMatch) {
-                result.regNo = idMatch[1];
-            } else {
-                // 5자리 숫자 찾기 (날짜가 아닌 것)
-                const numMatches = fullText.match(/\b(\d{5})\b/g) || [];
-                for (const num of numMatches) {
-                    if (!num.startsWith('20') && !num.startsWith('19')) {
-                        result.regNo = num;
-                        break;
+            // OD/OS 안축장 추출 - 여러 세트 찾기
+            // 패턴: "OD" 섹션의 AL값과 "OS" 섹션의 AL값
+            
+            // 검사 날짜들 추출 (2024-2026년대 날짜들)
+            const examDates = [];
+            const datePattern = /(202[4-6])[-.\/](0[1-9]|1[0-2])[-.\/](0[1-9]|[12]\d|3[01])/g;
+            let dateMatch;
+            while ((dateMatch = datePattern.exec(fullText)) !== null) {
+                const dateStr = dateMatch[0].replace(/[.\/]/g, '-');
+                // 생년월일이 아닌 경우만 추가
+                if (dateStr !== patientInfo.birthDate && !examDates.includes(dateStr)) {
+                    examDates.push(dateStr);
+                }
+            }
+            
+            console.log('발견된 검사 날짜들:', examDates);
+            
+            // AL 값들 추출 (20~30 범위)
+            const alPattern = /AL[:\s]*(\d{2}[.,]\d{1,2})\s*mm/gi;
+            const alValues = [];
+            let alMatch;
+            while ((alMatch = alPattern.exec(fullText)) !== null) {
+                const val = alMatch[1].replace(',', '.');
+                if (parseFloat(val) >= 20 && parseFloat(val) <= 30) {
+                    alValues.push(val);
+                }
+            }
+            
+            console.log('발견된 AL 값들:', alValues);
+            
+            // OD와 OS 섹션 분리하여 각각의 AL 추출
+            const sections = fullText.split(/(?=OD|OS)/);
+            let odALs = [];
+            let osALs = [];
+            
+            for (const section of sections) {
+                const isOD = section.trim().startsWith('OD');
+                const isOS = section.trim().startsWith('OS');
+                
+                const sectionALMatch = section.match(/AL[:\s]*(\d{2}[.,]\d{1,2})/i);
+                if (sectionALMatch) {
+                    const val = sectionALMatch[1].replace(',', '.');
+                    if (parseFloat(val) >= 20 && parseFloat(val) <= 30) {
+                        if (isOD) odALs.push(val);
+                        if (isOS) osALs.push(val);
                     }
                 }
             }
             
-            // OD/OS 추출
-            if (fullText.includes('OD')) {
-                result.eye = 'OD';
-            } else if (fullText.includes('OS')) {
-                result.eye = 'OS';
+            console.log('OD AL 값들:', odALs);
+            console.log('OS AL 값들:', osALs);
+            
+            // 측정 데이터 조합
+            // 날짜 수와 AL 값 쌍 수를 비교하여 매칭
+            const numMeasurements = Math.max(examDates.length, Math.max(odALs.length, osALs.length), 1);
+            
+            for (let i = 0; i < numMeasurements; i++) {
+                measurements.push({
+                    examDate: examDates[i] || examDates[0] || '',
+                    odAL: odALs[i] || '',
+                    osAL: osALs[i] || ''
+                });
             }
             
-            // 안축장(AL) 추출 - 다양한 패턴 시도
-            const alPatterns = [
-                /AL[:\s]*(\d{2}[.,]\d{1,2})/i,
-                /AL\s+(\d{2}[.,]\d{1,2})\s*mm/i,
-                /(\d{2}[.,]\d{2})\s*mm/
-            ];
-            
-            for (const pattern of alPatterns) {
-                const match = fullText.match(pattern);
-                if (match) {
-                    const alValue = parseFloat(match[1].replace(',', '.'));
-                    // 안축장 범위 확인 (20~30mm)
-                    if (alValue >= 20 && alValue <= 30) {
-                        result.axialLength = match[1].replace(',', '.');
-                        break;
-                    }
-                }
+            // 측정 데이터가 없으면 기본값 추가
+            if (measurements.length === 0) {
+                measurements.push({ examDate: '', odAL: '', osAL: '' });
             }
             
-            console.log('파싱 완료:', result);
+            const result = {
+                patient: patientInfo,
+                measurements: measurements
+            };
+            
+            console.log('=== 파싱 완료 ===');
+            console.log('환자 정보:', patientInfo);
+            console.log('측정 데이터:', measurements);
+            
             return result;
         }
         
@@ -964,18 +978,19 @@
                     const file = item.getAsFile();
                     const data = await extractIOLMasterData(file);
                     
-                    if (data) {
-                        if (data.regNo) document.getElementById('newPatientRegNo').value = data.regNo;
-                        if (data.name) document.getElementById('newPatientName').value = data.name;
-                        if (data.birthDate) document.getElementById('newPatientBirth').value = data.birthDate;
-                        if (data.gender === 'M') document.getElementById('genderMale').checked = true;
-                        if (data.gender === 'F') document.getElementById('genderFemale').checked = true;
+                    if (data && data.patient) {
+                        const p = data.patient;
+                        if (p.regNo) document.getElementById('newPatientRegNo').value = p.regNo;
+                        if (p.name) document.getElementById('newPatientName').value = p.name;
+                        if (p.birthDate) document.getElementById('newPatientBirth').value = p.birthDate;
+                        if (p.gender === 'M') document.getElementById('genderMale').checked = true;
+                        if (p.gender === 'F') document.getElementById('genderFemale').checked = true;
                         
                         let msg = 'IOL Master 이미지에서 정보를 추출했습니다:\n';
-                        msg += '등록번호: ' + (data.regNo || '인식 실패') + '\n';
-                        msg += '이름: ' + (data.name || '인식 실패') + '\n';
-                        msg += '생년월일: ' + (data.birthDate || '인식 실패') + '\n';
-                        msg += '성별: ' + (data.gender === 'M' ? '남' : data.gender === 'F' ? '여' : '인식 실패') + '\n';
+                        msg += '등록번호: ' + (p.regNo || '인식 실패') + '\n';
+                        msg += '이름: ' + (p.name || '인식 실패') + '\n';
+                        msg += '생년월일: ' + (p.birthDate || '인식 실패') + '\n';
+                        msg += '성별: ' + (p.gender === 'M' ? '남' : p.gender === 'F' ? '여' : '인식 실패') + '\n';
                         msg += '\n추출된 정보를 확인해주세요.';
                         alert(msg);
                     }
@@ -995,27 +1010,110 @@
                     const file = item.getAsFile();
                     const data = await extractIOLMasterData(file);
                     
-                    if (data) {
-                        if (data.examDate) document.getElementById('measureDate').value = data.examDate;
-                        if (data.axialLength && data.eye === 'OD') {
-                            document.getElementById('odAL').value = data.axialLength;
-                        } else if (data.axialLength && data.eye === 'OS') {
-                            document.getElementById('osAL').value = data.axialLength;
-                        } else if (data.axialLength) {
-                            // eye가 인식 안되면 OD에 입력
-                            document.getElementById('odAL').value = data.axialLength;
-                        }
+                    if (data && data.measurements && data.measurements.length > 0) {
+                        const measurements = data.measurements;
                         
-                        let msg = 'IOL Master 이미지에서 정보를 추출했습니다:\n';
-                        msg += '검사일: ' + (data.examDate || '인식 실패') + '\n';
-                        msg += '눈: ' + (data.eye || '인식 실패') + '\n';
-                        msg += '안축장: ' + (data.axialLength || '인식 실패') + ' mm\n';
-                        msg += '\n추출된 정보를 확인해주세요.';
-                        alert(msg);
+                        if (measurements.length === 1) {
+                            // 단일 측정값인 경우 바로 입력
+                            const m = measurements[0];
+                            if (m.examDate) document.getElementById('measureDate').value = m.examDate;
+                            if (m.odAL) document.getElementById('odAL').value = m.odAL;
+                            if (m.osAL) document.getElementById('osAL').value = m.osAL;
+                            
+                            let msg = 'IOL Master 이미지에서 정보를 추출했습니다:\n';
+                            msg += '검사일: ' + (m.examDate || '인식 실패') + '\n';
+                            msg += 'OD 안축장: ' + (m.odAL || '-') + ' mm\n';
+                            msg += 'OS 안축장: ' + (m.osAL || '-') + ' mm\n';
+                            msg += '\n추출된 정보를 확인해주세요.';
+                            alert(msg);
+                        } else {
+                            // 여러 측정값인 경우 선택 또는 일괄 입력
+                            let msg = '여러 측정 데이터가 발견되었습니다:\n\n';
+                            measurements.forEach((m, i) => {
+                                msg += (i + 1) + '. ' + (m.examDate || '날짜 없음') + ': ';
+                                msg += 'OD=' + (m.odAL || '-') + 'mm, ';
+                                msg += 'OS=' + (m.osAL || '-') + 'mm\n';
+                            });
+                            msg += '\n모두 자동으로 등록하시겠습니까?';
+                            
+                            if (confirm(msg)) {
+                                // 모든 측정값 자동 등록
+                                await autoAddMultipleMeasurements(measurements);
+                            } else {
+                                // 첫 번째 값만 폼에 입력
+                                const m = measurements[0];
+                                if (m.examDate) document.getElementById('measureDate').value = m.examDate;
+                                if (m.odAL) document.getElementById('odAL').value = m.odAL;
+                                if (m.osAL) document.getElementById('osAL').value = m.osAL;
+                                alert('첫 번째 측정값만 폼에 입력했습니다.');
+                            }
+                        }
                     }
                     break;
                 }
             }
+        }
+        
+        // 여러 측정값 자동 등록 함수
+        async function autoAddMultipleMeasurements(measurements) {
+            if (!currentPatientId) {
+                alert('환자를 먼저 선택해주세요.');
+                return;
+            }
+            
+            showLoading(true);
+            try {
+                const patient = patients.find(p => p.id === currentPatientId);
+                if (!patient) throw new Error('환자를 찾을 수 없습니다.');
+                
+                let addedCount = 0;
+                const records = patient.records || [];
+                
+                for (const m of measurements) {
+                    if (!m.examDate) continue;
+                    
+                    // 나이 계산
+                    const birth = new Date(patient.birthDate);
+                    const exam = new Date(m.examDate);
+                    const age = (exam - birth) / (365.25 * 24 * 60 * 60 * 1000);
+                    
+                    // 이미 같은 날짜의 기록이 있는지 확인
+                    const exists = records.some(r => r.date === m.examDate);
+                    if (exists) {
+                        console.log('이미 존재하는 날짜:', m.examDate);
+                        continue;
+                    }
+                    
+                    const newRecord = {
+                        date: m.examDate,
+                        age: parseFloat(age.toFixed(2)),
+                        od: m.odAL ? parseFloat(m.odAL) : null,
+                        os: m.osAL ? parseFloat(m.osAL) : null,
+                        odSE: null,
+                        osSE: null
+                    };
+                    
+                    records.push(newRecord);
+                    addedCount++;
+                }
+                
+                // 날짜순 정렬
+                records.sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                // Firebase 업데이트
+                await db.collection('patients').doc(currentPatientId).update({ records });
+                
+                // 로컬 데이터 업데이트
+                patient.records = records;
+                
+                alert(addedCount + '개의 측정값이 자동으로 등록되었습니다.');
+                selectPatient(currentPatientId);
+                
+            } catch (error) {
+                console.error('자동 등록 실패:', error);
+                alert('자동 등록에 실패했습니다: ' + error.message);
+            }
+            showLoading(false);
         }
 
         // 가입 신청 알림 이메일 (관리자에게)
