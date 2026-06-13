@@ -1596,6 +1596,13 @@
                 // 전체 환자 목록 로드 (관리자용)
         async function loadAllPatients() {
             try {
+                // 안과 목록 먼저 로드
+                const clinicsSnapshot = await db.collection('clinics').get();
+                const clinicMap = {};
+                clinicsSnapshot.forEach(doc => {
+                    clinicMap[doc.id] = doc.data().name || doc.id;
+                });
+                
                 const snapshot = await db.collection('patients').get();
                 const allPatients = [];
                 
@@ -1624,15 +1631,18 @@
                     html += '<th style="padding:8px; text-align:left;">이름</th>';
                     html += '<th style="padding:8px; text-align:left;">생년월일</th>';
                     html += '<th style="padding:8px; text-align:left;">성별</th>';
-                    html += '<th style="padding:8px; text-align:left;">측정 횟수</th></tr>';
+                    html += '<th style="padding:8px; text-align:left;">측정횟수</th>';
+                    html += '<th style="padding:8px; text-align:left;">안과명</th></tr>';
                     
                     recent.forEach(p => {
+                        const clinicName = clinicMap[p.clinicId] || '-';
                         html += '<tr style="border-bottom:1px solid #ddd;">';
                         html += '<td style="padding:8px;">' + (p.regNo || '-') + '</td>';
                         html += '<td style="padding:8px;">' + (p.name || '-') + '</td>';
                         html += '<td style="padding:8px;">' + (p.birthDate || '-') + '</td>';
                         html += '<td style="padding:8px;">' + (p.gender === 'M' ? '남' : p.gender === 'F' ? '여' : '-') + '</td>';
                         html += '<td style="padding:8px;">' + (p.records ? p.records.length : 0) + '회</td>';
+                        html += '<td style="padding:8px;">' + clinicName + '</td>';
                         html += '</tr>';
                     });
                     
@@ -1654,6 +1664,13 @@
         async function exportAllPatientsCSV() {
             showLoading(true);
             try {
+                // 안과 목록 먼저 로드
+                const clinicsSnapshot = await db.collection('clinics').get();
+                const clinicMap = {};
+                clinicsSnapshot.forEach(doc => {
+                    clinicMap[doc.id] = doc.data().name || doc.id;
+                });
+                
                 const snapshot = await db.collection('patients').get();
                 const allPatients = [];
                 
@@ -1669,12 +1686,13 @@
                 
                 // CSV 헤더
                 let csv = '\uFEFF'; // UTF-8 BOM for Excel
-                csv += '등록번호,이름,생년월일,성별,측정횟수,최근측정일,최근OD안축장,최근OS안축장,안과ID\n';
+                csv += '등록번호,이름,생년월일,성별,측정횟수,최근측정일,최근OD안축장,최근OS안축장,안과명\n';
                 
                 // 데이터 행
                 allPatients.forEach(p => {
                     const records = p.records || [];
                     const lastRecord = records.length > 0 ? records[records.length - 1] : null;
+                    const clinicName = clinicMap[p.clinicId] || p.clinicId || '';
                     
                     const row = [
                         p.regNo || '',
@@ -1685,7 +1703,7 @@
                         lastRecord ? lastRecord.date : '',
                         lastRecord && lastRecord.od ? lastRecord.od : '',
                         lastRecord && lastRecord.os ? lastRecord.os : '',
-                        p.clinicId || ''
+                        clinicName
                     ];
                     
                     csv += row.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
@@ -1715,6 +1733,13 @@
         async function exportAllPatientsDetailedCSV() {
             showLoading(true);
             try {
+                // 안과 목록 먼저 로드
+                const clinicsSnapshot = await db.collection('clinics').get();
+                const clinicMap = {};
+                clinicsSnapshot.forEach(doc => {
+                    clinicMap[doc.id] = doc.data().name || doc.id;
+                });
+                
                 const snapshot = await db.collection('patients').get();
                 const allPatients = [];
                 
@@ -1730,11 +1755,12 @@
                 
                 // CSV 헤더 (측정 기록 포함)
                 let csv = '\uFEFF'; // UTF-8 BOM
-                csv += '등록번호,이름,생년월일,성별,측정일,나이,OD안축장,OS안축장,OD굴절력,OS굴절력\n';
+                csv += '등록번호,이름,생년월일,성별,안과명,측정일,나이,OD안축장,OS안축장,OD굴절력,OS굴절력\n';
                 
                 // 데이터 행 (환자별 측정 기록 각각)
                 allPatients.forEach(p => {
                     const records = p.records || [];
+                    const clinicName = clinicMap[p.clinicId] || p.clinicId || '';
                     
                     if (records.length === 0) {
                         // 측정 기록이 없는 환자도 포함
@@ -1743,6 +1769,7 @@
                             p.name || '',
                             p.birthDate || '',
                             p.gender === 'M' ? '남' : p.gender === 'F' ? '여' : '',
+                            clinicName,
                             '', '', '', '', '', ''
                         ];
                         csv += row.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
@@ -1753,6 +1780,7 @@
                                 p.name || '',
                                 p.birthDate || '',
                                 p.gender === 'M' ? '남' : p.gender === 'F' ? '여' : '',
+                                clinicName,
                                 r.date || '',
                                 r.age || '',
                                 r.od || '',
