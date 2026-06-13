@@ -550,6 +550,7 @@
                 <button class="tab-btn" onclick="showAdminTab('users')">사용자 관리</button>
                 <button class="tab-btn" onclick="showAdminTab('doctors')">안과의사 목록</button>
                 <button class="tab-btn" onclick="showAdminTab('clinics')">안과 목록</button>
+                <button class="tab-btn" onclick="showAdminTab('patients')">환자 관리</button>
                 <button class="tab-btn" onclick="showAdminTab('stats')">통계</button>
             </div>
             
@@ -578,6 +579,18 @@
                 <div class="card">
                     <h3 class="card-title">등록된 안과</h3>
                     <div id="clinicList"></div>
+                </div>
+            </div>
+            
+            <div id="adminPatientsTab" style="display:none">
+                <div class="card">
+                    <h3 class="card-title">전체 환자 관리</h3>
+                    <div style="margin-bottom:15px;">
+                        <button class="btn btn-primary btn-sm" onclick="exportAllPatientsCSV()">📥 환자 목록 CSV</button>
+                        <button class="btn btn-primary btn-sm" onclick="exportAllPatientsDetailedCSV()" style="margin-left:10px;">📥 측정기록 포함 CSV</button>
+                    </div>
+                    <div id="allPatientsStats" style="margin-bottom:15px; padding:10px; background:#f5f5f5; border-radius:8px;"></div>
+                    <div id="allPatientsList"></div>
                 </div>
             </div>
             
@@ -1580,6 +1593,198 @@
         }
         
         // ==================== 관리자 기능 ====================
+                // 전체 환자 목록 로드 (관리자용)
+        async function loadAllPatients() {
+            try {
+                const snapshot = await db.collection('patients').get();
+                const allPatients = [];
+                
+                snapshot.forEach(doc => {
+                    allPatients.push({ id: doc.id, ...doc.data() });
+                });
+                
+                console.log('전체 환자 수:', allPatients.length);
+                
+                // 통계 표시
+                const statsDiv = document.getElementById('allPatientsStats');
+                if (statsDiv) {
+                    const clinicCount = new Set(allPatients.map(p => p.clinicId)).size;
+                    statsDiv.innerHTML = '<strong>총 환자 수:</strong> ' + allPatients.length + '명 | ' +
+                        '<strong>등록된 안과 수:</strong> ' + clinicCount + '개';
+                }
+                
+                // 환자 목록 표시 (최근 20명)
+                const listDiv = document.getElementById('allPatientsList');
+                if (listDiv) {
+                    const sorted = allPatients.sort((a, b) => (b.regNo || '').localeCompare(a.regNo || ''));
+                    const recent = sorted.slice(0, 20);
+                    
+                    let html = '<table style="width:100%; border-collapse:collapse; font-size:14px;">';
+                    html += '<tr style="background:#e0e0e0;"><th style="padding:8px; text-align:left;">등록번호</th>';
+                    html += '<th style="padding:8px; text-align:left;">이름</th>';
+                    html += '<th style="padding:8px; text-align:left;">생년월일</th>';
+                    html += '<th style="padding:8px; text-align:left;">성별</th>';
+                    html += '<th style="padding:8px; text-align:left;">측정 횟수</th></tr>';
+                    
+                    recent.forEach(p => {
+                        html += '<tr style="border-bottom:1px solid #ddd;">';
+                        html += '<td style="padding:8px;">' + (p.regNo || '-') + '</td>';
+                        html += '<td style="padding:8px;">' + (p.name || '-') + '</td>';
+                        html += '<td style="padding:8px;">' + (p.birthDate || '-') + '</td>';
+                        html += '<td style="padding:8px;">' + (p.gender === 'M' ? '남' : p.gender === 'F' ? '여' : '-') + '</td>';
+                        html += '<td style="padding:8px;">' + (p.records ? p.records.length : 0) + '회</td>';
+                        html += '</tr>';
+                    });
+                    
+                    html += '</table>';
+                    if (allPatients.length > 20) {
+                        html += '<p style="color:#666; margin-top:10px;">최근 20명만 표시됩니다. 전체 목록은 CSV 내보내기를 이용하세요.</p>';
+                    }
+                    listDiv.innerHTML = html;
+                }
+                
+                return allPatients;
+            } catch (error) {
+                console.error('환자 목록 로드 실패:', error);
+                return [];
+            }
+        }
+        
+        // 전체 환자 CSV 내보내기
+        async function exportAllPatientsCSV() {
+            showLoading(true);
+            try {
+                const snapshot = await db.collection('patients').get();
+                const allPatients = [];
+                
+                snapshot.forEach(doc => {
+                    allPatients.push({ id: doc.id, ...doc.data() });
+                });
+                
+                if (allPatients.length === 0) {
+                    alert('내보낼 환자 데이터가 없습니다.');
+                    showLoading(false);
+                    return;
+                }
+                
+                // CSV 헤더
+                let csv = '\uFEFF'; // UTF-8 BOM for Excel
+                csv += '등록번호,이름,생년월일,성별,측정횟수,최근측정일,최근OD안축장,최근OS안축장,안과ID\n';
+                
+                // 데이터 행
+                allPatients.forEach(p => {
+                    const records = p.records || [];
+                    const lastRecord = records.length > 0 ? records[records.length - 1] : null;
+                    
+                    const row = [
+                        p.regNo || '',
+                        p.name || '',
+                        p.birthDate || '',
+                        p.gender === 'M' ? '남' : p.gender === 'F' ? '여' : '',
+                        records.length,
+                        lastRecord ? lastRecord.date : '',
+                        lastRecord && lastRecord.od ? lastRecord.od : '',
+                        lastRecord && lastRecord.os ? lastRecord.os : '',
+                        p.clinicId || ''
+                    ];
+                    
+                    csv += row.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
+                });
+                
+                // 다운로드
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'patients_' + new Date().toISOString().slice(0, 10) + '.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                alert('총 ' + allPatients.length + '명의 환자 데이터를 내보냈습니다.');
+                
+            } catch (error) {
+                console.error('CSV 내보내기 실패:', error);
+                alert('CSV 내보내기에 실패했습니다: ' + error.message);
+            }
+            showLoading(false);
+        }
+        
+        // 측정 기록 포함 상세 CSV 내보내기
+        async function exportAllPatientsDetailedCSV() {
+            showLoading(true);
+            try {
+                const snapshot = await db.collection('patients').get();
+                const allPatients = [];
+                
+                snapshot.forEach(doc => {
+                    allPatients.push({ id: doc.id, ...doc.data() });
+                });
+                
+                if (allPatients.length === 0) {
+                    alert('내보낼 환자 데이터가 없습니다.');
+                    showLoading(false);
+                    return;
+                }
+                
+                // CSV 헤더 (측정 기록 포함)
+                let csv = '\uFEFF'; // UTF-8 BOM
+                csv += '등록번호,이름,생년월일,성별,측정일,나이,OD안축장,OS안축장,OD굴절력,OS굴절력\n';
+                
+                // 데이터 행 (환자별 측정 기록 각각)
+                allPatients.forEach(p => {
+                    const records = p.records || [];
+                    
+                    if (records.length === 0) {
+                        // 측정 기록이 없는 환자도 포함
+                        const row = [
+                            p.regNo || '',
+                            p.name || '',
+                            p.birthDate || '',
+                            p.gender === 'M' ? '남' : p.gender === 'F' ? '여' : '',
+                            '', '', '', '', '', ''
+                        ];
+                        csv += row.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
+                    } else {
+                        records.forEach(r => {
+                            const row = [
+                                p.regNo || '',
+                                p.name || '',
+                                p.birthDate || '',
+                                p.gender === 'M' ? '남' : p.gender === 'F' ? '여' : '',
+                                r.date || '',
+                                r.age || '',
+                                r.od || '',
+                                r.os || '',
+                                r.odSE || '',
+                                r.osSE || ''
+                            ];
+                            csv += row.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
+                        });
+                    }
+                });
+                
+                // 다운로드
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'patients_detailed_' + new Date().toISOString().slice(0, 10) + '.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                alert('상세 측정 기록을 내보냈습니다.');
+                
+            } catch (error) {
+                console.error('CSV 내보내기 실패:', error);
+                alert('CSV 내보내기에 실패했습니다: ' + error.message);
+            }
+            showLoading(false);
+        }
+        
         async function loadAdminData() {
             await loadApprovalRequests();
             await loadAllUsers();
@@ -1591,7 +1796,7 @@
         function showAdminTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
-            ['adminApprovalsTab', 'adminUsersTab', 'adminDoctorsTab', 'adminClinicsTab', 'adminStatsTab'].forEach(id => {
+            ['adminApprovalsTab', 'adminUsersTab', 'adminDoctorsTab', 'adminClinicsTab', 'adminPatientsTab', 'adminStatsTab'].forEach(id => {
                 document.getElementById(id).style.display = 'none';
             });
             document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Tab').style.display = 'block';
