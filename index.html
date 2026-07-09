@@ -668,7 +668,14 @@
                 </div>
                 
                 <div class="card"><h3 class="card-title">📐 구간별 안축장 증가 속도</h3><div class="table-container"><table class="rate-table"><thead><tr><th>구간</th><th>기간</th><th>OD 변화량</th><th>OD 속도</th><th>OS 변화량</th><th>OS 속도</th></tr></thead><tbody id="rateTableBody"></tbody></table></div><p style="margin-top:12px;font-size:0.8rem;color:var(--gray-600)">* 측정 오차 보정: 0.02mm 감산 적용</p></div>
-                
+
+                <div class="card" id="treatmentEffectCard">
+                    <h3 class="card-title">💊 치료 전후 효과 비교</h3>
+                    <div class="table-container"><table class="rate-table"><thead><tr><th>치료</th><th>시작일</th><th>구분</th><th>치료 전 속도</th><th>치료 후 속도</th><th>감소율</th><th>판정</th></tr></thead><tbody id="treatmentEffectBody"></tbody></table></div>
+                    <div class="chart-container" id="treatmentEffectChartWrap" style="margin-top:16px;display:none"><canvas id="treatmentEffectChart"></canvas></div>
+                    <p style="margin-top:12px;font-size:0.8rem;color:var(--gray-600)">* 속도는 각 구간 측정치의 선형회귀 기울기(mm/년). 치료 전후 각각 2회 이상 측정 &amp; 90일 이상 간격일 때 계산됩니다. 치료 시작일 측정치는 "치료 전"에 포함됩니다.</p>
+                </div>
+
                 <div class="card"><h3 class="card-title">📈 시간에 따른 변화</h3><div class="chart-tabs"><button class="chart-tab active" onclick="switchChart('AL')" id="tabAL">안축장</button><button class="chart-tab" onclick="switchChart('SE')" id="tabSE">굴절력</button></div><div class="chart-container"><canvas id="progressChart"></canvas></div></div>
                 
                 <div class="card"><h3 class="card-title">📋 측정 기록</h3><div class="table-container"><table><thead><tr><th>날짜</th><th>나이</th><th>OD AL</th><th>OD %ile</th><th>OS AL</th><th>OS %ile</th><th>OD SE</th><th>OS SE</th><th></th></tr></thead><tbody id="recordsBody"></tbody></table></div><div style="margin-top:16px"><button class="btn btn-outline" onclick="exportCSV()">📥 CSV 내보내기</button></div></div>
@@ -1167,7 +1174,7 @@
         let patients = [];
         let clinics = [];
         let tempChildren = [];
-        let progressChart = null, growthChart = null, customerGrowthChart = null, patientSearchChart = null;
+        let progressChart = null, growthChart = null, customerGrowthChart = null, patientSearchChart = null, treatmentEffectChart = null;
         let currentChartType = 'AL';
         let duplicatePatients = [];
         
@@ -2360,6 +2367,7 @@
             updateTreatments(p, 'treatmentList', true);
             updateRecords(p, 'recordsBody', true);
             updateRateTable(p);
+            updateTreatmentEffect(p);
             updateProgressChart(p);
             updateGrowthChart(p, 'growthChart');
         }
@@ -2407,6 +2415,106 @@
                 rows += '<tr><td>'+prev.date+' → '+curr.date+'</td><td>'+months+'개월</td><td>'+(odDiff!==null?(odDiff>=0?'+':'')+odDiff.toFixed(2)+'mm':'-')+'</td><td class="'+getRateClass(odRate)+'">'+(odRate!==null?(odRate>=0?'+':'')+odRate.toFixed(2)+'mm/년':'-')+'</td><td>'+(osDiff!==null?(osDiff>=0?'+':'')+osDiff.toFixed(2)+'mm':'-')+'</td><td class="'+getRateClass(osRate)+'">'+(osRate!==null?(osRate>=0?'+':'')+osRate.toFixed(2)+'mm/년':'-')+'</td></tr>';
             }
             tbody.innerHTML = rows;
+        }
+
+        // ===== 치료 전후 효과 분석 =====
+        // 선형회귀 기울기: x=나이(년), y=안축장(mm) → mm/년
+        // 조건: 2개 이상의 측정치, 기간 90일(약 0.246년) 이상
+        function regressionSlope(points) {
+            if (points.length < 2) return null;
+            const span = points[points.length-1].x - points[0].x;
+            if (span < 90/365.25) return null;
+            const n = points.length;
+            const meanX = points.reduce((s,p)=>s+p.x,0)/n;
+            const meanY = points.reduce((s,p)=>s+p.y,0)/n;
+            let num = 0, den = 0;
+            points.forEach(p => { num += (p.x-meanX)*(p.y-meanY); den += (p.x-meanX)*(p.x-meanX); });
+            return den === 0 ? null : num/den;
+        }
+
+        // 치료별 전/후 성장속도 계산
+        // 전: 치료 시작일 이전(당일 포함) 측정치 / 후: 시작일 이후 ~ 다음 치료 시작 전까지
+        function analyzeTreatmentEffect(p) {
+            const records = (p.records || []).filter(r => r.age != null).sort((a,b) => new Date(a.date) - new Date(b.date));
+            const treatments = (p.treatments || []).slice().sort((a,b) => new Date(a.date) - new Date(b.date));
+            if (!records.length || !treatments.length) return [];
+            return treatments.map((t, i) => {
+                const tDate = new Date(t.date);
+                const nextDate = i+1 < treatments.length ? new Date(treatments[i+1].date) : null;
+                const pre = records.filter(r => new Date(r.date) <= tDate);
+                const post = records.filter(r => { const d = new Date(r.date); return d > tDate && (!nextDate || d <= nextDate); });
+                const eye = key => ({
+                    pre: regressionSlope(pre.filter(r => r[key] != null).map(r => ({x:r.age, y:r[key]}))),
+                    post: regressionSlope(post.filter(r => r[key] != null).map(r => ({x:r.age, y:r[key]})))
+                });
+                return { treatment: t, od: eye('odAL'), os: eye('osAL') };
+            });
+        }
+
+        function effectJudgement(pre, post) {
+            if (pre === null || post === null) return {text:'데이터 부족', cls:''};
+            if (pre < 0.05) return {text:'판정 보류*', cls:''};          // 치료 전 성장이 거의 없어 감소율 의미 없음
+            const reduction = (pre - post) / pre * 100;
+            if (post < 0.2 && reduction >= 30) return {text:'효과 좋음', cls:'rate-stable'};
+            if (reduction > 0) return {text:'부분 효과', cls:'rate-moderate'};
+            return {text:'효과 불충분', cls:'rate-rapid'};
+        }
+
+        function updateTreatmentEffect(p) {
+            const tbody = document.getElementById('treatmentEffectBody');
+            const chartWrap = document.getElementById('treatmentEffectChartWrap');
+            if (!tbody) return;
+            if (treatmentEffectChart) { treatmentEffectChart.destroy(); treatmentEffectChart = null; }
+            const results = analyzeTreatmentEffect(p);
+            if (!results.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="color:var(--gray-600)">등록된 치료가 없습니다</td></tr>';
+                chartWrap.style.display = 'none';
+                return;
+            }
+            const fmt = v => v === null ? '-' : (v>=0?'+':'')+v.toFixed(2)+' mm/년';
+            const fmtRed = (pre, post) => (pre === null || post === null || pre < 0.05) ? '-' : Math.round((pre-post)/pre*100)+'%';
+            let rows = '';
+            const chartLabels = [], preData = [], postData = [], barColors = [];
+            results.forEach(res => {
+                const t = res.treatment;
+                const c = TREATMENT_COLORS[t.type] || '#6b7280';
+                [['OD', res.od], ['OS', res.os]].forEach(([eyeLabel, e], j) => {
+                    const judge = effectJudgement(e.pre, e.post);
+                    rows += '<tr>'
+                        + (j === 0 ? '<td rowspan="2" style="color:'+c+';font-weight:600">'+t.type+'</td><td rowspan="2">'+t.date+'<br><span style="color:var(--gray-600);font-size:0.85em">('+t.age+'세)</span></td>' : '')
+                        + '<td>'+eyeLabel+'</td><td>'+fmt(e.pre)+'</td><td>'+fmt(e.post)+'</td><td>'+fmtRed(e.pre, e.post)+'</td>'
+                        + '<td class="'+judge.cls+'">'+judge.text+'</td></tr>';
+                    if (e.pre !== null && e.post !== null) {
+                        chartLabels.push(t.type+' ('+eyeLabel+')');
+                        preData.push(+e.pre.toFixed(3));
+                        postData.push(+e.post.toFixed(3));
+                        barColors.push(c);
+                    }
+                });
+            });
+            tbody.innerHTML = rows;
+            if (!chartLabels.length) { chartWrap.style.display = 'none'; return; }
+            chartWrap.style.display = 'block';
+            const ctx = document.getElementById('treatmentEffectChart').getContext('2d');
+            treatmentEffectChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: chartLabels, datasets: [
+                    { label: '치료 전', data: preData, backgroundColor: '#9ca3af' },
+                    { label: '치료 후', data: postData, backgroundColor: barColors }
+                ]},
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { callbacks: { label: c => c.dataset.label+': '+(c.parsed.y>=0?'+':'')+c.parsed.y.toFixed(2)+' mm/년' } },
+                        annotation: { annotations: {
+                            stable: { type:'line', yMin:0.2, yMax:0.2, borderColor:'#28a745', borderWidth:1.5, borderDash:[6,4], label:{display:true, content:'안정 기준 0.2', position:'end', backgroundColor:'rgba(255,255,255,0.9)', color:'#28a745', font:{size:10}} },
+                            rapid: { type:'line', yMin:0.4, yMax:0.4, borderColor:'#dc3545', borderWidth:1.5, borderDash:[6,4], label:{display:true, content:'빠름 기준 0.4', position:'end', backgroundColor:'rgba(255,255,255,0.9)', color:'#dc3545', font:{size:10}} }
+                        }}
+                    },
+                    scales: { y: { title: { display:true, text:'안축장 성장속도 (mm/년)' }, beginAtZero: true } }
+                }
+            });
         }
         // 차트 기능
         function updateProgressChart(p) {
