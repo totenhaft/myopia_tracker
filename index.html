@@ -161,6 +161,26 @@
         .mt-16{margin-top:16px}
         .error-text{color:var(--danger);font-size:0.85rem;margin-top:4px}
         @media(max-width:768px){.container{padding:12px}header{padding:60px 16px 20px}header h1{font-size:1.3rem}.header-actions{position:absolute;top:10px;right:10px;transform:none}.card{padding:16px}.eye-inputs{grid-template-columns:1fr}.btn{padding:10px 16px;font-size:0.9rem}.treatment-form{flex-direction:column}.treatment-form .form-group{width:100%}.growth-chart-container{height:400px}.role-selector{flex-direction:column}}
+        /* 보호자용 리포트 */
+        .report-modal{max-width:800px}
+        .report-body{font-size:0.92rem}
+        .report-body h2{font-size:1.2rem;color:var(--primary);margin-bottom:4px}
+        .report-meta{color:var(--gray-600);font-size:0.85rem;margin-bottom:16px}
+        .report-section{margin-bottom:18px}
+        .report-section h4{color:var(--primary);border-bottom:2px solid var(--primary-light);padding-bottom:6px;margin-bottom:10px;font-size:1rem}
+        .report-summary{background:var(--primary-light);border-radius:8px;padding:14px 16px;line-height:1.7}
+        .report-chart-img{width:100%;border:1px solid var(--gray-200);border-radius:8px}
+        .report-table{width:100%;border-collapse:collapse;font-size:0.88rem}
+        .report-table th,.report-table td{border:1px solid var(--gray-300);padding:6px 10px;text-align:center}
+        .report-table th{background:var(--gray-100)}
+        .recall-overdue{color:var(--danger);font-weight:600}
+        @media print{
+            body *{visibility:hidden}
+            #reportModal,#reportModal *{visibility:visible}
+            #reportModal{position:absolute;top:0;left:0;width:100%;background:white;display:block!important;padding:0}
+            #reportModal .modal{max-width:100%;width:100%;max-height:none;box-shadow:none;padding:10mm}
+            .no-print{display:none!important}
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
@@ -624,7 +644,17 @@
                 </div>
                 <div class="search-results" id="doctorSearchResults"></div>
             </div>
-            
+
+            <div class="card">
+                <h3 class="card-title"><span>🔔 재방문 관리</span>
+                    <span style="display:flex;gap:10px;align-items:center;font-weight:400">
+                        <select id="recallMonths" onchange="updateRecallList()"><option value="3">3개월 경과</option><option value="6" selected>6개월 경과</option><option value="9">9개월 경과</option><option value="12">12개월 경과</option></select>
+                        <button class="btn btn-outline btn-sm" onclick="openClinicStats()">📊 원내 치료 통계</button>
+                    </span>
+                </h3>
+                <div class="table-container"><table class="rate-table"><thead><tr><th>환자</th><th>등록번호</th><th>마지막 측정일</th><th>경과</th><th></th></tr></thead><tbody id="recallListBody"></tbody></table></div>
+            </div>
+
             <div id="doctorMainContent" style="display:none">
                 <div class="patient-info-header" id="doctorPatientHeader"></div>
                 
@@ -654,7 +684,7 @@
                 </div>
                 
                 <div class="card">
-                    <h3 class="card-title"><span>📈 안축장 성장 차트</span><button class="btn btn-outline btn-sm" onclick="saveChartAsImage()">📷 저장</button></h3>
+                    <h3 class="card-title"><span>📈 안축장 성장 차트</span><span style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="saveChartAsImage()">📷 저장</button><button class="btn btn-primary btn-sm" onclick="openReport()">📄 보호자 리포트</button></span></h3>
                     <div class="growth-chart-container"><canvas id="growthChart"></canvas></div>
                     <div class="chart-legend">
                         <div class="legend-item"><div class="legend-dot" style="background:var(--od-color)"></div>우안 (OD)</div>
@@ -664,9 +694,10 @@
                         <div class="legend-item"><div class="legend-line" style="background:#16a34a;height:4px"></div>P50</div>
                         <div class="legend-item"><div class="legend-line" style="background:#6b7280"></div>P25</div>
                         <div class="legend-item"><div class="legend-line" style="background:#9ca3af"></div>P5</div>
+                        <div class="legend-item"><div class="legend-line" style="background:repeating-linear-gradient(90deg,var(--gray-600) 0 5px,transparent 5px 9px)"></div>향후 2년 예측</div>
                     </div>
                 </div>
-                
+
                 <div class="card"><h3 class="card-title">📐 구간별 안축장 증가 속도</h3><div class="table-container"><table class="rate-table"><thead><tr><th>구간</th><th>기간</th><th>OD 변화량</th><th>OD 속도</th><th>OS 변화량</th><th>OS 속도</th></tr></thead><tbody id="rateTableBody"></tbody></table></div><p style="margin-top:12px;font-size:0.8rem;color:var(--gray-600)">* 측정 오차 보정: 0.02mm 감산 적용</p></div>
 
                 <div class="card" id="treatmentEffectCard">
@@ -762,6 +793,28 @@
             </div>
             <div class="form-group"><label>등록번호</label><input type="text" id="confirmRegNo" placeholder="등록번호 입력"></div>
             <button class="btn btn-primary" onclick="confirmRegNo()" style="width:100%">확인</button>
+        </div>
+    </div>
+
+    <!-- 보호자용 요약 리포트 모달 -->
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal report-modal">
+            <div class="modal-header no-print"><h3>📄 보호자용 요약 리포트</h3><button class="modal-close" onclick="closeReport()">&times;</button></div>
+            <div class="report-body" id="reportBody"></div>
+            <div class="no-print" style="display:flex;gap:10px;margin-top:16px">
+                <button class="btn btn-primary" onclick="window.print()" style="flex:1">🖨️ 인쇄 / PDF 저장</button>
+                <button class="btn btn-gray" onclick="closeReport()" style="flex:1">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 원내 치료 통계 모달 -->
+    <div class="modal-overlay" id="clinicStatsModal">
+        <div class="modal report-modal">
+            <div class="modal-header"><h3>📊 원내 치료 통계</h3><button class="modal-close" onclick="closeClinicStats()">&times;</button></div>
+            <div id="clinicStatsBody"></div>
+            <div class="chart-container" id="clinicStatsChartWrap" style="display:none"><canvas id="clinicStatsChart"></canvas></div>
+            <p style="margin-top:12px;font-size:0.8rem;color:var(--gray-600)">* 치료 전후 각각 2회 이상 측정 &amp; 90일 이상 간격 조건을 만족하는 눈(eye)만 집계됩니다.</p>
         </div>
     </div>
     <script>
@@ -1174,7 +1227,7 @@
         let patients = [];
         let clinics = [];
         let tempChildren = [];
-        let progressChart = null, growthChart = null, customerGrowthChart = null, patientSearchChart = null, treatmentEffectChart = null;
+        let progressChart = null, growthChart = null, customerGrowthChart = null, patientSearchChart = null, treatmentEffectChart = null, clinicStatsChart = null;
         let currentChartType = 'AL';
         let duplicatePatients = [];
         
@@ -2153,6 +2206,7 @@
                 console.log('환자 목록:', patients.map(p => ({ name: p.name, clinicId: p.clinicId })));
             }
             console.log('=== 디버깅 끝 ===');
+            updateRecallList();
         }
         
         function showRecentPatients() {
@@ -2368,6 +2422,7 @@
             updateRecords(p, 'recordsBody', true);
             updateRateTable(p);
             updateTreatmentEffect(p);
+            updateRecallList();
             updateProgressChart(p);
             updateGrowthChart(p, 'growthChart');
         }
@@ -2516,6 +2571,167 @@
                 }
             });
         }
+        // ===== 성장 예측 =====
+        // 최근 추세(마지막 치료 이후 측정치 2회 이상이면 그 구간, 아니면 최근 3회)로
+        // 향후 2년 예측 구간 [시작점, 끝점]을 반환. 조건 미달 시 null.
+        function predictSegment(p, key) {
+            const records = (p.records || []).filter(r => r.age != null && r[key] != null).sort((a,b) => a.age - b.age);
+            if (records.length < 2) return null;
+            let pts = null;
+            const treatments = p.treatments || [];
+            if (treatments.length) {
+                const lastT = treatments.reduce((m,t) => new Date(t.date) > new Date(m.date) ? t : m);
+                const after = records.filter(r => new Date(r.date) > new Date(lastT.date));
+                if (after.length >= 2) pts = after;
+            }
+            if (!pts) pts = records.slice(-3);
+            const slope = regressionSlope(pts.map(r => ({x:r.age, y:r[key]})));
+            if (slope === null) return null;
+            const last = records[records.length-1];
+            const endAge = Math.min(last.age + 2, 18);
+            if (endAge <= last.age) return null;
+            return [{x:last.age, y:last[key]}, {x:endAge, y:last[key] + slope*(endAge-last.age)}];
+        }
+
+        // ===== 재방문 관리 =====
+        function updateRecallList() {
+            const tbody = document.getElementById('recallListBody');
+            if (!tbody) return;
+            const months = parseInt(document.getElementById('recallMonths').value, 10);
+            const now = new Date();
+            const overdue = [];
+            patients.forEach(p => {
+                const dates = (p.records || []).map(r => new Date(r.date)).filter(d => !isNaN(d));
+                if (!dates.length) return;
+                const last = new Date(Math.max.apply(null, dates));
+                const elapsed = (now - last) / (86400000 * 30.44);
+                if (elapsed >= months) overdue.push({p, last, elapsed});
+            });
+            if (!overdue.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="color:var(--gray-600)">기준 개월을 초과한 환자가 없습니다 ✅</td></tr>';
+                return;
+            }
+            overdue.sort((a,b) => b.elapsed - a.elapsed);
+            tbody.innerHTML = overdue.map(o =>
+                '<tr><td>'+(o.p.gender==='male'?'👦':'👧')+' '+o.p.name+'</td><td>'+(o.p.regNo||'-')+'</td><td>'+o.last.toISOString().split('T')[0]+'</td>'
+                + '<td class="recall-overdue">'+Math.floor(o.elapsed)+'개월 경과</td>'
+                + '<td><button class="btn btn-outline btn-sm" onclick="selectPatient(\''+o.p.id+'\')">열기</button></td></tr>'
+            ).join('');
+        }
+
+        // ===== 원내 치료 통계 =====
+        function aggregateClinicStats() {
+            const byType = {};
+            patients.forEach(p => {
+                analyzeTreatmentEffect(p).forEach(res => {
+                    [res.od, res.os].forEach(e => {
+                        if (e.pre !== null && e.post !== null && e.pre >= 0.05) {
+                            const k = res.treatment.type;
+                            if (!byType[k]) byType[k] = {pres:[], posts:[], patientIds:{}};
+                            byType[k].pres.push(e.pre);
+                            byType[k].posts.push(e.post);
+                            byType[k].patientIds[p.id] = true;
+                        }
+                    });
+                });
+            });
+            return byType;
+        }
+
+        function openClinicStats() {
+            const body = document.getElementById('clinicStatsBody');
+            const wrap = document.getElementById('clinicStatsChartWrap');
+            if (clinicStatsChart) { clinicStatsChart.destroy(); clinicStatsChart = null; }
+            const stats = aggregateClinicStats();
+            const types = Object.keys(stats);
+            if (!types.length) {
+                body.innerHTML = '<p style="color:var(--gray-600)">아직 집계 가능한 치료 데이터가 없습니다. (치료 전후 각 2회 이상 측정 필요)</p>';
+                wrap.style.display = 'none';
+                document.getElementById('clinicStatsModal').classList.add('active');
+                return;
+            }
+            const mean = a => a.reduce((s,v)=>s+v,0)/a.length;
+            let rows = '';
+            const labels = [], preMeans = [], postMeans = [], colors = [];
+            types.sort((a,b) => stats[b].pres.length - stats[a].pres.length).forEach(k => {
+                const s = stats[k];
+                const preM = mean(s.pres), postM = mean(s.posts);
+                const red = Math.round((preM - postM) / preM * 100);
+                const nPatients = Object.keys(s.patientIds).length;
+                rows += '<tr><td style="color:'+(TREATMENT_COLORS[k]||'#6b7280')+';font-weight:600">'+k+'</td><td>'+nPatients+'명 ('+s.pres.length+'안)</td><td>'+preM.toFixed(2)+'</td><td>'+postM.toFixed(2)+'</td><td style="font-weight:600">'+red+'%</td></tr>';
+                labels.push(k); preMeans.push(+preM.toFixed(3)); postMeans.push(+postM.toFixed(3)); colors.push(TREATMENT_COLORS[k]||'#6b7280');
+            });
+            body.innerHTML = '<div class="table-container"><table class="rate-table"><thead><tr><th>치료</th><th>표본</th><th>평균 치료 전 (mm/년)</th><th>평균 치료 후 (mm/년)</th><th>평균 감소율</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+            wrap.style.display = 'block';
+            document.getElementById('clinicStatsModal').classList.add('active');
+            const ctx = document.getElementById('clinicStatsChart').getContext('2d');
+            clinicStatsChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets: [
+                    { label: '치료 전', data: preMeans, backgroundColor: '#9ca3af' },
+                    { label: '치료 후', data: postMeans, backgroundColor: colors }
+                ]},
+                options: { responsive:true, maintainAspectRatio:false,
+                    plugins: { legend:{position:'top'} },
+                    scales: { y: { title:{display:true, text:'평균 안축장 성장속도 (mm/년)'}, beginAtZero:true } } }
+            });
+        }
+        function closeClinicStats() { document.getElementById('clinicStatsModal').classList.remove('active'); }
+
+        // ===== 보호자용 요약 리포트 =====
+        function rateWord(v) { return v === null ? null : Math.abs(v) < 0.2 ? '안정적인' : Math.abs(v) < 0.4 ? '다소 빠른' : '빠른'; }
+
+        function makeReportSummary(p) {
+            const last = p.records[p.records.length-1];
+            const lines = [];
+            const pctText = pct => pct == null ? null : (typeof pct === 'string' ? (pct.includes('>') ? '95 이상' : '3 미만') : pct);
+            if (last.odPct != null || last.osPct != null) {
+                lines.push('자녀의 안축장(눈의 길이)은 또래 100명 중 우안 약 <b>'+(pctText(last.odPct)||'-')+'번째</b>, 좌안 약 <b>'+(pctText(last.osPct)||'-')+'번째</b>로 긴 수준입니다. (숫자가 클수록 근시 진행 위험이 높습니다)');
+            }
+            const progOD = calcProg(p.records, 'odAL'), progOS = calcProg(p.records, 'osAL');
+            const worse = (progOD !== null && progOS !== null) ? Math.max(progOD, progOS) : (progOD !== null ? progOD : progOS);
+            if (worse !== null) {
+                lines.push('전체 기간 기준 성장 속도는 연간 약 <b>'+worse.toFixed(2)+'mm</b>로 <b>'+rateWord(worse)+'</b> 편입니다. (일반적으로 연 0.2mm 미만이면 안정적, 0.4mm 이상이면 빠른 진행으로 봅니다)');
+            }
+            const effects = analyzeTreatmentEffect(p);
+            effects.forEach(res => {
+                const best = [res.od, res.os].filter(e => e.pre !== null && e.post !== null && e.pre >= 0.05);
+                if (best.length) {
+                    const red = Math.round(best.reduce((s,e) => s + (e.pre-e.post)/e.pre*100, 0) / best.length);
+                    if (red > 0) lines.push('<b>'+res.treatment.type+'</b> 치료 시작 후 성장 속도가 평균 <b>'+red+'%</b> 감소하여 치료 효과가 확인됩니다.');
+                    else lines.push('<b>'+res.treatment.type+'</b> 치료 후 성장 속도 감소가 아직 뚜렷하지 않습니다. 경과 관찰이 필요합니다.');
+                }
+            });
+            const nextMonths = worse === null ? 6 : (Math.abs(worse) >= 0.4 ? 3 : 6);
+            lines.push('다음 측정 권장 시기: <b>약 '+nextMonths+'개월 후</b>입니다.');
+            return lines;
+        }
+
+        function openReport() {
+            const p = patients.find(x => x.id === currentPatientId);
+            if (!p || !p.records || !p.records.length) { alert('측정 기록이 있어야 리포트를 만들 수 있습니다.'); return; }
+            const last = p.records[p.records.length-1];
+            const chartCanvas = document.getElementById('growthChart');
+            const chartImg = chartCanvas ? chartCanvas.toDataURL('image/png') : '';
+            const fmt = (v,d) => v == null ? '-' : v.toFixed(d);
+            const treatRows = (p.treatments||[]).map(t => '<span style="color:'+(TREATMENT_COLORS[t.type]||'#6b7280')+';font-weight:600">'+t.type+'</span> ('+t.date+' 시작)').join(' · ') || '없음';
+            const summary = makeReportSummary(p).map(l => '• '+l).join('<br>');
+            document.getElementById('reportBody').innerHTML =
+                '<h2>근시 관리 요약 리포트</h2>'
+                + '<div class="report-meta">'+p.name+' ('+(p.gender==='male'?'남':'여')+', '+p.birthDate+') · 등록번호 '+(p.regNo||'-')+' · 발행일 '+new Date().toISOString().split('T')[0]+'</div>'
+                + '<div class="report-section"><h4>현재 상태 ('+last.date+' 측정)</h4>'
+                + '<table class="report-table"><thead><tr><th></th><th>안축장 (mm)</th><th>또래 대비 (%ile)</th><th>굴절력 (D)</th></tr></thead><tbody>'
+                + '<tr><td>우안 (OD)</td><td>'+fmt(last.odAL,2)+'</td><td>'+(last.odPct!=null?last.odPct:'-')+'</td><td>'+fmt(last.odSE,2)+'</td></tr>'
+                + '<tr><td>좌안 (OS)</td><td>'+fmt(last.osAL,2)+'</td><td>'+(last.osPct!=null?last.osPct:'-')+'</td><td>'+fmt(last.osSE,2)+'</td></tr>'
+                + '</tbody></table></div>'
+                + (chartImg ? '<div class="report-section"><h4>성장 차트</h4><img class="report-chart-img" src="'+chartImg+'" alt="성장 차트"></div>' : '')
+                + '<div class="report-section"><h4>진행 중인 치료</h4><p>'+treatRows+'</p></div>'
+                + '<div class="report-section"><h4>요약 설명</h4><div class="report-summary">'+summary+'</div></div>'
+                + '<p style="font-size:0.78rem;color:var(--gray-600)">본 리포트는 보호자의 이해를 돕기 위한 참고 자료이며, 정확한 진단과 치료 방침은 담당 의사의 판단을 따릅니다.</p>';
+            document.getElementById('reportModal').classList.add('active');
+        }
+        function closeReport() { document.getElementById('reportModal').classList.remove('active'); }
+
         // 차트 기능
         function updateProgressChart(p) {
             const ctx = document.getElementById('progressChart').getContext('2d');
@@ -2552,11 +2768,17 @@
                     }
                 });
             }
+            // 성장 예측선 (향후 2년, 최근 추세 기반)
+            const predDatasets = [];
+            const predOD = predictSegment(p, 'odAL'), predOS = predictSegment(p, 'osAL');
+            if (predOD) predDatasets.push({type:'line',label:'우안 예측',data:predOD,borderColor:OD_COLOR,borderWidth:2,borderDash:[5,4],pointRadius:0,fill:false,tension:0,order:5});
+            if (predOS) predDatasets.push({type:'line',label:'좌안 예측',data:predOS,borderColor:OS_COLOR,borderWidth:2,borderDash:[5,4],pointRadius:0,fill:false,tension:0,order:5});
             const chart = new Chart(ctx, {type:'scatter',data:{datasets:[
                 createRefLine('P95','#dc2626',2,[6,3],'P95'),createRefLine('P90','#ea580c',1.5,[4,4],'P90'),createRefLine('P75','#f59e0b',2,[6,3],'P75'),
                 createRefLine('P50','#16a34a',3,[],'P50'),createRefLine('P25','#6b7280',2,[6,3],'P25'),createRefLine('P10','#9ca3af',1.5,[4,4],'P10'),createRefLine('P5','#d1d5db',2,[6,3],'P5'),
                 {type:'scatter',label:'우안 (OD)',data:odData,borderColor:OD_COLOR,backgroundColor:OD_COLOR,pointRadius:5,pointHoverRadius:7,showLine:true,borderWidth:2,tension:0.2,order:1},
-                {type:'scatter',label:'좌안 (OS)',data:osData,borderColor:OS_COLOR,backgroundColor:OS_COLOR,pointRadius:5,pointHoverRadius:7,showLine:true,borderWidth:2,tension:0.2,order:1}
+                {type:'scatter',label:'좌안 (OS)',data:osData,borderColor:OS_COLOR,backgroundColor:OS_COLOR,pointRadius:5,pointHoverRadius:7,showLine:true,borderWidth:2,tension:0.2,order:1},
+                ...predDatasets
             ]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'nearest'},plugins:{legend:{display:false},tooltip:{filter:item=>item.dataset.label==='우안 (OD)'||item.dataset.label==='좌안 (OS)'},annotation:{annotations}},scales:{x:{type:'linear',min:4,max:18,title:{display:true,text:'나이 (세)',color:'#333'},ticks:{stepSize:2,color:'#333'},grid:{color:'#e0e0e0'}},y:{min:20,max:29,title:{display:true,text:'안축장 (mm)',color:'#333'},ticks:{stepSize:1,color:'#333'},grid:{color:'#e0e0e0'}}}}});
             
             if (canvasId === 'growthChart') growthChart = chart;
