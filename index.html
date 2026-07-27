@@ -132,7 +132,13 @@
         .loading-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;z-index:2000;flex-direction:column;gap:16px}
         .loading-spinner{width:50px;height:50px;border:4px solid var(--gray-200);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
-        .sync-status{position:fixed;bottom:20px;right:20px;padding:8px 16px;border-radius:20px;font-size:0.85rem;display:none;z-index:100}
+        .sync-status{position:fixed;bottom:20px;right:88px;padding:8px 16px;border-radius:20px;font-size:0.85rem;display:none;z-index:100}
+        .scroll-top-btn{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;border:none;box-shadow:0 4px 12px rgba(0,0,0,0.25);cursor:pointer;font-size:1.3rem;line-height:1;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transform:translateY(12px);transition:opacity .25s ease,transform .25s ease,visibility .25s ease;z-index:900}
+        .scroll-top-btn.show{opacity:1;visibility:visible;transform:translateY(0)}
+        .scroll-top-btn:hover{box-shadow:0 6px 18px rgba(0,0,0,0.32);transform:translateY(-2px)}
+        .scroll-top-btn:active{transform:translateY(0)}
+        @media(max-width:600px){.scroll-top-btn{width:46px;height:46px;bottom:16px;right:16px;font-size:1.15rem}.sync-status{right:74px}}
+        @media print{.scroll-top-btn{display:none!important}}
         .sync-status.syncing{display:block;background:#fef3c7;color:#92400e}
         .sync-status.synced{display:block;background:#d1fae5;color:#065f46}
         .sync-status.error{display:block;background:#fee2e2;color:#991b1b}
@@ -1416,6 +1422,39 @@
             }
         });
         
+        // ===== 맨 위로 스크롤 버튼 =====
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 버튼 HTML이 이 스크립트보다 아래에 있으므로 DOM이 모두 만들어진 뒤에 실행해야 함
+        document.addEventListener('DOMContentLoaded', function initScrollTopBtn() {
+            const btn = document.getElementById('scrollTopBtn');
+            if (!btn) {
+                console.warn('scrollTopBtn 요소를 찾을 수 없습니다.');
+                return;
+            }
+
+            // 스크롤 이벤트가 초당 수십 번 발생하므로 requestAnimationFrame으로 처리 횟수를 줄임
+            let ticking = false;
+            function updateBtn() {
+                if (window.scrollY > 300) {
+                    btn.classList.add('show');
+                } else {
+                    btn.classList.remove('show');
+                }
+                ticking = false;
+            }
+            window.addEventListener('scroll', () => {
+                if (!ticking) {
+                    ticking = true;
+                    window.requestAnimationFrame(updateBtn);
+                }
+            }, { passive: true });
+
+            updateBtn();
+        });
+
         auth.onAuthStateChanged(async (user) => {
             showLoading(true);
             if (user) {
@@ -3235,5 +3274,6 @@
         }
 
     </script>
+    <button class="scroll-top-btn" id="scrollTopBtn" onclick="scrollToTop()" title="맨 위로" aria-label="맨 위로">&#9650;</button>
 </body>
 </html>
