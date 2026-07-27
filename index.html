@@ -189,6 +189,7 @@
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     
 </head>
 <body>
@@ -807,9 +808,11 @@
         <div class="modal report-modal">
             <div class="modal-header no-print"><h3>📄 보호자용 요약 리포트</h3><button class="modal-close" onclick="closeReport()">&times;</button></div>
             <div class="report-body" id="reportBody"></div>
-            <div class="no-print" style="display:flex;gap:10px;margin-top:16px">
-                <button class="btn btn-primary" onclick="window.print()" style="flex:1">🖨️ 인쇄 / PDF 저장</button>
-                <button class="btn btn-gray" onclick="closeReport()" style="flex:1">닫기</button>
+            <div class="no-print" style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+                <button class="btn btn-primary" id="copyReportBtn" onclick="copyReportImage()" style="flex:1 1 140px">📋 이미지 복사</button>
+                <button class="btn btn-outline" id="saveReportBtn" onclick="downloadReportImage()" style="flex:1 1 140px">🖼️ 이미지 저장</button>
+                <button class="btn btn-outline" onclick="window.print()" style="flex:1 1 140px">🖨️ 인쇄 / PDF</button>
+                <button class="btn btn-gray" onclick="closeReport()" style="flex:1 1 100px">닫기</button>
             </div>
         </div>
     </div>
@@ -2770,6 +2773,134 @@
             document.getElementById('reportModal').classList.add('active');
         }
         function closeReport() { document.getElementById('reportModal').classList.remove('active'); }
+
+        // ===== 리포트 이미지 복사 / 저장 =====
+
+        // 리포트 영역을 캔버스로 렌더링해 PNG Blob으로 만든다
+        function buildReportBlob() {
+            const body = document.getElementById('reportBody');
+            if (!body) return Promise.reject(new Error('리포트 영역을 찾을 수 없습니다.'));
+            if (typeof html2canvas === 'undefined') {
+                return Promise.reject(new Error('이미지 변환 라이브러리를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.'));
+            }
+
+            return html2canvas(body, {
+                backgroundColor: '#ffffff',  // 지정하지 않으면 배경이 투명해져 채팅창에서 글자가 안 보일 수 있음
+                scale: 2,                    // 2배 해상도로 렌더링해 글자가 선명하게 나오도록
+                useCORS: true,
+                logging: false,
+                windowWidth: body.scrollWidth,
+                windowHeight: body.scrollHeight,
+                // onclone은 캡처용 복사본에만 적용된다. 실제 화면 레이아웃은 건드리지 않으면서
+                // 이미지에만 여백을 넣기 위해 사용
+                onclone: (doc) => {
+                    const cloned = doc.getElementById('reportBody');
+                    if (cloned) {
+                        cloned.style.padding = '24px';
+                        cloned.style.background = '#ffffff';
+                    }
+                }
+            }).then(canvas => {
+                return new Promise((resolve, reject) => {
+                    canvas.toBlob(blob => {
+                        if (blob) resolve(blob);
+                        else reject(new Error('이미지 생성에 실패했습니다.'));
+                    }, 'image/png');
+                });
+            });
+        }
+
+        function reportFileName() {
+            const p = patients.find(x => x.id === currentPatientId);
+            const name = p && p.name ? p.name : 'report';
+            const date = new Date().toISOString().split('T')[0];
+            return '근시관리리포트_' + name + '_' + date + '.png';
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            // 메모리 누수를 막기 위해 사용이 끝난 URL은 반드시 해제
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        // 버튼에 잠깐 결과 메시지를 보여주고 원래 상태로 되돌린다
+        function flashBtn(btn, text, ms) {
+            if (!btn) return;
+            if (!btn.dataset.originalText) btn.dataset.originalText = btn.textContent;
+            btn.textContent = text;
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.textContent = btn.dataset.originalText;
+                btn.disabled = false;
+            }, ms || 1800);
+        }
+
+        // 주의: async 함수로 만들면 안 됨.
+        // 일부 브라우저(사파리)는 클릭 직후 동기적으로 clipboard.write가 호출되어야 허용한다.
+        function copyReportImage() {
+            const btn = document.getElementById('copyReportBtn');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ 이미지 생성 중...'; }
+
+            const blobPromise = buildReportBlob();
+
+            const canUseClipboard = !!(navigator.clipboard && window.ClipboardItem && navigator.clipboard.write);
+
+            if (!canUseClipboard) {
+                // HTTP 환경이거나 지원하지 않는 브라우저 → 저장으로 대체
+                blobPromise.then(blob => {
+                    downloadBlob(blob, reportFileName());
+                    if (btn) { btn.dataset.originalText = '📋 이미지 복사'; }
+                    flashBtn(btn, '💾 저장됨');
+                    alert('이 브라우저는 이미지 클립보드 복사를 지원하지 않아 파일로 저장했습니다.\n(크롬 또는 엣지 브라우저를 권장합니다)');
+                }).catch(err => {
+                    console.error('리포트 이미지 생성 실패:', err);
+                    if (btn) { btn.disabled = false; btn.textContent = '📋 이미지 복사'; }
+                    alert('이미지 생성에 실패했습니다: ' + err.message);
+                });
+                return;
+            }
+
+            // ClipboardItem에 Blob 대신 Promise를 넘기면 사파리에서도 동작한다
+            navigator.clipboard.write([
+                new ClipboardItem({ 'image/png': blobPromise })
+            ]).then(() => {
+                if (btn) { btn.dataset.originalText = '📋 이미지 복사'; }
+                flashBtn(btn, '✅ 복사 완료!');
+            }).catch(err => {
+                console.error('클립보드 복사 실패:', err);
+                // 복사가 막힌 경우에도 작업이 헛되지 않도록 파일로 저장
+                blobPromise.then(blob => {
+                    downloadBlob(blob, reportFileName());
+                    if (btn) { btn.dataset.originalText = '📋 이미지 복사'; }
+                    flashBtn(btn, '💾 저장됨');
+                    alert('클립보드 복사가 차단되어 이미지 파일로 저장했습니다.');
+                }).catch(e2 => {
+                    if (btn) { btn.disabled = false; btn.textContent = '📋 이미지 복사'; }
+                    alert('이미지 생성에 실패했습니다: ' + e2.message);
+                });
+            });
+        }
+
+        function downloadReportImage() {
+            const btn = document.getElementById('saveReportBtn');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ 이미지 생성 중...'; }
+
+            buildReportBlob().then(blob => {
+                downloadBlob(blob, reportFileName());
+                if (btn) { btn.dataset.originalText = '🖼️ 이미지 저장'; }
+                flashBtn(btn, '✅ 저장 완료!');
+            }).catch(err => {
+                console.error('리포트 이미지 저장 실패:', err);
+                if (btn) { btn.disabled = false; btn.textContent = '🖼️ 이미지 저장'; }
+                alert('이미지 생성에 실패했습니다: ' + err.message);
+            });
+        }
 
         // 차트 기능
         function updateProgressChart(p) {
