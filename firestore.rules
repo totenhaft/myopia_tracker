@@ -50,7 +50,25 @@ service cloud.firestore {
       return userExists() && userData().clinicId == clinicId;
     }
 
-    // 이 환자와 연결이 승인된 보호자인지 (2단계에서 사용)
+    // 보호자 접근 (임시 조치).
+    // 로그인한 보호자가, 자기 병원 소속이고, 본인 계정에 등록해 둔 자녀와
+    // 이름·생년월일이 정확히 일치하는 환자만 볼 수 있다.
+    //
+    // ⚠️ 완전한 보안은 아니다. 보호자가 자기 children 목록에 임의의
+    //    이름·생년월일을 넣으면 해당 환자를 열 수 있다.
+    //    다만 '로그인 없이 전체 공개'보다는 훨씬 안전하며,
+    //    병원 발급 접근코드 방식이 준비되면 아래 isLinkedGuardian으로 교체한다.
+    function isRegisteredChild() {
+      return userExists()
+        && userData().role == 'customer'
+        && resource.data.clinicId == userData().clinicId
+        && userData().children.hasAny([{
+             'name': resource.data.name,
+             'birthDate': resource.data.birthDate
+           }]);
+    }
+
+    // 2단계(접근코드 방식)에서 사용할 자리
     function isLinkedGuardian() {
       return isSignedIn()
         && 'linkedGuardians' in resource.data
@@ -99,6 +117,7 @@ service cloud.firestore {
       // 로그인하지 않은 사람은 절대 읽을 수 없다.
       allow read: if isAdmin()
         || (isApprovedDoctor() && isMyClinic(resource.data.clinicId))
+        || isRegisteredChild()
         || isLinkedGuardian();
 
       // 생성: 승인된 의사가 자기 병원 소속으로만
