@@ -865,18 +865,9 @@
                     <input type="text" class="search-input" id="doctorSearchInput" placeholder="🔍 환자 이름 또는 등록번호로 검색..." onfocus="showRecentPatients()" oninput="searchPatients()">
                     <button class="btn btn-primary" onclick="openPatientModal()">➕ 새 환자</button>
                     <button class="btn btn-danger" onclick="deletePatient()" id="deletePatientBtn" style="display:none">🗑️ 삭제</button>
+                    <button class="btn btn-outline" onclick="openClinicStats()">📊 원내 치료 통계</button>
                 </div>
                 <div class="search-results" id="doctorSearchResults"></div>
-            </div>
-
-            <div class="card">
-                <h3 class="card-title"><span>🔔 재방문 관리</span>
-                    <span style="display:flex;gap:10px;align-items:center;font-weight:400">
-                        <select id="recallMonths" onchange="updateRecallList()"><option value="3">3개월 경과</option><option value="6" selected>6개월 경과</option><option value="9">9개월 경과</option><option value="12">12개월 경과</option></select>
-                        <button class="btn btn-outline btn-sm" onclick="openClinicStats()">📊 원내 치료 통계</button>
-                    </span>
-                </h3>
-                <div class="table-container"><table class="rate-table"><thead><tr><th>환자</th><th>등록번호</th><th>마지막 측정일</th><th>경과</th><th></th></tr></thead><tbody id="recallListBody"></tbody></table></div>
             </div>
 
             <div id="doctorMainContent" style="display:none">
