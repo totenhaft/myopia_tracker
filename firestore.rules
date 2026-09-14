@@ -1,0 +1,134 @@
+rules_version = '2';
+
+// ============================================================
+//  근시관리 트래커 Firestore 보안 규칙
+//
+//  ⚠️ 이 파일은 저장소에 있는 것만으로는 아무 효력이 없습니다.
+//     Firebase Console > Firestore Database > 규칙(Rules) 에
+//     붙여넣고 [게시]를 눌러야 실제로 적용됩니다.
+//
+//  현재(수정 전) 규칙의 문제:
+//    match /patients/{id} { allow read: if true; }
+//      → 로그인하지 않은 누구나 전체 환자 기록을 읽을 수 있음
+//    match /patients/{id} { allow write: if request.auth != null; }
+//      → 익명 로그인 사용자를 포함해 아무나 모든 환자를 수정·삭제 가능
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- 공통 판별 함수 ----------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // 관리자 이메일. 앱의 ADMIN_EMAIL 값과 반드시 같아야 합니다.
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'totenhaft@gmail.com';
+    }
+
+    // 사용자 문서가 없을 때 get()이 null을 반환해 규칙이 오류로 막히는 것을 방지
+    function userExists() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // 승인된 의사만 환자 데이터를 다룰 수 있다
+    function isApprovedDoctor() {
+      return userExists()
+        && userData().role == 'doctor'
+        && userData().approved == true;
+    }
+
+    // 자기 병원 환자인지 확인 (다른 병원 환자 접근 차단)
+    function isMyClinic(clinicId) {
+      return userExists() && userData().clinicId == clinicId;
+    }
+
+    // 이 환자와 연결이 승인된 보호자인지 (2단계에서 사용)
+    function isLinkedGuardian() {
+      return isSignedIn()
+        && 'linkedGuardians' in resource.data
+        && request.auth.uid in resource.data.linkedGuardians;
+    }
+
+
+    // ---------- users ----------
+    match /users/{userId} {
+      // 본인 문서와 관리자만 조회 가능 (다른 사용자의 이메일·소속 노출 차단)
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+
+      // 가입: 본인 문서만 생성 가능.
+      // 스스로 admin 역할을 부여하거나 approved: true 로 만드는 것을 서버에서 차단한다.
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.role in ['doctor', 'customer']
+        && (request.resource.data.role != 'doctor'
+            || request.resource.data.approved == false);
+
+      // 수정: 관리자는 자유롭게, 본인은 역할·승인상태를 바꿀 수 없다
+      allow update: if isAdmin()
+        || (isSignedIn()
+            && request.auth.uid == userId
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.approved == resource.data.approved);
+
+      allow delete: if isAdmin();
+    }
+
+
+    // ---------- clinics ----------
+    match /clinics/{clinicId} {
+      // 가입 화면의 병원 선택 목록에 필요하므로 공개.
+      // 병원 이름만 들어 있어 환자정보는 노출되지 않는다.
+      allow read: if true;
+
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+
+    // ---------- patients (가장 중요) ----------
+    match /patients/{patientId} {
+      // 읽기: 관리자 / 같은 병원의 승인된 의사 / 연결된 보호자만.
+      // 로그인하지 않은 사람은 절대 읽을 수 없다.
+      allow read: if isAdmin()
+        || (isApprovedDoctor() && isMyClinic(resource.data.clinicId))
+        || isLinkedGuardian();
+
+      // 생성: 승인된 의사가 자기 병원 소속으로만
+      allow create: if isAdmin()
+        || (isApprovedDoctor() && isMyClinic(request.resource.data.clinicId));
+
+      // 수정: 자기 병원 환자만, 그리고 다른 병원으로 옮길 수 없다
+      allow update: if isAdmin()
+        || (isApprovedDoctor()
+            && isMyClinic(resource.data.clinicId)
+            && request.resource.data.clinicId == resource.data.clinicId);
+
+      allow delete: if isAdmin()
+        || (isApprovedDoctor() && isMyClinic(resource.data.clinicId));
+    }
+
+
+    // ---------- approvalRequests ----------
+    match /approvalRequests/{requestId} {
+      allow read: if isAdmin();
+      // 본인 명의의 요청만 생성 가능
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+
+    // ---------- 명시적으로 나머지는 모두 차단 ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
