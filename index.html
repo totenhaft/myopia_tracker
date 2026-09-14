@@ -1473,12 +1473,29 @@
         // 이제는 값을 빼지 않고, 변화량이 이 범위 안일 때 '해석 주의' 표시에만 쓴다.
         const MEASUREMENT_NOISE = 0.02;
 
+        // 환자명·병원명 등 사용자가 입력한 값을 innerHTML에 그대로 넣으면
+        // 따옴표나 <태그>가 들어갔을 때 화면이 깨지거나 스크립트가 실행될 수 있다(XSS).
+        // 화면에 글자로 보여줄 값은 반드시 이 함수를 거친다.
+        function esc(s) {
+            if (s === null || s === undefined) return '';
+            return String(s).replace(/[&<>"']/g, function (ch) {
+                return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch];
+            });
+        }
+
         // 굴절력 0.00D는 '정시(plano)'라는 유효한 측정값이다.
         // v ? A : B 처럼 참/거짓으로 검사하면 0이 거짓으로 취급되어 미측정('-')으로 잘못 표시된다.
         // 값의 유무는 반드시 이 함수로 판정한다.
         function hasValue(v) { return v !== null && v !== undefined && v !== '' && !isNaN(v); }
         function fmtNum(v, d) { return hasValue(v) ? Number(v).toFixed(d) : '-'; }
         function csvNum(v) { return hasValue(v) ? v : ''; }
+        // 엑셀은 = + - @ 로 시작하는 칸을 수식으로 해석한다.
+        // 환자명 등에 그런 문자가 있으면 파일을 여는 사람의 PC에서 의도치 않은 동작이 일어날 수 있다.
+        function csvText(v) {
+            const s = (v === null || v === undefined) ? '' : String(v);
+            const safe = /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
+            return '"' + safe.replace(/"/g, '""') + '"';
+        }
 
         // 구간 속도 계산 — 화면마다 따로 계산하면 값이 어긋나므로 반드시 이 함수만 사용한다
         function annualRate(diff, days) {
@@ -1845,10 +1862,12 @@
             if (!q) { container.innerHTML = ''; return; }
             const results = clinics.filter(c => c.name.toLowerCase().includes(q));
             container.innerHTML = results.length === 0 ? '<p style="color:var(--gray-600);padding:12px">검색 결과가 없습니다</p>' :
-                results.map(c => '<div class="clinic-item" onclick="selectClinic(\''+c.id+'\',\''+c.name+'\')">' + c.name + '</div>').join('');
+                results.map(c => '<div class="clinic-item" onclick="selectClinic(\''+c.id+'\')">' + esc(c.name) + '</div>').join('');
         }
         
         function selectClinic(id, name) {
+            // 이름은 전달받지 않고 목록에서 찾는다 (onclick 문자열 주입 방지)
+            if (name === undefined) { const c = clinics.find(x => x.id === id); name = c ? c.name : ''; }
             document.getElementById('selectedClinicId').value = id;
             document.getElementById('selectedClinicName').textContent = '✅ ' + name;
             document.getElementById('clinicSearchResults').innerHTML = '';
@@ -1874,7 +1893,7 @@
         function renderChildrenList() {
             const container = document.getElementById('childrenList');
             container.innerHTML = tempChildren.map((c, i) => 
-                '<div class="child-card"><div class="child-info"><div class="child-avatar">👶</div><div><div class="child-name">'+c.name+'</div><div class="child-birth">'+c.birthDate+'</div></div></div><button class="btn btn-danger btn-sm" onclick="removeChild('+i+')">삭제</button></div>'
+                '<div class="child-card"><div class="child-info"><div class="child-avatar">👶</div><div><div class="child-name">'+esc(c.name)+'</div><div class="child-birth">'+esc(c.birthDate)+'</div></div></div><button class="btn btn-danger btn-sm" onclick="removeChild('+i+')">삭제</button></div>'
             ).join('');
         }
         
@@ -1920,10 +1939,11 @@
             if (!q) { container.innerHTML = ''; return; }
             const results = clinics.filter(c => c.name.toLowerCase().includes(q));
             container.innerHTML = results.length === 0 ? '<p style="color:var(--gray-600);padding:12px">검색 결과가 없습니다</p>' :
-                results.map(c => '<div class="clinic-item" onclick="selectClinicForDoctor(\''+c.id+'\',\''+c.name+'\')">' + c.name + '</div>').join('');
+                results.map(c => '<div class="clinic-item" onclick="selectClinicForDoctor(\''+c.id+'\')">' + esc(c.name) + '</div>').join('');
         }
         
         function selectClinicForDoctor(id, name) {
+            if (name === undefined) { const c = clinics.find(x => x.id === id); name = c ? c.name : ''; }
             document.getElementById('doctorSelectedClinicId').value = id;
             document.getElementById('doctorSelectedClinicName').textContent = '✅ ' + name;
             document.getElementById('doctorClinicResults').innerHTML = '';
@@ -1965,7 +1985,9 @@
                     role: 'doctor',
                     clinicId: clinicId,
                     clinicName: clinicName,
-                    approved: true,
+                    // 가입자가 스스로 승인 상태를 만들 수 없어야 한다.
+                    // 서버(보안 규칙)에서도 false만 허용하므로 여기서 true로 바꾸면 가입이 거부된다.
+                    approved: false,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
@@ -2163,7 +2185,7 @@
                         const clinicName = clinicMap[p.clinicId] || '-';
                         html += '<tr style="border-bottom:1px solid #ddd;">';
                         html += '<td style="padding:8px;">' + (p.regNo || '-') + '</td>';
-                        html += '<td style="padding:8px;">' + (p.name || '-') + '</td>';
+                        html += '<td style="padding:8px;">' + esc(p.name || '-') + '</td>';
                         html += '<td style="padding:8px;">' + (p.birthDate || '-') + '</td>';
                         html += '<td style="padding:8px;">' + (p.gender === 'M' ? '남' : p.gender === 'F' ? '여' : '-') + '</td>';
                         html += '<td style="padding:8px;">' + (p.records ? p.records.length : 0) + '회</td>';
@@ -2604,7 +2626,7 @@
             snapshot.forEach(doc => {
                 const d = doc.data();
                 const date = d.createdAt ? d.createdAt.toDate().toLocaleDateString() : '-';
-                html += '<tr><td>'+d.name+'</td><td>'+d.email+'</td><td>'+d.clinicName+'</td><td>'+date+'</td></tr>';
+                html += '<tr><td>'+esc(d.name)+'</td><td>'+esc(d.email)+'</td><td>'+esc(d.clinicName)+'</td><td>'+date+'</td></tr>';
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -2620,7 +2642,7 @@
             let html = '<table><thead><tr><th>안과 이름</th><th>등록일</th></tr></thead><tbody>';
             clinics.forEach(c => {
                 const date = c.createdAt ? c.createdAt.toDate().toLocaleDateString() : '-';
-                html += '<tr><td>'+c.name+'</td><td>'+date+'</td></tr>';
+                html += '<tr><td>'+esc(c.name)+'</td><td>'+date+'</td></tr>';
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -2680,7 +2702,7 @@
             if (input.value.trim() === '' && patients.length > 0) {
                 const recent = [...patients].sort((a,b) => (b.createdAt||0) - (a.createdAt||0)).slice(0, 10);
                 results.innerHTML = '<div style="padding:8px 16px;color:var(--gray-600);font-size:0.85rem;border-bottom:1px solid var(--gray-200)">📋 최근 등록 환자</div>' + 
-                    recent.map(p => '<div class="search-item" onmousedown="selectPatient(\''+p.id+'\')"><span class="patient-name">'+(p.gender==='male'?'👦':'👧')+' '+p.name+'</span><span class="patient-id">'+(p.regNo||'-')+' · '+p.birthDate+'</span></div>').join('');
+                    recent.map(p => '<div class="search-item" onmousedown="selectPatient(\''+p.id+'\')"><span class="patient-name">'+(p.gender==='male'?'👦':'👧')+' '+esc(p.name)+'</span><span class="patient-id">'+esc(p.regNo||'-')+' · '+esc(p.birthDate)+'</span></div>').join('');
                 results.classList.add('active');
             }
         }
@@ -2691,7 +2713,7 @@
             if (!q) { showRecentPatients(); return; }
             const f = patients.filter(p => p.name.toLowerCase().includes(q) || (p.regNo && p.regNo.toLowerCase().includes(q)));
             results.innerHTML = f.length === 0 ? '<div class="search-item">검색 결과 없음</div>' : 
-                f.map(p => '<div class="search-item" onmousedown="selectPatient(\''+p.id+'\')"><span class="patient-name">'+(p.gender==='male'?'👦':'👧')+' '+p.name+'</span><span class="patient-id">'+(p.regNo||'-')+' · '+p.birthDate+'</span></div>').join('');
+                f.map(p => '<div class="search-item" onmousedown="selectPatient(\''+p.id+'\')"><span class="patient-name">'+(p.gender==='male'?'👦':'👧')+' '+esc(p.name)+'</span><span class="patient-id">'+esc(p.regNo||'-')+' · '+esc(p.birthDate)+'</span></div>').join('');
             results.classList.add('active');
         }
         
@@ -2984,7 +3006,7 @@
         function updateDoctorDisplay() {
             const p = patients.find(x => x.id === currentPatientId);
             if (!p) return;
-            document.getElementById('doctorPatientHeader').innerHTML = '<span class="name">'+(p.gender==='male'?'👦':'👧')+' '+p.name+'</span><span class="details">등록번호: '+p.regNo+' · '+(p.gender==='male'?'남자':'여자')+' · '+p.birthDate+'</span>'
+            document.getElementById('doctorPatientHeader').innerHTML = '<span class="name">'+(p.gender==='male'?'👦':'👧')+' '+esc(p.name)+'</span><span class="details">등록번호: '+esc(p.regNo)+' · '+(p.gender==='male'?'남자':'여자')+' · '+p.birthDate+'</span>'
                 + '<button class="btn btn-outline btn-sm" style="margin-left:12px" onclick="openEditPatientModal()">✏️ 정보 수정</button>';
             updateStats(p, 'statsGrid');
             updateTreatments(p, 'treatmentList', true);
@@ -3316,7 +3338,7 @@
             const summary = makeReportSummary(p).map(l => '• '+l).join('<br>');
             document.getElementById('reportBody').innerHTML =
                 '<h2>근시 관리 요약 리포트</h2>'
-                + '<div class="report-meta">'+p.name+' ('+t(p.gender==='male'?'남':'여')+', '+p.birthDate+') · '+t('등록번호')+' '+(p.regNo||'-')+' · '+t('발행일')+' '+new Date().toISOString().split('T')[0]+'</div>'
+                + '<div class="report-meta">'+esc(p.name)+' ('+t(p.gender==='male'?'남':'여')+', '+esc(p.birthDate)+') · '+t('등록번호')+' '+esc(p.regNo||'-')+' · '+t('발행일')+' '+new Date().toISOString().split('T')[0]+'</div>'
                 + '<div class="report-section"><h4>'+t('현재 상태')+' ('+last.date+')</h4>'
                 + '<table class="report-table"><thead><tr><th></th><th>안축장 (mm)</th><th>또래 대비 (%ile)</th><th>굴절력 (D)</th></tr></thead><tbody>'
                 + '<tr><td>우안 (OD)</td><td>'+fmt(last.odAL,2)+'</td><td>'+(last.odPct!=null?last.odPct:'-')+'</td><td>'+fmt(last.odSE,2)+'</td></tr>'
@@ -3560,7 +3582,7 @@
         function exportCSV() {
             const p = patients.find(x => x.id === currentPatientId);
             if (!p || !p.records || !p.records.length) { alert('내보낼 데이터가 없습니다.'); return; }
-            let csv = '등록번호,'+p.regNo+'\n환자명,'+p.name+'\n생년월일,'+p.birthDate+'\n\n';
+            let csv = '등록번호,'+csvText(p.regNo)+'\n환자명,'+csvText(p.name)+'\n생년월일,'+csvText(p.birthDate)+'\n\n';
             if (p.treatments && p.treatments.length) { csv += '치료기록\n치료종류,시작일,시작나이\n'; p.treatments.forEach(t => csv += t.type+','+t.date+','+t.age+'\n'); csv += '\n'; }
             csv += '측정기록\n날짜,나이,OD_AL,OD_Pct,OS_AL,OS_Pct,OD_SE,OS_SE\n';
             p.records.forEach(r => csv += r.date+','+csvNum(r.age)+','+csvNum(r.odAL)+','+(r.odPct??'')+','+csvNum(r.osAL)+','+(r.osPct??'')+','+csvNum(r.odSE)+','+csvNum(r.osSE)+'\n');
@@ -3587,7 +3609,7 @@
             }
             container.innerHTML = children.map((c, i) => 
                 '<div class="child-card" style="cursor:pointer" onclick="selectChild('+i+')">' +
-                '<div class="child-info"><div class="child-avatar">👶</div><div><div class="child-name">'+c.name+'</div><div class="child-birth">'+c.birthDate+'</div></div></div>' +
+                '<div class="child-info"><div class="child-avatar">👶</div><div><div class="child-name">'+esc(c.name)+'</div><div class="child-birth">'+esc(c.birthDate)+'</div></div></div>' +
                 '<div class="child-actions"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();editChild('+i+')">수정</button><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();removeChildFromAccount('+i+')">삭제</button></div></div>'
             ).join('');
         }
@@ -3643,7 +3665,7 @@
         
         function displayCustomerPatient(p) {
             document.getElementById('customerMainContent').style.display = 'block';
-            document.getElementById('customerPatientHeader').innerHTML = '<span class="name">'+(p.gender==='male'?'👦':'👧')+' '+p.name+'</span><span class="details">'+(p.gender==='male'?'남자':'여자')+' · '+p.birthDate+'</span>';
+            document.getElementById('customerPatientHeader').innerHTML = '<span class="name">'+(p.gender==='male'?'👦':'👧')+' '+esc(p.name)+'</span><span class="details">'+(p.gender==='male'?'남자':'여자')+' · '+esc(p.birthDate)+'</span>';
             updateStats(p, 'customerStatsGrid');
             updateTreatments(p, 'customerTreatmentList', false);
             updateRecords(p, 'customerRecordsBody', false);
@@ -3775,7 +3797,7 @@
         function showDemoPatients() {
             const results = document.getElementById('demoSearchResults');
             results.innerHTML = '<div style="padding:8px 16px;color:var(--gray-600);font-size:0.85rem;border-bottom:1px solid var(--gray-200)">📋 샘플 환자 (데모 데이터)</div>' + 
-                DEMO_PATIENTS.map(p => '<div class="search-item" onmousedown="selectDemoPatient(\''+p.id+'\')"><span class="patient-name">'+(p.gender==='male'?'👦':'👧')+' '+p.name+'</span><span class="patient-id">'+p.regNo+' · '+p.birthDate+'</span></div>').join('');
+                DEMO_PATIENTS.map(p => '<div class="search-item" onmousedown="selectDemoPatient(\''+p.id+'\')"><span class="patient-name">'+(p.gender==='male'?'👦':'👧')+' '+esc(p.name)+'</span><span class="patient-id">'+esc(p.regNo)+' · '+esc(p.birthDate)+'</span></div>').join('');
             results.classList.add('active');
         }
         
@@ -3785,7 +3807,7 @@
             if (!q) { showDemoPatients(); return; }
             const f = DEMO_PATIENTS.filter(p => p.name.toLowerCase().includes(q) || p.regNo.toLowerCase().includes(q));
             results.innerHTML = f.length === 0 ? '<div class="search-item">검색 결과 없음</div>' : 
-                f.map(p => '<div class="search-item" onmousedown="selectDemoPatient(\''+p.id+'\')"><span class="patient-name">'+(p.gender==='male'?'👦':'👧')+' '+p.name+'</span><span class="patient-id">'+p.regNo+' · '+p.birthDate+'</span></div>').join('');
+                f.map(p => '<div class="search-item" onmousedown="selectDemoPatient(\''+p.id+'\')"><span class="patient-name">'+(p.gender==='male'?'👦':'👧')+' '+esc(p.name)+'</span><span class="patient-id">'+esc(p.regNo)+' · '+esc(p.birthDate)+'</span></div>').join('');
             results.classList.add('active');
         }
         
@@ -3805,7 +3827,7 @@
             if (!p) return;
             
             // 환자 헤더
-            document.getElementById('demoPatientHeader').innerHTML = '<span class="name">'+(p.gender==='male'?'👦':'👧')+' '+p.name+'</span><span class="details">등록번호: '+p.regNo+' · '+(p.gender==='male'?'남자':'여자')+' · '+p.birthDate+' <span class="pending-badge">샘플</span></span>';
+            document.getElementById('demoPatientHeader').innerHTML = '<span class="name">'+(p.gender==='male'?'👦':'👧')+' '+esc(p.name)+'</span><span class="details">등록번호: '+esc(p.regNo)+' · '+(p.gender==='male'?'남자':'여자')+' · '+p.birthDate+' <span class="pending-badge">샘플</span></span>';
             
             // 통계
             updateStats(p, 'demoStatsGrid');
