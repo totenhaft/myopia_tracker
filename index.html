@@ -1473,6 +1473,13 @@
         // 이제는 값을 빼지 않고, 변화량이 이 범위 안일 때 '해석 주의' 표시에만 쓴다.
         const MEASUREMENT_NOISE = 0.02;
 
+        // 굴절력 0.00D는 '정시(plano)'라는 유효한 측정값이다.
+        // v ? A : B 처럼 참/거짓으로 검사하면 0이 거짓으로 취급되어 미측정('-')으로 잘못 표시된다.
+        // 값의 유무는 반드시 이 함수로 판정한다.
+        function hasValue(v) { return v !== null && v !== undefined && v !== '' && !isNaN(v); }
+        function fmtNum(v, d) { return hasValue(v) ? Number(v).toFixed(d) : '-'; }
+        function csvNum(v) { return hasValue(v) ? v : ''; }
+
         // 구간 속도 계산 — 화면마다 따로 계산하면 값이 어긋나므로 반드시 이 함수만 사용한다
         function annualRate(diff, days) {
             if (diff === null || days < 30) return null;
@@ -2219,8 +2226,8 @@
                         p.gender === 'M' ? '남' : p.gender === 'F' ? '여' : '',
                         records.length,
                         lastRecord ? lastRecord.date : '',
-                        lastRecord && lastRecord.od ? lastRecord.od : '',
-                        lastRecord && lastRecord.os ? lastRecord.os : '',
+                        lastRecord ? csvNum(lastRecord.odAL) : '',
+                        lastRecord ? csvNum(lastRecord.osAL) : '',
                         clinicName
                     ];
                     
@@ -2301,10 +2308,10 @@
                                 clinicName,
                                 r.date || '',
                                 r.age || '',
-                                r.od || '',
-                                r.os || '',
-                                r.odSE || '',
-                                r.osSE || ''
+                                csvNum(r.odAL),
+                                csvNum(r.osAL),
+                                csvNum(r.odSE),
+                                csvNum(r.osSE)
                             ];
                             csv += row.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
                         });
@@ -2995,8 +3002,8 @@
             const last = p.records[p.records.length-1];
             const progOD = calcProg(p.records, 'odAL'), progOS = calcProg(p.records, 'osAL');
             const cls = v => v === null ? '' : Math.abs(v) < 0.2 ? 'stable' : Math.abs(v) < 0.4 ? 'moderate' : 'rapid';
-            const badge = pct => { if (!pct) return ''; const n = typeof pct === 'string' ? (pct.includes('>') ? 96 : 2) : pct; return '<span class="percentile-badge '+(n>75?'percentile-high':n>50?'percentile-mid':'percentile-low')+'">'+pct+'%ile</span>'; };
-            g.innerHTML = '<div class="stat-card left"><div class="stat-label">우안 안축장</div><div class="stat-value">'+(last.odAL?last.odAL.toFixed(2):'-')+'</div><div class="stat-unit">mm</div>'+badge(last.odPct)+(progOD!==null?'<div class="progress-indicator '+cls(progOD)+'">'+(progOD>=0?'+':'')+progOD.toFixed(2)+' mm/년</div>':'')+'</div><div class="stat-card right"><div class="stat-label">좌안 안축장</div><div class="stat-value">'+(last.osAL?last.osAL.toFixed(2):'-')+'</div><div class="stat-unit">mm</div>'+badge(last.osPct)+(progOS!==null?'<div class="progress-indicator '+cls(progOS)+'">'+(progOS>=0?'+':'')+progOS.toFixed(2)+' mm/년</div>':'')+'</div><div class="stat-card left"><div class="stat-label">우안 굴절력</div><div class="stat-value">'+(last.odSE?last.odSE.toFixed(2):'-')+'</div><div class="stat-unit">D</div></div><div class="stat-card right"><div class="stat-label">좌안 굴절력</div><div class="stat-value">'+(last.osSE?last.osSE.toFixed(2):'-')+'</div><div class="stat-unit">D</div></div>';
+            const badge = pct => { if (pct === null || pct === undefined) return ''; const n = typeof pct === 'string' ? (pct.includes('>') ? 96 : 2) : pct; return '<span class="percentile-badge '+(n>75?'percentile-high':n>50?'percentile-mid':'percentile-low')+'">'+pct+'%ile</span>'; };
+            g.innerHTML = '<div class="stat-card left"><div class="stat-label">우안 안축장</div><div class="stat-value">'+fmtNum(last.odAL,2)+'</div><div class="stat-unit">mm</div>'+badge(last.odPct)+(progOD!==null?'<div class="progress-indicator '+cls(progOD)+'">'+(progOD>=0?'+':'')+progOD.toFixed(2)+' mm/년</div>':'')+'</div><div class="stat-card right"><div class="stat-label">좌안 안축장</div><div class="stat-value">'+fmtNum(last.osAL,2)+'</div><div class="stat-unit">mm</div>'+badge(last.osPct)+(progOS!==null?'<div class="progress-indicator '+cls(progOS)+'">'+(progOS>=0?'+':'')+progOS.toFixed(2)+' mm/년</div>':'')+'</div><div class="stat-card left"><div class="stat-label">우안 굴절력</div><div class="stat-value">'+fmtNum(last.odSE,2)+'</div><div class="stat-unit">D</div></div><div class="stat-card right"><div class="stat-label">좌안 굴절력</div><div class="stat-value">'+fmtNum(last.osSE,2)+'</div><div class="stat-unit">D</div></div>';
         }
         
         function updateTreatments(p, listId, editable) {
@@ -3011,8 +3018,8 @@
         function updateRecords(p, tbodyId, editable) {
             const tbody = document.getElementById(tbodyId);
             if (!p.records || !p.records.length) { tbody.innerHTML = '<tr><td colspan="9">기록이 없습니다</td></tr>'; return; }
-            const badge = pct => { if (!pct) return '-'; const n = typeof pct === 'string' ? (pct.includes('>') ? 96 : 2) : pct; return '<span class="percentile-badge '+(n>75?'percentile-high':n>50?'percentile-mid':'percentile-low')+'">'+pct+'</span>'; };
-            tbody.innerHTML = p.records.map((r,i) => '<tr><td>'+r.date+'</td><td>'+(r.age?r.age.toFixed(1):'-')+'세</td><td>'+(r.odAL?r.odAL.toFixed(2):'-')+'</td><td>'+badge(r.odPct)+'</td><td>'+(r.osAL?r.osAL.toFixed(2):'-')+'</td><td>'+badge(r.osPct)+'</td><td>'+(r.odSE?r.odSE.toFixed(2):'-')+'</td><td>'+(r.osSE?r.osSE.toFixed(2):'-')+'</td>'+(editable?'<td><button class="delete-btn" onclick="deleteRecord('+i+')">✕</button></td>':'')+'</tr>').join('');
+            const badge = pct => { if (pct === null || pct === undefined) return '-'; const n = typeof pct === 'string' ? (pct.includes('>') ? 96 : 2) : pct; return '<span class="percentile-badge '+(n>75?'percentile-high':n>50?'percentile-mid':'percentile-low')+'">'+pct+'</span>'; };
+            tbody.innerHTML = p.records.map((r,i) => '<tr><td>'+r.date+'</td><td>'+fmtNum(r.age,1)+'세</td><td>'+fmtNum(r.odAL,2)+'</td><td>'+badge(r.odPct)+'</td><td>'+fmtNum(r.osAL,2)+'</td><td>'+badge(r.osPct)+'</td><td>'+fmtNum(r.odSE,2)+'</td><td>'+fmtNum(r.osSE,2)+'</td>'+(editable?'<td><button class="delete-btn" onclick="deleteRecord('+i+')">✕</button></td>':'')+'</tr>').join('');
         }
         
         function updateRateTable(p) {
@@ -3556,7 +3563,7 @@
             let csv = '등록번호,'+p.regNo+'\n환자명,'+p.name+'\n생년월일,'+p.birthDate+'\n\n';
             if (p.treatments && p.treatments.length) { csv += '치료기록\n치료종류,시작일,시작나이\n'; p.treatments.forEach(t => csv += t.type+','+t.date+','+t.age+'\n'); csv += '\n'; }
             csv += '측정기록\n날짜,나이,OD_AL,OD_Pct,OS_AL,OS_Pct,OD_SE,OS_SE\n';
-            p.records.forEach(r => csv += r.date+','+(r.age||'')+','+(r.odAL||'')+','+(r.odPct||'')+','+(r.osAL||'')+','+(r.osPct||'')+','+(r.odSE||'')+','+(r.osSE||'')+'\n');
+            p.records.forEach(r => csv += r.date+','+csvNum(r.age)+','+csvNum(r.odAL)+','+(r.odPct??'')+','+csvNum(r.osAL)+','+(r.osPct??'')+','+csvNum(r.odSE)+','+csvNum(r.osSE)+'\n');
             const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
