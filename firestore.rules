@@ -23,6 +23,13 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // 익명 로그인(둘러보기 모드)은 계정이 사라지면 연결도 함께 끊긴다.
+    // 자녀 연결처럼 오래 유지되어야 하는 동작은 정식 계정만 허용한다.
+    function isRealAccount() {
+      return isSignedIn()
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
     // 관리자 이메일. 앱의 ADMIN_EMAIL 값과 반드시 같아야 합니다.
     function isAdmin() {
       return isSignedIn() && request.auth.token.email == 'totenhaft@gmail.com';
@@ -50,15 +57,20 @@ service cloud.firestore {
       return userExists() && userData().clinicId == clinicId;
     }
 
-    // 보호자 접근 (임시 조치).
-    // 로그인한 보호자가, 자기 병원 소속이고, 본인 계정에 등록해 둔 자녀와
-    // 이름·생년월일이 정확히 일치하는 환자만 볼 수 있다.
-    //
-    // ⚠️ 완전한 보안은 아니다. 보호자가 자기 children 목록에 임의의
-    //    이름·생년월일을 넣으면 해당 환자를 열 수 있다.
-    //    다만 '로그인 없이 전체 공개'보다는 훨씬 안전하며,
-    //    병원 발급 접근코드 방식이 준비되면 아래 isLinkedGuardian으로 교체한다.
-    function isRegisteredChild() {
+    // 보호자 연결 확인 (정식 방식).
+    // 병원이 발급한 연결코드를 입력해야만 patientLinks 문서가 만들어지고,
+    // 그 문서가 있어야 해당 환자를 읽을 수 있다.
+    // 문서 ID가 "<환자ID>_<보호자UID>" 이므로 남의 자녀로는 통과할 수 없다.
+    function isLinkedGuardian(pid) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/patientLinks/$(pid + '_' + request.auth.uid));
+    }
+
+    // ───────── 전환기 임시 허용 (연결코드 도입 전에 가입한 보호자용) ─────────
+    // ⚠️ 이 함수는 보호자가 자기 자녀 목록에 아무 이름·생년월일이나 넣으면
+    //    그 환자를 열 수 있게 해준다. 기존 보호자들이 모두 연결코드로
+    //    다시 연결하면 아래 함수와 patients 읽기 규칙의 호출부를 삭제할 것.
+    function isLegacyRegisteredChild() {
       return userExists()
         && userData().role == 'customer'
         && resource.data.clinicId == userData().clinicId
@@ -66,13 +78,6 @@ service cloud.firestore {
              'name': resource.data.name,
              'birthDate': resource.data.birthDate
            }]);
-    }
-
-    // 2단계(접근코드 방식)에서 사용할 자리
-    function isLinkedGuardian() {
-      return isSignedIn()
-        && 'linkedGuardians' in resource.data
-        && request.auth.uid in resource.data.linkedGuardians;
     }
 
 
@@ -117,8 +122,8 @@ service cloud.firestore {
       // 로그인하지 않은 사람은 절대 읽을 수 없다.
       allow read: if isAdmin()
         || (isApprovedDoctor() && isMyClinic(resource.data.clinicId))
-        || isRegisteredChild()
-        || isLinkedGuardian();
+        || isLinkedGuardian(patientId)
+        || isLegacyRegisteredChild();   // ← 전환 끝나면 이 줄 삭제
 
       // 생성: 승인된 의사가 자기 병원 소속으로만
       allow create: if isAdmin()
@@ -142,6 +147,45 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAdmin();
+    }
+
+
+    // ---------- accessCodes (병원이 발급하는 보호자 연결코드) ----------
+    match /accessCodes/{code} {
+      // 코드 자체가 비밀번호다. 정확한 코드를 아는 사람만 그 문서 하나를 읽을 수 있고,
+      // 목록 조회(list)는 막아야 코드를 쓸어담아 대입할 수 없다.
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+
+      allow create: if isAdmin()
+        || (isApprovedDoctor()
+            && isMyClinic(request.resource.data.clinicId)
+            && request.resource.data.patientId is string);
+
+      allow update, delete: if isAdmin()
+        || (isApprovedDoctor() && isMyClinic(resource.data.clinicId));
+    }
+
+
+    // ---------- patientLinks (보호자 ↔ 환자 연결) ----------
+    match /patientLinks/{linkId} {
+      // 본인 연결만 읽을 수 있다 (안에 든 코드가 새어나가지 않도록)
+      allow get: if isAdmin()
+        || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow list: if isAdmin();
+
+      // 유효한 연결코드를 아는 사람만, 본인 UID로, 그 코드가 가리키는 환자에게만 연결
+      allow create: if isRealAccount()
+        && linkId == request.resource.data.patientId + '_' + request.auth.uid
+        && request.resource.data.uid == request.auth.uid
+        && exists(/databases/$(database)/documents/accessCodes/$(request.resource.data.code))
+        && get(/databases/$(database)/documents/accessCodes/$(request.resource.data.code)).data.patientId == request.resource.data.patientId
+        && get(/databases/$(database)/documents/accessCodes/$(request.resource.data.code)).data.expiresAt > request.time;
+
+      // 연결 해제는 본인 또는 관리자만. 수정은 누구도 할 수 없다.
+      allow delete: if isAdmin()
+        || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow update: if false;
     }
 
 
