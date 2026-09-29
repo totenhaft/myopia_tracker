@@ -997,7 +997,10 @@
                 <div style="color:#2e7d32; font-weight:bold;">IOL Master 이미지 붙여넣기</div>
                 <div style="color:#666; font-size:12px;">Ctrl+V로 이미지를 붙여넣으면 자동 입력됩니다</div>
             </div>
-            <div class="form-group"><label>등록번호 *</label><input type="text" id="newPatientRegNo" placeholder="12345678"></div>
+            <div class="form-group"><label>등록번호 *</label>
+                <input type="text" id="newPatientRegNo" placeholder="12345678" oninput="checkRegNoDuplicate()">
+                <div id="regNoDupWarn" style="display:none;margin-top:6px;padding:8px 10px;border-radius:6px;background:#fff1f2;border:1px solid #fda4af;color:#9f1239;font-size:0.85rem"></div>
+            </div>
             <div class="form-group"><label>환자 이름 *</label><input type="text" id="newPatientName" placeholder="홍길동"></div>
             <div class="form-group"><label>생년월일 *</label><input type="date" id="newPatientBirth"></div>
             <div class="form-group"><label>성별 *</label>
@@ -1353,7 +1356,7 @@
                     
                     if (data && data.patient) {
                         const p = data.patient;
-                        if (p.regNo) document.getElementById('newPatientRegNo').value = p.regNo;
+                        if (p.regNo) { document.getElementById('newPatientRegNo').value = p.regNo; checkRegNoDuplicate(); }
                         if (p.name) document.getElementById('newPatientName').value = p.name;
                         if (p.birthDate) document.getElementById('newPatientBirth').value = p.birthDate;
                         if (p.gender === 'M') document.getElementById('genderMale').checked = true;
@@ -2804,19 +2807,76 @@
             if (results && input && !results.contains(e.target) && e.target !== input) results.classList.remove('active');
         });
         
-        function openPatientModal() { document.getElementById('patientModal').classList.add('active'); }
+        function openPatientModal() {
+            const w = document.getElementById('regNoDupWarn');
+            if (w) { w.style.display = 'none'; w.innerHTML = ''; }
+            document.getElementById('patientModal').classList.add('active');
+        }
         function closePatientModal() { document.getElementById('patientModal').classList.remove('active'); }
         
+        // 등록번호 비교는 반드시 이 함수로 한다.
+        // 앞뒤 공백이나 대소문자 차이 때문에 같은 번호가 다른 번호로 취급되면 중복이 새어나간다.
+        function normRegNo(v) {
+            return String(v === null || v === undefined ? '' : v).trim().toUpperCase();
+        }
+
+        // 같은 병원 안에서 그 등록번호를 쓰고 있는 환자를 찾는다 (excludeId: 자기 자신 제외)
+        function findPatientByRegNo(regNo, excludeId) {
+            const key = normRegNo(regNo);
+            if (!key) return null;
+            return patients.find(p =>
+                p.id !== excludeId && normRegNo(p.regNo) === key) || null;
+        }
+
+        // 입력하는 즉시 알려준다 (등록 버튼까지 가서야 알게 되면 이미 다 입력한 뒤다)
+        function checkRegNoDuplicate() {
+            const box = document.getElementById('regNoDupWarn');
+            if (!box) return;
+            const v = document.getElementById('newPatientRegNo').value;
+            const dup = findPatientByRegNo(v);
+            if (dup) {
+                box.innerHTML = '⚠️ 이미 사용 중인 등록번호입니다 &mdash; <b>' + esc(dup.name || '(이름 없음)')
+                    + '</b> · ' + esc(dup.birthDate || '-');
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+                box.innerHTML = '';
+            }
+        }
+
         async function addPatient() {
             const regNo = document.getElementById('newPatientRegNo').value.trim();
             const name = document.getElementById('newPatientName').value.trim();
             const birth = document.getElementById('newPatientBirth').value;
             const gender = document.querySelector('input[name="gender"]:checked').value;
             if (!regNo || !name || !birth) { alert('모든 필드를 입력하세요.'); return; }
-            if (patients.find(p => p.regNo === regNo)) { alert('이미 등록된 등록번호입니다.'); return; }
-            
+
+            // 등록번호는 환자 한 명당 하나뿐이다. 같은 번호가 이미 있으면 등록을 막는다.
+            const dup = findPatientByRegNo(regNo);
+            if (dup) {
+                const open = confirm(
+                    '등록번호 ' + regNo + '는 이미 사용 중입니다.\n\n'
+                    + '   ' + (dup.name || '(이름 없음)') + ' · ' + (dup.birthDate || '-') + '\n\n'
+                    + '같은 환자라면 새로 등록하지 마시고 기존 기록에 이어서 입력하세요.\n'
+                    + '해당 환자를 여시겠습니까?');
+                if (open) { closePatientModal(); selectPatient(dup.id); }
+                return;
+            }
+
             showLoading(true);
             try {
+                // 목록이 오래됐거나 다른 직원이 방금 등록했을 수 있으니 저장 직전에 서버에서 한 번 더 확인
+                const srv = await db.collection('patients')
+                    .where('clinicId', '==', currentUserData.clinicId)
+                    .where('regNo', '==', regNo).limit(1).get();
+                if (!srv.empty) {
+                    showLoading(false);
+                    const d = srv.docs[0].data();
+                    alert('등록번호 ' + regNo + '는 이미 사용 중입니다.\n\n   '
+                        + (d.name || '(이름 없음)') + ' · ' + (d.birthDate || '-')
+                        + '\n\n다른 기기에서 방금 등록되었을 수 있습니다. 환자 목록을 새로고침해주세요.');
+                    return;
+                }
                 const patient = {
                     regNo, name, birthDate: birth, gender,
                     clinicId: currentUserData.clinicId,
@@ -2900,9 +2960,14 @@
             if (new Date(birthDate) > new Date()) { alert('생년월일이 미래로 입력되었습니다.'); return; }
 
             // 같은 안과 안에서 등록번호가 겹치면 환자를 구분할 수 없다 (자기 자신은 제외)
-            if (regNo !== p.regNo) {
-                const dup = patients.find(x => x.id !== p.id && x.clinicId === p.clinicId && String(x.regNo) === regNo);
-                if (dup) { alert('이미 등록된 등록번호입니다. (' + dup.name + ')'); return; }
+            if (normRegNo(regNo) !== normRegNo(p.regNo)) {
+                const dup = findPatientByRegNo(regNo, p.id);
+                if (dup) {
+                    alert('등록번호 ' + regNo + '는 이미 사용 중입니다.\n\n   '
+                        + (dup.name || '(이름 없음)') + ' · ' + (dup.birthDate || '-')
+                        + '\n\n등록번호는 환자 한 명당 하나여야 합니다.');
+                    return;
+                }
             }
 
             const birthChanged = birthDate !== p.birthDate;
