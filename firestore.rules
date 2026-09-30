@@ -63,11 +63,12 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/patientLinks/$(pid + '_' + request.auth.uid));
     }
 
-    // ───────── 전환기 임시 허용 (연결코드 도입 전에 가입한 보호자용) ─────────
-    // ⚠️ 이 함수는 보호자가 자기 자녀 목록에 아무 이름·생년월일이나 넣으면
-    //    그 환자를 열 수 있게 해준다. 기존 보호자들이 모두 연결코드로
-    //    다시 연결하면 아래 함수와 patients 읽기 규칙의 호출부를 삭제할 것.
-    function isLegacyRegisteredChild() {
+    // 보호자 접근 (회원가입·로그인 방식 — 현재 사용 중인 정식 경로).
+    // 로그인한 보호자가, 가입 때 고른 병원 소속이고, 본인 계정에 등록한 자녀와
+    // 이름·생년월일이 정확히 일치하는 환자만 볼 수 있다.
+    // 참고: 보호자가 자녀 목록에 남의 아이 이름·생년월일을 적으면 열 수 있다.
+    //       관리자 화면 '사용자 관리'의 '등록한 자녀' 칸으로 확인할 수 있다.
+    function isRegisteredChild() {
       return userExists()
         && userData().role == 'customer'
         && resource.data.clinicId == userData().clinicId
@@ -117,10 +118,12 @@ service cloud.firestore {
     match /patients/{patientId} {
       // 읽기: 관리자 / 같은 병원의 승인된 의사 / 연결된 보호자만.
       // 로그인하지 않은 사람은 절대 읽을 수 없다.
+      // 보호자 조회는 '병원+이름+생년월일' 검색(쿼리)으로 이뤄지므로,
+      // 쿼리로 판정 가능한 isRegisteredChild()를 문서 ID가 필요한 조건보다 먼저 둔다.
       allow read: if isAdmin()
         || (isApprovedDoctor() && isMyClinic(resource.data.clinicId))
-        || isLinkedGuardian(patientId)
-        || isLegacyRegisteredChild();   // ← 전환 끝나면 이 줄 삭제
+        || isRegisteredChild()
+        || isLinkedGuardian(patientId);
 
       // 생성: 승인된 의사가 자기 병원 소속으로만
       allow create: if isAdmin()
