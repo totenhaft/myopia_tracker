@@ -945,12 +945,21 @@
                 <div class="card"><h3 class="card-title">💊 치료 기록</h3><div class="treatment-list" id="customerTreatmentList"></div></div>
                 
                 <div class="card">
-                    <h3 class="card-title">📈 안축장 성장 차트</h3>
+                    <h3 class="card-title"><span>📈 안축장 성장 차트</span><button class="btn btn-primary btn-sm" onclick="openCustomerReport()">📄 보호자 리포트</button></h3>
                     <div class="growth-chart-container"><canvas id="customerGrowthChart"></canvas></div>
                     <div class="chart-legend">
                         <div class="legend-item"><div class="legend-dot" style="background:var(--od-color)"></div>우안 (OD)</div>
                         <div class="legend-item"><div class="legend-dot" style="background:var(--os-color)"></div>좌안 (OS)</div>
                     </div>
+                </div>
+
+                <div class="card"><h3 class="card-title">📐 구간별 안축장 증가 속도</h3><div class="table-container"><table class="rate-table"><thead><tr><th>구간</th><th>기간</th><th>OD 변화량</th><th>OD 속도</th><th>OS 변화량</th><th>OS 속도</th></tr></thead><tbody id="customerRateTableBody"></tbody></table></div><p style="margin-top:12px;font-size:0.8rem;color:var(--gray-600)">* 실제 변화량을 그대로 표시합니다. † 표시는 변화량이 측정 오차 범위(±0.02mm) 안이라 해석에 주의가 필요한 구간입니다.</p></div>
+
+                <div class="card">
+                    <h3 class="card-title">💊 치료 전후 효과 비교</h3>
+                    <div class="table-container"><table class="rate-table"><thead><tr><th>치료</th><th>시작일</th><th>구분</th><th>치료 전 속도</th><th>치료 후 속도</th><th>감소율</th><th>판정</th></tr></thead><tbody id="customerTreatmentEffectBody"></tbody></table></div>
+                    <div class="chart-container" id="customerTreatmentEffectChartWrap" style="margin-top:16px;display:none"><canvas id="customerTreatmentEffectChart"></canvas></div>
+                    <p style="margin-top:12px;font-size:0.8rem;color:var(--gray-600)">* 속도는 각 구간 측정치의 선형회귀 기울기(mm/년). 치료 전후 각각 2회 이상 측정 &amp; 90일 이상 간격일 때 계산됩니다. 치료 시작일 측정치는 "치료 전"에 포함됩니다.</p>
                 </div>
                 
                 <div class="card"><h3 class="card-title">📋 측정 기록</h3><div class="table-container"><table><thead><tr><th>날짜</th><th>나이</th><th>OD AL</th><th>OD %ile</th><th>OS AL</th><th>OS %ile</th><th>OD SE</th><th>OS SE</th></tr></thead><tbody id="customerRecordsBody"></tbody></table></div></div>
@@ -1577,7 +1586,7 @@
         let patients = [];
         let clinics = [];
         let tempChildren = [];
-        let progressChart = null, growthChart = null, customerGrowthChart = null, patientSearchChart = null, treatmentEffectChart = null, clinicStatsChart = null;
+        let progressChart = null, growthChart = null, customerGrowthChart = null, patientSearchChart = null, clinicStatsChart = null;
         let currentChartType = 'AL';
         let duplicatePatients = [];
         
@@ -3453,8 +3462,10 @@
             tbody.innerHTML = p.records.map((r,i) => '<tr><td>'+r.date+'</td><td>'+fmtNum(r.age,1)+'세</td><td>'+fmtNum(r.odAL,2)+'</td><td>'+badge(r.odPct)+'</td><td>'+fmtNum(r.osAL,2)+'</td><td>'+badge(r.osPct)+'</td><td>'+fmtNum(r.odSE,2)+'</td><td>'+fmtNum(r.osSE,2)+'</td>'+(editable?'<td><button class="delete-btn" onclick="deleteRecord('+i+')">✕</button></td>':'')+'</tr>').join('');
         }
         
-        function updateRateTable(p) {
-            const tbody = document.getElementById('rateTableBody');
+        // tbodyId를 넘기면 보호자 화면 등 다른 표에도 같은 계산 결과를 그린다
+        function updateRateTable(p, tbodyId) {
+            const tbody = document.getElementById(tbodyId || 'rateTableBody');
+            if (!tbody) return;
             const records = (p.records || []).filter(r => r.odAL !== null || r.osAL !== null);
             if (records.length < 2) { tbody.innerHTML = '<tr><td colspan="6" style="color:var(--gray-600)">2회 이상 측정 시 표시됩니다</td></tr>'; return; }
             tbody.innerHTML = buildRateRows(records);
@@ -3503,11 +3514,16 @@
             return {text:'효과 불충분', cls:'rate-rapid'};
         }
 
-        function updateTreatmentEffect(p) {
-            const tbody = document.getElementById('treatmentEffectBody');
-            const chartWrap = document.getElementById('treatmentEffectChartWrap');
-            if (!tbody) return;
-            if (treatmentEffectChart) { treatmentEffectChart.destroy(); treatmentEffectChart = null; }
+        // 화면마다 차트 인스턴스를 따로 둔다. 하나를 공유하면 한 화면을 그릴 때
+        // 다른 화면의 차트를 destroy 해버린다.
+        const effectCharts = {};
+
+        function updateTreatmentEffect(p, ids) {
+            ids = ids || { body: 'treatmentEffectBody', wrap: 'treatmentEffectChartWrap', canvas: 'treatmentEffectChart' };
+            const tbody = document.getElementById(ids.body);
+            const chartWrap = document.getElementById(ids.wrap);
+            if (!tbody || !chartWrap) return;
+            if (effectCharts[ids.canvas]) { effectCharts[ids.canvas].destroy(); delete effectCharts[ids.canvas]; }
             const results = analyzeTreatmentEffect(p);
             if (!results.length) {
                 tbody.innerHTML = '<tr><td colspan="7" style="color:var(--gray-600)">등록된 치료가 없습니다</td></tr>';
@@ -3538,12 +3554,13 @@
             tbody.innerHTML = rows;
             if (!chartLabels.length) { chartWrap.style.display = 'none'; return; }
             chartWrap.style.display = 'block';
-            const ctx = document.getElementById('treatmentEffectChart').getContext('2d');
-            treatmentEffectChart = new Chart(ctx, {
+            const ctx = document.getElementById(ids.canvas).getContext('2d');
+            effectCharts[ids.canvas] = new Chart(ctx, {
                 type: 'bar',
                 data: { labels: chartLabels, datasets: [
-                    { label: '치료 전', data: preData, backgroundColor: '#9ca3af' },
-                    { label: '치료 후', data: postData, backgroundColor: barColors }
+                    // 차트 글씨는 캔버스에 그려져 자동 번역이 안 되므로 t()로 감싼다
+                    { label: t('치료 전'), data: preData, backgroundColor: '#9ca3af' },
+                    { label: t('치료 후'), data: postData, backgroundColor: barColors }
                 ]},
                 options: {
                     responsive: true, maintainAspectRatio: false,
@@ -3736,11 +3753,16 @@
             return lines;
         }
 
-        function openReport() {
-            const p = patients.find(x => x.id === currentPatientId);
+        // 리포트를 만든 환자 (파일 이름에 사용). 의사·보호자 화면 모두에서 쓴다.
+        let reportPatient = null;
+
+        // p·chartCanvasId를 넘기지 않으면 의사 화면에서 선택한 환자로 만든다
+        function openReport(p, chartCanvasId) {
+            if (!p || !p.records) p = patients.find(x => x.id === currentPatientId);
             if (!p || !p.records || !p.records.length) { alert('측정 기록이 있어야 리포트를 만들 수 있습니다.'); return; }
+            reportPatient = p;
             const last = p.records[p.records.length-1];
-            const chartCanvas = document.getElementById('growthChart');
+            const chartCanvas = document.getElementById(chartCanvasId || 'growthChart');
             const chartImg = chartCanvas ? chartCanvas.toDataURL('image/png') : '';
             const fmt = (v,d) => v == null ? '-' : v.toFixed(d);
             const treatRows = (p.treatments||[]).map(t => '<span style="color:'+(TREATMENT_COLORS[t.type]||'#6b7280')+';font-weight:600">'+t.type+'</span> ('+t.date+' 시작)').join(' · ') || '없음';
@@ -3798,7 +3820,7 @@
         }
 
         function reportFileName() {
-            const p = patients.find(x => x.id === currentPatientId);
+            const p = reportPatient || patients.find(x => x.id === currentPatientId);
             const name = p && p.name ? p.name : 'report';
             const date = new Date().toISOString().split('T')[0];
             return '근시관리리포트_' + name + '_' + date + '.png';
@@ -4102,6 +4124,17 @@
             updateTreatments(p, 'customerTreatmentList', false);
             updateRecords(p, 'customerRecordsBody', false);
             updateGrowthChart(p, 'customerGrowthChart');
+            currentCustomerPatient = p;
+            updateRateTable(p, 'customerRateTableBody');
+            updateTreatmentEffect(p, { body: 'customerTreatmentEffectBody',
+                                       wrap: 'customerTreatmentEffectChartWrap',
+                                       canvas: 'customerTreatmentEffectChart' });
+        }
+
+        let currentCustomerPatient = null;
+        function openCustomerReport() {
+            if (!currentCustomerPatient) { alert('자녀를 먼저 선택해주세요.'); return; }
+            openReport(currentCustomerPatient, 'customerGrowthChart');
         }
         
         function openAddChildModal() {
