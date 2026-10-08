@@ -95,7 +95,8 @@ service cloud.firestore {
             && request.resource.data.get('role', null) == resource.data.get('role', null)
             && request.resource.data.get('approved', null) == resource.data.get('approved', null));
 
-      allow delete: if isAdmin();
+      // 삭제: 관리자, 또는 본인 (앱 안의 '계정 삭제' — 앱스토어·구글플레이 필수 기능)
+      allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
     }
 
 
