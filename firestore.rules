@@ -151,6 +151,14 @@ service cloud.firestore {
     }
 
 
+    // ---------- patientIndex (병원별 환자 목록: 이름·등록번호·생년월일만) ----------
+    // 의사 화면이 환자 전체 대신 이 문서 하나만 읽어 하루 읽기 사용량을 줄인다.
+    // 환자 정보이므로 환자 문서와 같은 수준으로 보호: 관리자와 그 병원의 승인된 의사만.
+    match /patientIndex/{clinicId} {
+      allow read, write: if isAdmin() || (isApprovedDoctor() && isMyClinic(clinicId));
+    }
+
+
     // ---------- 명시적으로 나머지는 모두 차단 ----------
     match /{document=**} {
       allow read, write: if false;
