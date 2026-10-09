@@ -112,7 +112,20 @@ service cloud.firestore {
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 50;
-      allow update, delete: if isAdmin();
+
+      // 수정: 관리자는 전부, 그 안과의 승인된 의사는 '문의 연락처'(카카오톡·네이버톡·전화)만
+      allow update: if isAdmin()
+        || (isApprovedDoctor()
+            && isMyClinic(clinicId)
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['kakaoChannelUrl', 'naverTalkUrl', 'phone', 'contactUpdatedAt'])
+            && request.resource.data.get('kakaoChannelUrl', '') is string
+            && request.resource.data.get('naverTalkUrl', '') is string
+            && request.resource.data.get('phone', '') is string
+            && request.resource.data.get('kakaoChannelUrl', '').size() <= 200
+            && request.resource.data.get('naverTalkUrl', '').size() <= 200
+            && request.resource.data.get('phone', '').size() <= 30);
+      allow delete: if isAdmin();
     }
 
 
