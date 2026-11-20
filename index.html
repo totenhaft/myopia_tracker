@@ -2760,6 +2760,7 @@
         // 병원 환자 전체를 읽고(환자 수만큼 읽기) 목록 문서를 새로 만든다.
         // 처음 한 번, 3일에 한 번, '목록 새로고침'·'원내 치료 통계'를 누를 때만 실행된다.
         async function rebuildPatientIndex() {
+            const startedAt = Date.now();
             const snapshot = await db.collection('patients').where('clinicId', '==', currentUserData.clinicId).get();
             const items = {};
             patients = [];
@@ -2770,8 +2771,56 @@
             });
             allPatientsLoaded = true;
             console.log('환자 전체 불러옴:', patients.length + '명');
-            try { await indexRef().set({ items, updatedAt: Date.now() }); }
-            catch (e) { console.warn('환자 목록 문서 저장 실패 (보안 규칙 게시 전일 수 있음):', e.message); }
+            // 전체를 읽는 동안 다른 PC가 새 환자를 등록했을 수 있다.
+            // 예전에는 목록 문서를 통째로 덮어써서 그 환자가 목록에서 사라졌다(서버엔 있는데 검색 안 됨).
+            // 이제는 덮어쓰기 직전에 목록 문서를 다시 읽어, 그 사이 추가된 환자를 살려 둔다.
+            try {
+                await db.runTransaction(async tx => {
+                    const cur = await tx.get(indexRef());
+                    const curItems = (cur.exists && cur.data().items) || {};
+                    Object.keys(curItems).forEach(id => {
+                        if (!items[id] && (curItems[id].c || 0) >= startedAt - 120000) items[id] = curItems[id];
+                    });
+                    tx.set(indexRef(), { items, updatedAt: Date.now() });
+                });
+            } catch (e) { console.warn('환자 목록 문서 저장 실패:', e.message); }
+        }
+
+        // 서버에는 있는데 목록 문서에서 빠진 환자를 화면 목록과 목록 문서에 되살린다
+        function restoreToList(id, data) {
+            let p = patients.find(x => x.id === id);
+            if (!p) {
+                p = sortPatientArrays({ id, ...data });
+                patients.push(p);
+            }
+            setIndexEntry(id, p);
+            return p;
+        }
+
+        // 검색 결과가 없을 때: 서버에서 이름·등록번호로 직접 찾아본다 (찾은 환자 수만큼만 읽기)
+        async function searchPatientsOnServer() {
+            const q = document.getElementById('doctorSearchInput').value.trim();
+            if (!q) return;
+            showLoading(true);
+            try {
+                const base = db.collection('patients').where('clinicId', '==', currentUserData.clinicId);
+                const [byName, byReg] = await Promise.all([
+                    base.where('name', '==', q).limit(20).get(),
+                    base.where('regNo', '==', q).limit(20).get()
+                ]);
+                let restored = 0;
+                [byName, byReg].forEach(snap => snap.forEach(doc => {
+                    if (!patients.some(x => x.id === doc.id)) restored++;
+                    restoreToList(doc.id, doc.data());
+                }));
+                showLoading(false);
+                if (byName.empty && byReg.empty) { alert('서버에도 \'' + q + '\' 환자가 없습니다.'); return; }
+                if (restored) alert('목록에서 빠져 있던 환자 ' + restored + '명을 찾아 목록에 복구했습니다.');
+                searchPatients();
+            } catch (e) {
+                showLoading(false);
+                alert('서버 검색에 실패했습니다: ' + e.message);
+            }
         }
 
         async function refreshPatientList() {
@@ -2797,7 +2846,7 @@
             const results = document.getElementById('doctorSearchResults');
             if (!q) { showRecentPatients(); return; }
             const f = patients.filter(p => p.name.toLowerCase().includes(q) || (p.regNo && p.regNo.toLowerCase().includes(q)));
-            results.innerHTML = f.length === 0 ? '<div class="search-item">검색 결과 없음</div>' : 
+            results.innerHTML = f.length === 0 ? '<div class="search-item">검색 결과 없음</div><div class="search-item" style="color:var(--primary);font-weight:500" onmousedown="searchPatientsOnServer()">🔎 서버에서 다시 찾기 (목록에서 빠진 환자 복구)</div>' : 
                 f.map(p => '<div class="search-item" onmousedown="selectPatient(\''+p.id+'\')"><span class="patient-name">'+(p.gender==='male'?'👦':'👧')+' '+esc(p.name)+'</span><span class="patient-id">'+esc(p.regNo||'-')+' · '+esc(p.birthDate)+'</span></div>').join('');
             results.classList.add('active');
         }
@@ -2902,10 +2951,14 @@
                     .where('regNo', '==', regNo).limit(1).get();
                 if (!srv.empty) {
                     showLoading(false);
-                    const d = srv.docs[0].data();
-                    alert('등록번호 ' + regNo + '는 이미 사용 중입니다.\n\n   '
+                    const doc0 = srv.docs[0], d = doc0.data();
+                    // 서버엔 있는데 화면 목록에 없던 환자 → 목록에 되살려서 바로 열 수 있게 한다
+                    restoreToList(doc0.id, d);
+                    const open = confirm('등록번호 ' + regNo + '는 이미 서버에 등록되어 있습니다.\n\n   '
                         + (d.name || '(이름 없음)') + ' · ' + (d.birthDate || '-')
-                        + '\n\n다른 기기에서 방금 등록되었을 수 있습니다. 환자 목록을 새로고침해주세요.');
+                        + '\n\n목록에서 빠져 있던 환자라 검색되지 않았습니다. 지금 목록에 복구했습니다.\n'
+                        + '같은 환자라면 열어서 [정보 수정]으로 생년월일 등을 바로잡아 주세요.\n\n해당 환자를 여시겠습니까?');
+                    if (open) { closePatientModal(); selectPatient(doc0.id); }
                     return;
                 }
                 const patient = {
@@ -3241,8 +3294,13 @@
         }
         // 목록 문서 갱신은 실패해도 본 작업(환자 저장)에는 영향이 없게 한다
         async function setIndexEntry(id, p) {
-            try { await indexRef().set({ items: { [id]: indexEntry(p) } }, { merge: true }); }
-            catch (e) { console.warn('환자 목록 문서 갱신 실패:', e.message); }
+            for (let i = 0; i < 2; i++) {
+                try { await indexRef().set({ items: { [id]: indexEntry(p) } }, { merge: true }); return; }
+                catch (e) {
+                    console.warn('환자 목록 문서 갱신 실패' + (i ? '' : ' (다시 시도)') + ':', e.message);
+                    if (!i) await new Promise(r => setTimeout(r, 1500));
+                }
+            }
         }
         async function removeIndexEntry(id) {
             try { await indexRef().update({ ['items.' + id]: firebase.firestore.FieldValue.delete() }); }
