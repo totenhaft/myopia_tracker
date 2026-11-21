@@ -2744,7 +2744,12 @@
                 const data = snap.exists ? snap.data() : null;
                 // 3일마다 한 번은 전체를 다시 읽어 목록을 바로잡는다
                 // (예전 버전 화면이 열린 PC에서 등록한 환자가 목록에서 빠지는 경우 대비)
-                const fresh = data && data.items && (Date.now() - (data.updatedAt || 0)) < 3 * 86400000;
+                // 목록 문서가 3일 이내에 만들어졌고, 만들 때 기록한 환자 수(total)와 거의 맞아야 믿고 쓴다.
+                // (예전에 일부만 담긴 목록 문서가 저장돼 환자 886명이 검색되지 않던 문제 방지)
+                const count = data && data.items ? Object.keys(data.items).length : 0;
+                const fresh = data && data.items && data.total
+                    && count >= data.total * 0.9
+                    && (Date.now() - (data.updatedAt || 0)) < 3 * 86400000;
                 if (fresh) {
                     patients = Object.keys(data.items).map(id => fromIndex(id, data.items[id]));
                     allPatientsLoaded = false;
@@ -2754,14 +2759,28 @@
             } catch (e) {
                 console.warn('환자 목록 문서를 읽지 못해 전체를 불러옵니다:', e.message);
             }
-            await rebuildPatientIndex();
+            try { await rebuildPatientIndex(); }
+            catch (e) {
+                // 전체 읽기에 실패하면(인터넷 끊김·읽기 한도 초과) 목록 문서라도 보여주고 알린다
+                console.warn('환자 전체 불러오기 실패:', e.message);
+                try {
+                    const s2 = await indexRef().get();
+                    const d2 = s2.exists ? s2.data() : null;
+                    if (d2 && d2.items) patients = Object.keys(d2.items).map(id => fromIndex(id, d2.items[id]));
+                } catch (_) {}
+                alert('환자 목록을 서버에서 모두 불러오지 못했습니다. 일부 환자가 검색되지 않을 수 있습니다.\n잠시 후 [목록 새로고침]을 눌러 주세요.\n(' + e.message + ')');
+            }
         }
 
         // 병원 환자 전체를 읽고(환자 수만큼 읽기) 목록 문서를 새로 만든다.
         // 처음 한 번, 3일에 한 번, '목록 새로고침'·'원내 치료 통계'를 누를 때만 실행된다.
         async function rebuildPatientIndex() {
             const startedAt = Date.now();
-            const snapshot = await db.collection('patients').where('clinicId', '==', currentUserData.clinicId).get();
+            // 반드시 서버에서 읽는다. 인터넷이 불안정하거나 하루 읽기 한도를 넘으면 Firestore가
+            // 브라우저에 남아 있던 일부 환자만 돌려줄 수 있는데, 그걸로 목록 문서를 만들면
+            // 나머지 환자가 전부 목록에서 사라진다(이번 오류의 원인).
+            const snapshot = await db.collection('patients').where('clinicId', '==', currentUserData.clinicId).get({ source: 'server' });
+            if (snapshot.metadata.fromCache) throw new Error('서버에 연결되지 않아 목록을 새로 만들 수 없습니다.');
             const items = {};
             patients = [];
             snapshot.forEach(doc => {
@@ -2781,9 +2800,16 @@
                     Object.keys(curItems).forEach(id => {
                         if (!items[id] && (curItems[id].c || 0) >= startedAt - 120000) items[id] = curItems[id];
                     });
-                    tx.set(indexRef(), { items, updatedAt: Date.now() });
+                    // 안전장치: 이전보다 환자 수가 크게 줄어든 목록으로는 덮어쓰지 않는다
+                    const prevTotal = (cur.exists && cur.data().total) || 0;
+                    const n = Object.keys(items).length;
+                    if (prevTotal && n < prevTotal * 0.8) throw new Error('환자 수가 ' + prevTotal + '명 → ' + n + '명으로 급감하여 목록 저장을 중단했습니다.');
+                    tx.set(indexRef(), { items, total: n, updatedAt: Date.now() });
                 });
-            } catch (e) { console.warn('환자 목록 문서 저장 실패:', e.message); }
+            } catch (e) {
+                console.warn('환자 목록 문서 저장 실패:', e.message);
+                if (String(e.message).includes('급감')) throw e;   // 화면도 기존 목록 문서로 되돌린다
+            }
         }
 
         // 서버에는 있는데 목록 문서에서 빠진 환자를 화면 목록과 목록 문서에 되살린다
